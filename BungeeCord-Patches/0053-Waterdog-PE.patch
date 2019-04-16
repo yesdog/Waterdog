@@ -1,7 +1,7 @@
-From c15bbf884a6123daa66368a0752709478aef922c Mon Sep 17 00:00:00 2001
+From 7ae726ee1ee079e1f5c4453aa62d25310922cdd4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
-Date: Mon, 15 Apr 2019 17:49:35 -0600
-Subject: [PATCH] Waterdog
+Date: Tue, 16 Apr 2019 07:32:41 -0600
+Subject: [PATCH] Waterdog PE
 
 
 diff --git a/README.md b/README.md
@@ -66,7 +66,7 @@ index 4965b234..1c6e3de3 100644
      /**
       * Returns the console overlord for this proxy. Being the console, this
 diff --git a/api/src/main/java/net/md_5/bungee/api/config/ListenerInfo.java b/api/src/main/java/net/md_5/bungee/api/config/ListenerInfo.java
-index 42b84063..8d0f9574 100644
+index 42b84063..3374ae40 100644
 --- a/api/src/main/java/net/md_5/bungee/api/config/ListenerInfo.java
 +++ b/api/src/main/java/net/md_5/bungee/api/config/ListenerInfo.java
 @@ -71,13 +71,26 @@ public class ListenerInfo
@@ -77,7 +77,7 @@ index 42b84063..8d0f9574 100644
 +    /**
 +     * Whether this listener is a PE listener.
 +     */
-+    private final boolean peListener;
++    private final boolean rakNet;
 +    // Waterdog end
  
      @Deprecated
@@ -104,9 +104,81 @@ index 42b84063..8d0f9574 100644
 +
 +    // Waterdog start
 +    public boolean needsRealQuery() {
-+        return queryEnabled && (!peListener || queryPort != host.getPort());
++        return queryEnabled && (!rakNet || queryPort != host.getPort());
 +    }
 +    // Waterdog end
+ }
+diff --git a/api/src/main/java/net/md_5/bungee/api/config/ServerInfo.java b/api/src/main/java/net/md_5/bungee/api/config/ServerInfo.java
+index 19773843..30e41bd7 100644
+--- a/api/src/main/java/net/md_5/bungee/api/config/ServerInfo.java
++++ b/api/src/main/java/net/md_5/bungee/api/config/ServerInfo.java
+@@ -104,4 +104,11 @@ public interface ServerInfo
+      * @param callback the callback to call when the count has been retrieved.
+      */
+     void ping(Callback<ServerPing> callback);
++
++    // Waterdog start
++    /**
++     * Whether this server should use the RakNet UDP protocol.
++     */
++    boolean isRakNet();
++    // Waterdog end
+ }
+diff --git a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java b/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
+index 0d1f801a..831505f0 100644
+--- a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
++++ b/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
+@@ -70,6 +70,12 @@ public class ServerConnectRequestTest
+         public void ping(Callback<ServerPing> callback)
+         {
+         }
++
++        // Waterdog start
++        public boolean isRakNet() {
++            return true;
++        }
++        // Waterdog end
+     };
+ 
+     @Test
+diff --git a/native/compile-native.sh b/native/compile-native.sh
+index 98baf0e2..430012e3 100755
+--- a/native/compile-native.sh
++++ b/native/compile-native.sh
+@@ -1,6 +1,8 @@
+ #!/bin/sh
+ 
+-CXX="g++ -shared -fPIC -O3 -Wall -Werror -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/"
++# Waterdog - for mac, do: brew install mbedtls zlib
+ 
+-$CXX src/main/c/NativeCipherImpl.cpp -o src/main/resources/native-cipher.so -lcrypto
++CXX="g++ -shared -fPIC -O3 -Wall -Werror -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/ -I$JAVA_HOME/include/darwin/"
++
++$CXX src/main/c/NativeCipherImpl.cpp -o src/main/resources/native-cipher.so -lcrypto -lmbedcrypto
+ $CXX src/main/c/NativeCompressImpl.cpp -o src/main/resources/native-compress.so -lz
+diff --git a/native/src/main/c/NativeCipherImpl.cpp b/native/src/main/c/NativeCipherImpl.cpp
+index aa7a12b4..6a27dc67 100644
+--- a/native/src/main/c/NativeCipherImpl.cpp
++++ b/native/src/main/c/NativeCipherImpl.cpp
+@@ -1,5 +1,7 @@
+ // Support for CentOS 6
++#if __linux__ // Waterdog
+ __asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
++#endif // Waterdog
+ 
+ #include <stdlib.h>
+ #include <string.h>
+diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
+index 6c92c1f5..ab08b874 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
++++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
+@@ -80,6 +80,6 @@ public final class NativeCode<T>
+ 
+     public static boolean isSupported()
+     {
+-        return "Linux".equals( System.getProperty( "os.name" ) ) && "amd64".equals( System.getProperty( "os.arch" ) );
++        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) ); // Waterdog
+     }
  }
 diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java
 index 7b2249f8..94b1d42b 100644
@@ -129,6 +201,19 @@ index 7b2249f8..94b1d42b 100644
      }
  
      @Override
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+index 7b0ecb09..1e82b290 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+@@ -18,7 +18,7 @@ public class NativeCipher implements BungeeCipher
+     @Override
+     public void init(boolean forEncryption, SecretKey key) throws GeneralSecurityException
+     {
+-        Preconditions.checkArgument( key.getEncoded().length == 16, "Invalid key size" );
++        Preconditions.checkArgument( key.getEncoded().length == 16 || key.getEncoded().length == 32, "Invalid key size" ); // Waterdog
+         free();
+ 
+         this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/pom.xml b/protocol/pom.xml
 index ee513895..335c1502 100644
 --- a/protocol/pom.xml
@@ -1053,7 +1138,7 @@ index 00000000..bfd8b92b
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..6576d448
+index 00000000..531b1bd1
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 @@ -0,0 +1,294 @@
@@ -1314,7 +1399,7 @@ index 00000000..6576d448
 +        JsonObject extraData = new JsonObject();
 +        extraData.addProperty("identity", uuid.toString());
 +        extraData.addProperty("displayName", username);
-+        //extraData.addProperty("XUID", "");
++        extraData.addProperty("XUID", String.valueOf(uuid.getLeastSignificantBits()));
 +        //chain
 +        dataChain.addProperty("nbf", nbf - 1);
 +        dataChain.addProperty("exp", exp);
@@ -1628,7 +1713,7 @@ index 00000000..0a5d0f6f
 +    }
 +}
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f0497f59..2947afca 100644
+index f0497f59..f11a6744 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -22,6 +22,15 @@
@@ -1647,12 +1732,19 @@ index f0497f59..2947afca 100644
      <dependencies>
          <dependency>
              <groupId>com.flowpowered</groupId>
-@@ -118,6 +127,29 @@
+@@ -118,6 +127,36 @@
              <scope>runtime</scope>
          </dependency>
          <!-- Waterfall end -->
 +
 +        <!-- Waterdog start -->
++        <dependency>
++            <groupId>io.netty</groupId>
++            <artifactId>netty-transport-native-kqueue</artifactId>
++            <version>${netty.version}</version>
++            <classifier>osx-x86_64</classifier>
++            <scope>compile</scope>
++        </dependency>
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>raknet</artifactId>
@@ -1678,10 +1770,18 @@ index f0497f59..2947afca 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 4ff03488..30232816 100644
+index 4ff03488..92432c89 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -90,6 +90,10 @@ import net.md_5.bungee.protocol.packet.PluginMessage;
+@@ -22,7 +22,6 @@ import io.netty.util.ResourceLeakDetector;
+ import java.io.File;
+ import java.io.FileReader;
+ import java.io.IOException;
+-import java.io.PrintStream;
+ import java.net.InetSocketAddress;
+ import java.text.MessageFormat;
+ import java.util.ArrayList;
+@@ -90,6 +89,10 @@ import net.md_5.bungee.protocol.packet.PluginMessage;
  import net.md_5.bungee.query.RemoteQuery;
  import net.md_5.bungee.scheduler.BungeeScheduler;
  import net.md_5.bungee.util.CaseInsensitiveMap;
@@ -1692,15 +1792,15 @@ index 4ff03488..30232816 100644
  
  /**
   * Main BungeeCord proxy class.
-@@ -331,6 +335,7 @@ public class BungeeCord extends ProxyServer
+@@ -331,6 +334,7 @@ public class BungeeCord extends ProxyServer
                      }
                  }
              };
-+            if ( !info.isPeListener() ) { // Waterdog
++            if ( !info.isRakNet() ) { // Waterdog
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -339,8 +344,24 @@ public class BungeeCord extends ProxyServer
+@@ -339,8 +343,24 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1726,7 +1826,7 @@ index 4ff03488..30232816 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -496,7 +517,7 @@ public class BungeeCord extends ProxyServer
+@@ -496,7 +516,7 @@ public class BungeeCord extends ProxyServer
      @Override
      public String getName()
      {
@@ -1735,20 +1835,20 @@ index 4ff03488..30232816 100644
      }
  
      @Override
-@@ -657,9 +678,9 @@ public class BungeeCord extends ProxyServer
+@@ -657,9 +677,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override
 -    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted)
-+    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean useEncap) // Waterdog
++    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean isRakNet) // Waterdog
      {
 -        return new BungeeServerInfo( name, address, motd, restricted );
-+        return new BungeeServerInfo( name, address, motd, restricted, useEncap ); // Waterdog
++        return new BungeeServerInfo( name, address, motd, restricted, isRakNet ); // Waterdog
      }
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-index 4c0637b9..938897fd 100644
+index 4c0637b9..d56f2472 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 @@ -50,6 +50,19 @@ public class BungeeServerInfo implements ServerInfo
@@ -1761,18 +1861,18 @@ index 4c0637b9..938897fd 100644
 +        this.address = address;
 +        this.motd = motd;
 +        this.restricted = restricted;
-+        this.useEncap = true;
++        this.rakNet = true;
 +    }
 +
 +    @Getter
-+    private final boolean useEncap;
++    private final boolean rakNet;
 +    // Waterdog end
 +
      @Synchronized("players")
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 110ac496..fd2c53e1 100644
+index 110ac496..53952a8f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,14 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -1802,7 +1902,7 @@ index 110ac496..fd2c53e1 100644
 +                    oPEHandshake.getUsername(), oPEHandshake.getUuid(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
 +        }
 +        // Waterdog end
-+        if ( BungeeCord.getInstance().config.isIpForward() && target.isUseEncap()) // Waterdog
++        if ( BungeeCord.getInstance().config.isIpForward() && !target.isRakNet()) // Waterdog
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
@@ -1876,7 +1976,7 @@ index 110ac496..fd2c53e1 100644
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index e649678e..e565a5e9 100644
+index e649678e..6c14d458 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -8,6 +8,7 @@ import io.netty.bootstrap.Bootstrap;
@@ -1932,7 +2032,7 @@ index e649678e..e565a5e9 100644
              {
 +                // Waterdog start
 +                if (ProtocolConstants.isPE(getPendingConnection().getVersion())) {
-+                    if (target.isUseEncap()) {
++                    if (!target.isRakNet()) {
 +                        ch.pipeline().addLast(new PSInitEncapsulation(getAddress(), false));
 +                    } else {
 +                        ch.pipeline().addLast(PECompressor.NAME, new PECompressor());
@@ -1945,7 +2045,7 @@ index e649678e..e565a5e9 100644
                  ch.pipeline().addAfter( PipelineUtils.FRAME_PREPENDER, PipelineUtils.PACKET_ENCODER, new MinecraftEncoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion() ) );
                  ch.pipeline().get( HandlerBoss.class ).setHandler( new ServerConnector( bungee, UserConnection.this, target ) );
 +                // Waterdog start
-+                if (ProtocolConstants.isPE(getPendingConnection().getVersion()) && !target.isUseEncap()) {
++                if (ProtocolConstants.isPE(getPendingConnection().getVersion()) && target.isRakNet()) {
 +                    ch.pipeline().replace(PipelineUtils.FRAME_DECODER, PipelineUtils.FRAME_DECODER, new ChannelInboundHandlerAdapter());
 +                    ch.pipeline().replace(PipelineUtils.FRAME_PREPENDER, PipelineUtils.FRAME_PREPENDER, new ChannelInboundHandlerAdapter());
 +                }
@@ -1958,7 +2058,7 @@ index e649678e..e565a5e9 100644
              }
          };
 -        Bootstrap b = new Bootstrap()
-+        Bootstrap b; if (target.isUseEncap()) { // Waterdog
++        Bootstrap b; if (!target.isRakNet()) { // Waterdog
 +        b = new Bootstrap()
                  .channel( PipelineUtils.getChannel() )
                  .group( ch.getHandle().eventLoop() )
@@ -2011,17 +2111,17 @@ index 37fe6ac7..fdb26501 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
-index 44011a96..31231718 100644
+index 44011a96..805907e4 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
 @@ -226,8 +226,9 @@ public class YamlConfig implements ConfigurationAdapter
              String addr = get( "address", "localhost:25565", val );
              String motd = ChatColor.translateAlternateColorCodes( '&', get( "motd", "&1Just another Waterfall - Forced Host", val ) );
              boolean restricted = get( "restricted", false, val );
-+            boolean useEncap = get( "use_encapsulation", true, val );
++            boolean isRakNet = get( "raknet", false, val );
              InetSocketAddress address = Util.getAddr( addr );
 -            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted );
-+            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted, useEncap );
++            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted, isRakNet );
              ret.put( name, info );
          }
  
@@ -2029,7 +2129,7 @@ index 44011a96..31231718 100644
              int queryPort = get( "query_port", 25577, val );
  
              boolean proxyProtocol = get( "proxy_protocol", false, val );
-+            boolean peListener = get( "pe_listener", false, val ); // Waterdog
++            boolean isRakNet = get( "raknet", false, val ); // Waterdog
              List<String> serverPriority = new ArrayList<>( get( "priorities", Collections.EMPTY_LIST, val ) );
  
              // Default server list migration
@@ -2038,7 +2138,7 @@ index 44011a96..31231718 100644
              set( "priorities", serverPriority, val );
  
 -            ListenerInfo info = new ListenerInfo( address, motd, maxPlayers, tabListSize, serverPriority, forceDefault, forced, value.toString(), setLocalAddress, pingPassthrough, queryPort, query, proxyProtocol );
-+            ListenerInfo info = new ListenerInfo( address, motd, maxPlayers, tabListSize, serverPriority, forceDefault, forced, value.toString(), setLocalAddress, pingPassthrough, queryPort, query, proxyProtocol, peListener ); // Waterdog
++            ListenerInfo info = new ListenerInfo( address, motd, maxPlayers, tabListSize, serverPriority, forceDefault, forced, value.toString(), setLocalAddress, pingPassthrough, queryPort, query, proxyProtocol, isRakNet ); // Waterdog
              ret.add( info );
          }
  
@@ -2298,9 +2398,58 @@ index 00000000..97dffa9e
 +        DefinedPacket.writeSVarLong(to, id == oldId ? newId : (id == newId ? oldId : id));
 +    };
 +}
+diff --git a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
+index 042bccb5..289e7183 100644
+--- a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
++++ b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
+@@ -87,9 +87,18 @@ public class PipelineUtils
+     public static final String LEGACY_KICKER = "legacy-kick";
+ 
+     private static boolean epoll;
++    private static boolean kQueue;
+ 
+     static
+     {
++        // Waterdog start
++        try {
++            kQueue = io.netty.channel.kqueue.KQueue.isAvailable();
++        } catch (Throwable e) {}
++        if (kQueue) {
++            ProxyServer.getInstance().getLogger().info( "kQueue is working, utilising it!" );
++        } else
++        // Waterdog end
+         if ( !PlatformDependent.isWindows() && Boolean.parseBoolean( System.getProperty( "bungee.epoll", "true" ) ) )
+         {
+             ProxyServer.getInstance().getLogger().info( "Not on Windows, attempting to use enhanced EpollEventLoop" );
+@@ -106,21 +115,25 @@ public class PipelineUtils
+ 
+     public static EventLoopGroup newEventLoopGroup(int threads, ThreadFactory factory)
+     {
++        if (kQueue) return new io.netty.channel.kqueue.KQueueEventLoopGroup(threads, factory); // Waterdog
+         return epoll ? new EpollEventLoopGroup( threads, factory ) : new NioEventLoopGroup( threads, factory );
+     }
+ 
+     public static Class<? extends ServerChannel> getServerChannel()
+     {
++        if (kQueue) return io.netty.channel.kqueue.KQueueServerSocketChannel.class; // Waterdog
+         return epoll ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
+     }
+ 
+     public static Class<? extends Channel> getChannel()
+     {
++        if (kQueue) return io.netty.channel.kqueue.KQueueSocketChannel.class; // Waterdog
+         return epoll ? EpollSocketChannel.class : NioSocketChannel.class;
+     }
+ 
+     public static Class<? extends io.netty.channel.socket.DatagramChannel> getDatagramChannel() // Waterfall - change to DatagramChannel
+     {
++        if (kQueue) return io.netty.channel.kqueue.KQueueDatagramChannel.class; // Waterdog
+         return epoll ? EpollDatagramChannel.class : NioDatagramChannel.class;
+     }
+ 
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..79aa95ef
+index 00000000..0ae0109a
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 @@ -0,0 +1,81 @@
@@ -2333,7 +2482,7 @@ index 00000000..79aa95ef
 +    @Override
 +    public void handlerAdded(ChannelHandlerContext ctx) {
 +        zlib.init( true, Deflater.DEFAULT_COMPRESSION );
-+        stashBuffer = ctx.alloc().ioBuffer(MAX_POOL_BYTES);
++        stashBuffer = ctx.alloc().directBuffer(MAX_POOL_BYTES);
 +    }
 +
 +    @Override
@@ -2375,7 +2524,7 @@ index 00000000..79aa95ef
 +    }
 +
 +    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
-+        final ByteBuf out = ctx.alloc().ioBuffer(128);
++        final ByteBuf out = ctx.alloc().directBuffer(128);
 +        Preconditions.checkArgument(stashBuffer.hasMemoryAddress(), "pre-compression buffer is not direct");
 +        PERakNetMetrics.INSTANCE.outPreComp.inc(stashBuffer.readableBytes());
 +        zlib.process(stashBuffer, out);
@@ -2387,21 +2536,19 @@ index 00000000..79aa95ef
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
 new file mode 100644
-index 00000000..ab20c3c0
+index 00000000..5d785901
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,38 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
++
 +import io.netty.buffer.ByteBuf;
 +import io.netty.channel.ChannelHandlerContext;
-+import io.netty.handler.codec.MessageToMessageDecoder;
-+
 +import io.netty.util.ReferenceCountUtil;
-+import net.md_5.bungee.compress.CompressFactory;
++
 +import net.md_5.bungee.compress.PacketDecompressor;
-+import net.md_5.bungee.jni.zlib.BungeeZlib;
 +import net.md_5.bungee.protocol.DefinedPacket;
 +
 +import java.util.List;
@@ -2416,14 +2563,7 @@ index 00000000..ab20c3c0
 +
 +    @Override
 +    protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) throws Exception {
-+        /*final ByteBuf tmp;
-+        if (buf.hasMemoryAddress()) {
-+            tmp = null;
-+        } else {
-+            tmp = ctx.alloc().ioBuffer(buf.readableBytes()).writeBytes(buf);
-+            buf = tmp;
-+        }
-+        Preconditions.checkArgument(buf.hasMemoryAddress(), "Compressed buffer is not direct");*/
++        buf = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), buf);
 +        final ByteBuf data = ctx.alloc().ioBuffer(32);
 +        try {
 +            getZlib().process(buf, data);
@@ -2433,7 +2573,7 @@ index 00000000..ab20c3c0
 +            Preconditions.checkArgument(!data.isReadable(), "Compressed data not handled");
 +        } finally {
 +            ReferenceCountUtil.safeRelease(data);
-+            //ReferenceCountUtil.safeRelease(tmp);
++            ReferenceCountUtil.safeRelease(buf);
 +        }
 +    }
 +
@@ -2536,10 +2676,10 @@ index 00000000..d94cb82c
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..8fa4a80b
+index 00000000..ffd644e8
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,99 @@
+@@ -0,0 +1,110 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.nimbusds.jose.JWSObject;
@@ -2550,6 +2690,7 @@ index 00000000..8fa4a80b
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelInitializer;
 +
++import io.netty.util.ReferenceCountUtil;
 +import lombok.RequiredArgsConstructor;
 +
 +import net.md_5.bungee.EncryptionUtil;
@@ -2599,9 +2740,14 @@ index 00000000..8fa4a80b
 +
 +        @Override
 +        protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-+            super.decode(ctx, msg, out);
-+            final ByteBuf data = (ByteBuf) out.get(0);
-+            data.writerIndex(data.writerIndex() - 8); //ignore hash
++            msg = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), msg);
++            try {
++                super.decode(ctx, msg, out);
++                final ByteBuf data = (ByteBuf) out.get(0);
++                data.writerIndex(data.writerIndex() - 8); //ignore hash
++            } finally {
++                msg.release();
++            }
 +        }
 +    }
 +
@@ -2618,8 +2764,13 @@ index 00000000..8fa4a80b
 +
 +        @Override
 +        protected void encode(ChannelHandlerContext ctx, ByteBuf in, ByteBuf out) throws Exception {
-+            appendHash(in);
-+            super.encode(ctx, in, out);
++            in = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), in);
++            try {
++                appendHash(in);
++                super.encode(ctx, in, out);
++            } finally {
++                in.release();
++            }
 +        }
 +
 +        void appendHash(ByteBuf data) {
@@ -2637,6 +2788,28 @@ index 00000000..8fa4a80b
 +            data.writeBytes(digest.digest(), 0, 8);
 +            digest.reset();
 +        }
++    }
++}
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
+new file mode 100644
+index 00000000..eac82efe
+--- /dev/null
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
+@@ -0,0 +1,16 @@
++package network.ycc.waterdog.pe;
++
++import io.netty.buffer.ByteBuf;
++import io.netty.buffer.ByteBufAllocator;
++
++public class PEEncryptionUtils {
++    //TODO: actually move the encryption stuff here
++    static public ByteBuf makeDirectOrRetain(ByteBufAllocator alloc, ByteBuf in) {
++        if (in.hasMemoryAddress()) {
++            return in.retain();
++        }
++        final ByteBuf out = alloc.directBuffer(in.readableBytes());
++        out.writeBytes(in);
++        return out;
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
