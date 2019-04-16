@@ -1,7 +1,7 @@
-From 00664643a7292e720d6870ddc1033c4a19046011 Mon Sep 17 00:00:00 2001
+From 5b7e1e41adb726b6d406dd8406287101b68d8cc2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:25:52 -0600
-Subject: [PATCH] kQueue and mac native
+Subject: [PATCH] OSX native zlip and crypto
 
 
 diff --git a/native/compile-native.sh b/native/compile-native.sh
@@ -38,7 +38,7 @@ index aa7a12b4..6a27dc67 100644
  #include <stdlib.h>
  #include <string.h>
 diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
-index 6c92c1f5..dd68d8e8 100644
+index 6c92c1f5..b8ba0135 100644
 --- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 +++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 @@ -19,6 +19,7 @@ public final class NativeCode<T>
@@ -49,34 +49,7 @@ index 6c92c1f5..dd68d8e8 100644
          this.name = name;
          this.javaImpl = javaImpl;
          this.nativeImpl = nativeImpl;
-@@ -51,20 +52,19 @@ public final class NativeCode<T>
- 
-             if ( !loaded )
-             {
--                try ( InputStream soFile = BungeeCipher.class.getClassLoader().getResourceAsStream( name + ".so" ) )
--                {
-+                try ( InputStream soFile = BungeeCipher.class.getClassLoader().getResourceAsStream( name + ".so" ) ) {
-                     // Else we will create and copy it to a temp file
--                    File temp = File.createTempFile( fullName, ".so" );
-+                    File temp = File.createTempFile(fullName, ".so");
-                     // Don't leave cruft on filesystem
-                     temp.deleteOnExit();
- 
--                    try ( OutputStream outputStream = new FileOutputStream( temp ) )
--                    {
--                        ByteStreams.copy( soFile, outputStream );
-+                    try (OutputStream outputStream = new FileOutputStream(temp)) {
-+                        ByteStreams.copy(soFile, outputStream);
-                     }
- 
--                    System.load( temp.getPath() );
-+                    System.load(temp.getPath());
-                     loaded = true;
-+                } catch ( NullPointerException e) { // Waterdog
-                 } catch ( IOException ex )
-                 {
-                     // Can't write to tmp?
-@@ -80,6 +80,6 @@ public final class NativeCode<T>
+@@ -80,6 +81,6 @@ public final class NativeCode<T>
  
      public static boolean isSupported()
      {
@@ -84,19 +57,6 @@ index 6c92c1f5..dd68d8e8 100644
 +        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) ); // Waterdog
      }
  }
-diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
-index 7b0ecb09..1e82b290 100644
---- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
-+++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
-@@ -18,7 +18,7 @@ public class NativeCipher implements BungeeCipher
-     @Override
-     public void init(boolean forEncryption, SecretKey key) throws GeneralSecurityException
-     {
--        Preconditions.checkArgument( key.getEncoded().length == 16, "Invalid key size" );
-+        Preconditions.checkArgument( key.getEncoded().length == 16 || key.getEncoded().length == 32, "Invalid key size" ); // Waterdog
-         free();
- 
-         this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/native/src/main/resources/osx-native-cipher.so b/native/src/main/resources/osx-native-cipher.so
 new file mode 100755
 index 0000000000000000000000000000000000000000..26073a3438fbf1505f2f5286c63f4e9f2271ef51
@@ -186,76 +146,6 @@ x#i3C(Vg$N(@X<&jtn1w!?R<1hHDbwV&_9WP4%r{-XtxiygMO*7kGP=_<v*Clv=IOR
 literal 0
 HcmV?d00001
 
-diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f0497f59..2ae44e8c 100644
---- a/proxy/pom.xml
-+++ b/proxy/pom.xml
-@@ -118,6 +118,16 @@
-             <scope>runtime</scope>
-         </dependency>
-         <!-- Waterfall end -->
-+
-+        <!-- Waterdog start -->
-+        <dependency>
-+            <groupId>io.netty</groupId>
-+            <artifactId>netty-transport-native-kqueue</artifactId>
-+            <version>${netty.version}</version>
-+            <classifier>osx-x86_64</classifier>
-+            <scope>compile</scope>
-+        </dependency>
-+        <!-- Waterdog end -->
-     </dependencies>
- 
-     <build>
-diff --git a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-index 042bccb5..289e7183 100644
---- a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-+++ b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-@@ -87,9 +87,18 @@ public class PipelineUtils
-     public static final String LEGACY_KICKER = "legacy-kick";
- 
-     private static boolean epoll;
-+    private static boolean kQueue;
- 
-     static
-     {
-+        // Waterdog start
-+        try {
-+            kQueue = io.netty.channel.kqueue.KQueue.isAvailable();
-+        } catch (Throwable e) {}
-+        if (kQueue) {
-+            ProxyServer.getInstance().getLogger().info( "kQueue is working, utilising it!" );
-+        } else
-+        // Waterdog end
-         if ( !PlatformDependent.isWindows() && Boolean.parseBoolean( System.getProperty( "bungee.epoll", "true" ) ) )
-         {
-             ProxyServer.getInstance().getLogger().info( "Not on Windows, attempting to use enhanced EpollEventLoop" );
-@@ -106,21 +115,25 @@ public class PipelineUtils
- 
-     public static EventLoopGroup newEventLoopGroup(int threads, ThreadFactory factory)
-     {
-+        if (kQueue) return new io.netty.channel.kqueue.KQueueEventLoopGroup(threads, factory); // Waterdog
-         return epoll ? new EpollEventLoopGroup( threads, factory ) : new NioEventLoopGroup( threads, factory );
-     }
- 
-     public static Class<? extends ServerChannel> getServerChannel()
-     {
-+        if (kQueue) return io.netty.channel.kqueue.KQueueServerSocketChannel.class; // Waterdog
-         return epoll ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
-     }
- 
-     public static Class<? extends Channel> getChannel()
-     {
-+        if (kQueue) return io.netty.channel.kqueue.KQueueSocketChannel.class; // Waterdog
-         return epoll ? EpollSocketChannel.class : NioSocketChannel.class;
-     }
- 
-     public static Class<? extends io.netty.channel.socket.DatagramChannel> getDatagramChannel() // Waterfall - change to DatagramChannel
-     {
-+        if (kQueue) return io.netty.channel.kqueue.KQueueDatagramChannel.class; // Waterdog
-         return epoll ? EpollDatagramChannel.class : NioDatagramChannel.class;
-     }
- 
 -- 
 2.17.2 (Apple Git-113)
 

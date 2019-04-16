@@ -1,4 +1,4 @@
-From de6748eb411a261a89895a0ffa8d58879042e864 Mon Sep 17 00:00:00 2001
+From 8df8f08113262753b4281efad6214574ce1aa213 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -112,6 +112,19 @@ index 7b2249f8..cc6c8e03 100644
      }
  
      @Override
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+index 7b0ecb09..1e82b290 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+@@ -18,7 +18,7 @@ public class NativeCipher implements BungeeCipher
+     @Override
+     public void init(boolean forEncryption, SecretKey key) throws GeneralSecurityException
+     {
+-        Preconditions.checkArgument( key.getEncoded().length == 16, "Invalid key size" );
++        Preconditions.checkArgument( key.getEncoded().length == 16 || key.getEncoded().length == 32, "Invalid key size" ); // Waterdog
+         free();
+ 
+         this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/pom.xml b/protocol/pom.xml
 index ee513895..335c1502 100644
 --- a/protocol/pom.xml
@@ -790,7 +803,7 @@ index d0a7529e..032391fa 100644
          buf.writeByte( difficulty );
          buf.writeByte( gameMode );
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 2ae44e8c..f11a6744 100644
+index f0497f59..2947afca 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -22,6 +22,15 @@
@@ -809,10 +822,12 @@ index 2ae44e8c..f11a6744 100644
      <dependencies>
          <dependency>
              <groupId>com.flowpowered</groupId>
-@@ -127,6 +136,26 @@
-             <classifier>osx-x86_64</classifier>
-             <scope>compile</scope>
+@@ -118,6 +127,29 @@
+             <scope>runtime</scope>
          </dependency>
+         <!-- Waterfall end -->
++
++        <!-- Waterdog start -->
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>raknet</artifactId>
@@ -833,9 +848,10 @@ index 2ae44e8c..f11a6744 100644
 +            <artifactId>simpleclient_httpserver</artifactId>
 +            <version>0.6.0</version>
 +        </dependency>
-         <!-- Waterdog end -->
++        <!-- Waterdog end -->
      </dependencies>
  
+     <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 index 620e3dd9..31f5ad8a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
@@ -1190,7 +1206,7 @@ index 765731d8..aef1f823 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..78b33487 100644
+index 51d0c6cf..88f40286 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -124,6 +124,14 @@ public class UpstreamBridge extends PacketHandler
@@ -1208,7 +1224,7 @@ index 51d0c6cf..78b33487 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,6 +143,29 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,6 +143,35 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  
@@ -1224,14 +1240,20 @@ index 51d0c6cf..78b33487 100644
 +    @Override
 +    public void handle(network.ycc.waterdog.pe.packet.PECommand command) throws Exception
 +    {
-+        // TODO: remove this hack test
-+        if (command.getMessage().equals("/testtransfer")) {
-+            java.net.InetSocketAddress vHost = con.getPendingConnection().getVirtualHost();
-+            System.out.println("test transfer back to " + vHost);
-+            con.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PETransfer(vHost.getHostString(), vHost.getPort()));
-+            return;
++        int maxLength = 256;
++        Preconditions.checkArgument( command.getMessage().length() <= maxLength, "PECommand message too long" ); // Mojang limit, check on updates
++        Preconditions.checkArgument(!StringUtil.isBlank(command.getMessage()), "PECommand message is empty");
++
++        ChatEvent chatEvent = new ChatEvent( con, con.getServer(), command.getMessage() );
++        if ( !bungee.getPluginManager().callEvent( chatEvent ).isCancelled() )
++        {
++            command.setMessage( chatEvent.getMessage() );
++            if ( !bungee.getPluginManager().dispatchCommand( con, command.getMessage().substring( 1 ) ) )
++            {
++                con.getServer().unsafe().sendPacket( command );
++            }
 +        }
-+        handle(new Chat(command.getMessage(), (byte) 0));
++        throw CancelSendSignal.INSTANCE;
 +    }
 +    // Waterdog end
 +
@@ -1254,6 +1276,22 @@ index 994670cd..d6826750 100644
          switch ( version )
          {
              case ProtocolConstants.MINECRAFT_1_8:
+diff --git a/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java b/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java
+index 4882b8ed..3cf45753 100644
+--- a/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java
++++ b/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java
+@@ -54,6 +54,11 @@ public class ChannelWrapper
+             if ( packet instanceof PacketWrapper )
+             {
+                 ( (PacketWrapper) packet ).setReleased( true );
++                // Waterdog start - let RakNet and PECompressor pool and auto flush
++                if (ch.config() instanceof network.ycc.raknet.RakNet.Config) {
++                    ch.write( ( (PacketWrapper) packet ).buf, ch.voidPromise() );
++                } else
++                // Waterdog end
+                 ch.writeAndFlush( ( (PacketWrapper) packet ).buf, ch.voidPromise() );
+             } else
+             {
 -- 
-2.21.0
+2.17.2 (Apple Git-113)
 
