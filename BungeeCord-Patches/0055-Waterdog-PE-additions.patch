@@ -1,4 +1,4 @@
-From 7b667a3583dbae634132ec076000317b0339d574 Mon Sep 17 00:00:00 2001
+From d1d67702c2f9342bd1a06ddfe0b40078ea58abb8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -172,7 +172,7 @@ index 00000000..bfd8b92b
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..531b1bd1
+index 00000000..373e7c73
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 @@ -0,0 +1,294 @@
@@ -278,7 +278,7 @@ index 00000000..531b1bd1
 +        Preconditions.checkArgument(serverAddr != null, "ServerAddress is missing");
 +        final String[] serverAddrSplit = serverAddr.split("[:]");
 +
-+        username = getString(identityData, "displayName");
++        username = getString(identityData, "displayName").replaceAll(" ", "_");
 +        uuid = UUID.fromString(getString(identityData, "identity")); //TODO: device UUID?
 +        authorized = key != null;
 +        if (authorized) {
