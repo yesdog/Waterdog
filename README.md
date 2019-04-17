@@ -1,4 +1,4 @@
-Waterfall [![Build Status](https://papermc.io/ci/job/Waterfall/badge/icon)](https://papermc.io/ci/job/Waterfall/)
+Waterdog
 =========
 
 Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfall), 
