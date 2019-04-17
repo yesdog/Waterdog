@@ -22,6 +22,10 @@ the ecosystem by allowing changes to be exposed to a wider audience more quickly
 
 Waterfall will still track upstream BungeeCord and merge changes as needed.
 
+*Why fork Waterfall?*
+
+This is a pretty crazy addition to waterfall.
+
 ## How To and Downloads (Server Admins)
 
 Download the latest jar from [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/)
