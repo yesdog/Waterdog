@@ -1,12 +1,11 @@
-Waterdog
+Waterdog [![Build Status](https://ci.codemc.org/job/yesdog/job/Waterdog/badge/icon)](https://ci.codemc.org/job/yesdog/job/Waterdog/)
 =========
 
 Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfall), 
 which is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/BungeeCord) server teleportation suite.
 
 Waterdog provides native support for the Minecraft Bedrock protocols along with the existing java protocols.
-ProtocolSupport PE support, or it can use the native RakNet Bedrock protocol for traditional 
-downstream Bedrock servers such as Nukkit, Pocketmine, MiNET, and others. 
+It is capable of using the ProtocolSupport PE encapsulation protocol over TCP, or it can use the native RakNet Bedrock protocol for traditional downstream Bedrock servers such as Nukkit, Pocketmine, MiNET, and others. 
 
 Waterfall focuses on three main areas:
 
@@ -23,9 +22,13 @@ the ecosystem by allowing changes to be exposed to a wider audience more quickly
 
 Waterfall will still track upstream BungeeCord and merge changes as needed.
 
-## How To (Server Admins)
+*Why fork Waterfall?*
 
-Download a copy of Waterdog.jar from our buildserver here: *coming soon*
+This is a pretty crazy addition to waterfall.
+
+## How To and Downloads (Server Admins)
+
+Download the latest jar from [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/)
 
 Waterfall requires **Java 8** or above.
 
