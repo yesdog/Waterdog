@@ -1,16 +1,16 @@
-From 27cf91d4d83ca302d90b6c4f1230e05763838c5f Mon Sep 17 00:00:00 2001
+From 7e89e2b8afecad0d8f237b9b9e44bc0c04083aaa Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Apr 2019 06:51:16 -0600
-Subject: [PATCH] IntrospectionEvent
+Subject: [PATCH] ServerChannelTapEvent
 
 
-diff --git a/api/src/main/java/network/ycc/waterdog/event/IntrospectionEvent.java b/api/src/main/java/network/ycc/waterdog/event/IntrospectionEvent.java
+diff --git a/api/src/main/java/network/ycc/waterdog/api/event/ServerChannelTapEvent.java b/api/src/main/java/network/ycc/waterdog/api/event/ServerChannelTapEvent.java
 new file mode 100644
-index 00000000..ef81f6c9
+index 00000000..a1475d4a
 --- /dev/null
-+++ b/api/src/main/java/network/ycc/waterdog/event/IntrospectionEvent.java
++++ b/api/src/main/java/network/ycc/waterdog/api/event/ServerChannelTapEvent.java
 @@ -0,0 +1,22 @@
-+package network.ycc.waterdog.event;
++package network.ycc.waterdog.api.event;
 +
 +import io.netty.channel.Channel;
 +
@@ -24,7 +24,7 @@ index 00000000..ef81f6c9
 +
 +@AllArgsConstructor
 +@EqualsAndHashCode(callSuper = false)
-+public class IntrospectionEvent extends Event {
++public class ServerChannelTapEvent extends Event {
 +    @Getter
 +    private ProxiedPlayer user;
 +    @Getter
@@ -33,17 +33,17 @@ index 00000000..ef81f6c9
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 126657a3..fddd287d 100644
+index 126657a3..0a737fdd 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -361,6 +361,7 @@ public final class UserConnection implements ProxiedPlayer
                          ch.pipeline().addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
                      }
                  }
-+                bungee.getPluginManager().callEvent(new network.ycc.waterdog.event.IntrospectionEvent(UserConnection.this, request.getTarget(), ch));
++                bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.ServerChannelTapEvent(UserConnection.this, request.getTarget(), ch));
                  // Waterdog end
                  PipelineUtils.BASE.initChannel( ch );
                  ch.pipeline().addAfter( PipelineUtils.FRAME_DECODER, PipelineUtils.PACKET_DECODER, new MinecraftDecoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion(), bungee.getConfig().isAllowEmptyPackets() ) ); // Waterfall
 -- 
-2.17.2 (Apple Git-113)
+2.21.0
 
