@@ -1,14 +1,14 @@
-From 47ac82ca0a4d2bdb7607ab2127f38be8bb75493a Mon Sep 17 00:00:00 2001
+From fae7ff9c38d53640963276364abbcfd7dc646b70 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
 
 
 diff --git a/api/pom.xml b/api/pom.xml
-index 0e46cbbe..e7aad5d8 100644
+index 0e46cbbe..4d5a0fc3 100644
 --- a/api/pom.xml
 +++ b/api/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,42 +4,42 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -27,7 +27,9 @@ index 0e46cbbe..e7aad5d8 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
-@@ -20,26 +20,26 @@
+-    <name>Waterfall-API</name>
++    <name>Waterdog-API</name>
+     <description>API implemented by the Elastic Portal Suite</description>
  
      <dependencies>
          <dependency>
@@ -63,10 +65,10 @@ index 0e46cbbe..e7aad5d8 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/bootstrap/pom.xml b/bootstrap/pom.xml
-index 6cacf112..cc4c5bd1 100644
+index 6cacf112..9d0e675e 100644
 --- a/bootstrap/pom.xml
 +++ b/bootstrap/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -85,6 +87,11 @@ index 6cacf112..cc4c5bd1 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Bootstrap</name>
++    <name>Waterdog-Bootstrap</name>
+     <description>Java 1.6 loader for Waterfall</description>
+ 
+     <properties>
 @@ -27,15 +27,15 @@
  
      <dependencies>
@@ -105,10 +112,10 @@ index 6cacf112..cc4c5bd1 100644
              <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
 diff --git a/chat/pom.xml b/chat/pom.xml
-index c9328ac3..3e0fbb3e 100644
+index c9328ac3..c3d721d2 100644
 --- a/chat/pom.xml
 +++ b/chat/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -127,11 +134,16 @@ index c9328ac3..3e0fbb3e 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Chat</name>
++    <name>Waterdog-Chat</name>
+     <description>Minecraft JSON chat API intended for use with Waterfall</description>
+ 
+     <dependencies>
 diff --git a/config/pom.xml b/config/pom.xml
-index 1bc01b9a..e3cd879b 100644
+index 1bc01b9a..140b3f6d 100644
 --- a/config/pom.xml
 +++ b/config/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -150,11 +162,16 @@ index 1bc01b9a..e3cd879b 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Config</name>
++    <name>Waterdog-Config</name>
+     <description>Generic java configuration API intended for use with Waterfall</description>
+ 
+     <dependencies>
 diff --git a/event/pom.xml b/event/pom.xml
-index e778b3d9..f0e0890a 100644
+index e778b3d9..017dd6f1 100644
 --- a/event/pom.xml
 +++ b/event/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,17 +4,17 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -173,11 +190,15 @@ index e778b3d9..f0e0890a 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Event</name>
++    <name>Waterdog-Event</name>
+     <description>Generic java event dispatching API intended for use with Waterfall.</description>
+ </project>
 diff --git a/log/pom.xml b/log/pom.xml
-index e24b3e40..99bb3b5b 100644
+index e24b3e40..f480e6ec 100644
 --- a/log/pom.xml
 +++ b/log/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -196,6 +217,11 @@ index e24b3e40..99bb3b5b 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Log</name>
++    <name>Waterdog-Log</name>
+     <description>Simplistic and performant java.util.Logger based logger and console API designed for use with Waterfall and Minecraft related applications.</description>
+ 
+     <dependencies>
 @@ -26,8 +26,8 @@
              <scope>compile</scope>
          </dependency>
@@ -208,10 +234,10 @@ index e24b3e40..99bb3b5b 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/log4j/pom.xml b/log4j/pom.xml
-index 33f1b659..596c406c 100644
+index 33f1b659..1ac17d68 100644
 --- a/log4j/pom.xml
 +++ b/log4j/pom.xml
-@@ -3,14 +3,14 @@
+@@ -3,18 +3,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -230,6 +256,11 @@ index 33f1b659..596c406c 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Log</name>
++    <name>Waterdog-Log</name>
+     <description>Simplistic and performant Log4j2 based logger and console API designed for use with Waterfall and Minecraft related applications.</description>
+ 
+     <properties>
 diff --git a/module/cmd-alert/pom.xml b/module/cmd-alert/pom.xml
 index db149339..7490e613 100644
 --- a/module/cmd-alert/pom.xml
@@ -346,10 +377,10 @@ index 9bdc3aba..69732072 100644
      <packaging>jar</packaging>
  
 diff --git a/module/pom.xml b/module/pom.xml
-index 6bed2ea0..eff8fcdd 100644
+index 6bed2ea0..64299364 100644
 --- a/module/pom.xml
 +++ b/module/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -368,6 +399,11 @@ index 6bed2ea0..eff8fcdd 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>pom</packaging>
  
+-    <name>Waterfall Modules</name>
++    <name>Waterdog Modules</name>
+     <description>Parent project for all Waterfall modules.</description>
+ 
+     <modules>
 @@ -34,8 +34,8 @@
  
      <dependencies>
@@ -403,10 +439,10 @@ index ca9a7c61..75d2c350 100644
      <packaging>jar</packaging>
  
 diff --git a/native/pom.xml b/native/pom.xml
-index 7073b404..a05e09ad 100644
+index 7073b404..f8a34db0 100644
 --- a/native/pom.xml
 +++ b/native/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -425,11 +461,16 @@ index 7073b404..a05e09ad 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Native</name>
++    <name>Waterdog-Native</name>
+     <description>Optional native code to speed up and enhance Waterfall functionality.</description>
+ 
+     <dependencies>
 diff --git a/pom.xml b/pom.xml
-index fd2bc4cc..e39f84b7 100644
+index fd2bc4cc..1eeb7898 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,23 +4,23 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -448,11 +489,22 @@ index fd2bc4cc..e39f84b7 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>pom</packaging>
  
+-    <name>Waterfall-Parent</name>
++    <name>Waterdog-Parent</name>
+     <description>Parent project for all Waterfall modules.</description>
+     <url>https://github.com/WaterfallMC/Waterfall</url>
+     <inceptionYear>2015</inceptionYear>
+     <organization>
+-        <name>WaterfallMC</name>
++        <name>WaterdogMC</name>
+         <url>https://github.com/WaterfallMC</url>
+     </organization>
+     <licenses>
 diff --git a/protocol/pom.xml b/protocol/pom.xml
-index ee513895..336415d0 100644
+index ee513895..cacf177b 100644
 --- a/protocol/pom.xml
 +++ b/protocol/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -471,6 +523,11 @@ index ee513895..336415d0 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Protocol</name>
++    <name>Waterdog-Protocol</name>
+     <description>Minimal implementation of the Minecraft protocol for use in Waterfall</description>
+ 
+     <!-- We really shouldn't depend on external repositories, but at least this is the Central staging one -->
 @@ -41,8 +41,8 @@
              <scope>compile</scope>
          </dependency>
@@ -483,10 +540,10 @@ index ee513895..336415d0 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f0497f59..ed595f32 100644
+index f0497f59..ac46172e 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -505,6 +562,11 @@ index f0497f59..ed595f32 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Proxy</name>
++    <name>Waterdog-Proxy</name>
+     <description>Proxy component of the Elastic Portal Suite</description>
+ 
+     <properties>
 @@ -63,32 +63,32 @@
              <scope>compile</scope>
          </dependency>
@@ -574,10 +636,10 @@ index b26035cf..1bc785eb 100644
      }
  }
 diff --git a/query/pom.xml b/query/pom.xml
-index 4ae682ee..5f455882 100644
+index 4ae682ee..f2bfeb80 100644
 --- a/query/pom.xml
 +++ b/query/pom.xml
-@@ -4,14 +4,14 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -596,6 +658,11 @@ index 4ae682ee..5f455882 100644
      <version>1.13-SNAPSHOT</version>
      <packaging>jar</packaging>
  
+-    <name>Waterfall-Query</name>
++    <name>Waterdog-Query</name>
+     <description>Minecraft query implementation based on the Waterfall API.</description>
+ 
+     <dependencies>
 @@ -26,8 +26,8 @@
              <scope>compile</scope>
          </dependency>
