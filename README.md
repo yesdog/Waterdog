@@ -1,7 +1,12 @@
-Waterfall [![Build Status](https://papermc.io/ci/job/Waterfall/badge/icon)](https://papermc.io/ci/job/Waterfall/)
+Waterdog
 =========
 
-Waterfall is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/BungeeCord) server teleportation suite.
+Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfall), 
+which is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/BungeeCord) server teleportation suite.
+
+Waterdog provides native support for the Minecraft Bedrock protocols along with the existing java protocols.
+ProtocolSupport PE support, or it can use the native RakNet Bedrock protocol for traditional 
+downstream Bedrock servers such as Nukkit, Pocketmine, MiNET, and others. 
 
 Waterfall focuses on three main areas:
 
@@ -20,7 +25,7 @@ Waterfall will still track upstream BungeeCord and merge changes as needed.
 
 ## How To (Server Admins)
 
-Download a copy of Waterfall.jar from our buildserver here: [Waterfall](https://papermc.io/ci/job/Waterfall/)
+Download a copy of Waterdog.jar from our buildserver here: *coming soon*
 
 Waterfall requires **Java 8** or above.
 
