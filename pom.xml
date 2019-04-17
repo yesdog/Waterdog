@@ -3,14 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.waterfallmc</groupId>
-    <artifactId>waterfall-super</artifactId>
+    <groupId>network.ycc.waterdog</groupId>
+    <artifactId>waterdog-super</artifactId>
     <version>dev-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Waterfall-Super</name>
-    <description>Super project for Waterfall.</description>
-    <url>https://github.com/WaterfallMC/Waterfall</url>
+    <description>Super project for Waterdog.</description>
+    <url>https://github.com/yesdog/Waterdog</url>
 
     <modules>
         <module>Waterfall-Proxy</module>
