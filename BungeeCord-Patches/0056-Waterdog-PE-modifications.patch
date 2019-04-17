@@ -1,4 +1,4 @@
-From 8df8f08113262753b4281efad6214574ce1aa213 Mon Sep 17 00:00:00 2001
+From 4d61f6383aa563b00a531053c7560b7aac21e508 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1016,10 +1016,10 @@ index 110ac496..ce6e29b3 100644
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index e649678e..0efb227e 100644
+index ade817e9..126657a3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -343,6 +343,16 @@ public final class UserConnection implements ProxiedPlayer
+@@ -335,6 +335,16 @@ public final class UserConnection implements ProxiedPlayer
              return;
          }
  
@@ -1036,7 +1036,7 @@ index e649678e..0efb227e 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -350,10 +360,26 @@ public final class UserConnection implements ProxiedPlayer
+@@ -342,10 +352,26 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1063,7 +1063,7 @@ index e649678e..0efb227e 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +413,24 @@ public final class UserConnection implements ProxiedPlayer
+@@ -379,12 +405,24 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1089,7 +1089,7 @@ index e649678e..0efb227e 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,6 +642,10 @@ public final class UserConnection implements ProxiedPlayer
+@@ -596,6 +634,10 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1100,7 +1100,7 @@ index e649678e..0efb227e 100644
      }
  
      @Override
-@@ -719,6 +761,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -711,6 +753,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
@@ -1261,7 +1261,7 @@ index 51d0c6cf..88f40286 100644
      public void handle(Chat chat) throws Exception
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index 994670cd..d6826750 100644
+index 4d8c665d..e9be4950 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -27,6 +27,11 @@ public abstract class EntityMap
@@ -1273,9 +1273,9 @@ index 994670cd..d6826750 100644
 +            return EntityMap_PE.INSTANCE;
 +        }
 +        // Waterdog end
-         switch ( version )
-         {
-             case ProtocolConstants.MINECRAFT_1_8:
+         // Waterfall start
+         if (System.getProperty("waterfall.disable_entity_metadata") != null) {
+             return EntityMap_Dummy.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java b/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java
 index 4882b8ed..3cf45753 100644
 --- a/proxy/src/main/java/net/md_5/bungee/netty/ChannelWrapper.java

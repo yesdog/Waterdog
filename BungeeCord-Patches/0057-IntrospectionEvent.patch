@@ -1,4 +1,4 @@
-From 4f3d178759b834d0880e0d856bb69e0e73ccfdc7 Mon Sep 17 00:00:00 2001
+From 193c5e40b5b893c701f465eb8fba2e4458b7a123 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Apr 2019 06:51:16 -0600
 Subject: [PATCH] IntrospectionEvent
@@ -29,10 +29,10 @@ index 00000000..6e66b01d
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 0efb227e..876b2386 100644
+index 126657a3..fddd287d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -369,6 +369,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -361,6 +361,7 @@ public final class UserConnection implements ProxiedPlayer
                          ch.pipeline().addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
                      }
                  }
