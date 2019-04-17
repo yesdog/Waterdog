@@ -1,4 +1,4 @@
-Waterdog
+Waterdog [![Build Status](https://ci.codemc.org/job/yesdog/job/Waterdog/badge/icon)](https://ci.codemc.org/job/yesdog/job/Waterdog/)
 =========
 
 Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfall), 
@@ -23,9 +23,9 @@ the ecosystem by allowing changes to be exposed to a wider audience more quickly
 
 Waterfall will still track upstream BungeeCord and merge changes as needed.
 
-## How To (Server Admins)
+## How To and Downloads (Server Admins)
 
-Download a copy of Waterdog.jar from our buildserver here: *coming soon*
+Download the latest jar from [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/)
 
 Waterfall requires **Java 8** or above.
 
