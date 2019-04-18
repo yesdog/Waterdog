@@ -1,11 +1,11 @@
-From 4d61f6383aa563b00a531053c7560b7aac21e508 Mon Sep 17 00:00:00 2001
+From e3d29b8698b6864dcc3d82c46195aa9238f81f3f Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
 
 
 diff --git a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
-index 4965b234..1c6e3de3 100644
+index 4965b234..6dafc64c 100644
 --- a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
 +++ b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
 @@ -221,7 +221,13 @@ public abstract class ProxyServer
@@ -14,10 +14,10 @@ index 4965b234..1c6e3de3 100644
       */
 -    public abstract ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted);
 +    // Waterdog start
-+    public abstract ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean useEncap);
++    public abstract ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean isRakNet, String transferGroup);
 +
 +    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted) {
-+        return constructServerInfo(name, address, motd, restricted, true);
++        return constructServerInfo(name, address, motd, restricted, false, "default");
 +    }
 +    // Waterdog end
  
@@ -126,7 +126,7 @@ index 7b0ecb09..1e82b290 100644
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/pom.xml b/protocol/pom.xml
-index ee513895..335c1502 100644
+index cacf177b..439526f7 100644
 --- a/protocol/pom.xml
 +++ b/protocol/pom.xml
 @@ -34,6 +34,18 @@
@@ -180,10 +180,10 @@ index bef7b370..70b7b7a1 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index d2d23b34..686c4036 100644
+index d2d23b34..29c3b259 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -11,6 +11,55 @@ import java.util.UUID;
+@@ -11,6 +11,73 @@ import java.util.UUID;
  @RequiredArgsConstructor
  public abstract class DefinedPacket
  {
@@ -234,6 +234,24 @@ index d2d23b34..686c4036 100644
 +
 +    public static void writeSVarInt(ByteBuf to, int varint) {
 +        writeVarInt(to, (varint << 1) ^ (varint >> 31));
++    }
++
++    public static void writeFixedSizeVarInt(ByteBuf to, int i) {
++        int writerIndex = to.writerIndex();
++        while ((i & 0xFFFFFF80) != 0x0) {
++            to.writeByte(i | 0x80);
++            i >>>= 7;
++        }
++        int paddingBytes = 5 - (to.writerIndex() - writerIndex) - 1;
++        if (paddingBytes == 0) {
++            to.writeByte(i);
++        } else {
++            to.writeByte(i | 0x80);
++            while (--paddingBytes > 0) {
++                to.writeByte(0x80);
++            }
++            to.writeByte(0);
++        }
 +    }
 +    // Waterdog end
  
@@ -803,7 +821,7 @@ index d0a7529e..032391fa 100644
          buf.writeByte( difficulty );
          buf.writeByte( gameMode );
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f0497f59..2947afca 100644
+index ac46172e..47969111 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -22,6 +22,15 @@
@@ -853,7 +871,7 @@ index f0497f59..2947afca 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 620e3dd9..31f5ad8a 100644
+index 620e3dd9..03cee58a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -331,6 +331,7 @@ public class BungeeCord extends ProxyServer
@@ -895,18 +913,18 @@ index 620e3dd9..31f5ad8a 100644
  
      @Override
 -    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted)
-+    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean isRakNet) // Waterdog
++    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted, boolean isRakNet, String transferGroup) // Waterdog
      {
 -        return new BungeeServerInfo( name, address, motd, restricted );
-+        return new BungeeServerInfo( name, address, motd, restricted, isRakNet ); // Waterdog
++        return new BungeeServerInfo( name, address, motd, restricted, isRakNet, transferGroup ); // Waterdog
      }
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-index 4c0637b9..d56f2472 100644
+index 4c0637b9..d8163ecf 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-@@ -50,6 +50,19 @@ public class BungeeServerInfo implements ServerInfo
+@@ -50,6 +50,22 @@ public class BungeeServerInfo implements ServerInfo
      @Getter
      private final Queue<DefinedPacket> packetQueue = new LinkedList<>();
  
@@ -917,10 +935,13 @@ index 4c0637b9..d56f2472 100644
 +        this.motd = motd;
 +        this.restricted = restricted;
 +        this.rakNet = true;
++        this.transferGroup = "default";
 +    }
 +
 +    @Getter
 +    private final boolean rakNet;
++    @Getter
++    private final String transferGroup;
 +    // Waterdog end
 +
      @Synchronized("players")
@@ -1016,15 +1037,29 @@ index 110ac496..ce6e29b3 100644
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index ade817e9..126657a3 100644
+index ade817e9..02a98d7c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -335,6 +335,16 @@ public final class UserConnection implements ProxiedPlayer
+@@ -151,6 +151,12 @@ public final class UserConnection implements ProxiedPlayer
+         public void sendPacket(DefinedPacket packet)
+         {
+             ch.write( packet );
++            // Waterdog start
++            if (packet instanceof net.md_5.bungee.protocol.packet.Respawn) {
++                // TODO: find a better place for this
++                network.ycc.waterdog.pe.PEDimSwitchLock.injectForcedDimChange(ch.getHandle());
++            }
++            // Waterdog end
+         }
+     };
+ 
+@@ -335,6 +341,17 @@ public final class UserConnection implements ProxiedPlayer
              return;
          }
  
 +        // Waterdog start
-+        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion()) && getServer() != null) {
++        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion()) && getServer() != null
++                && getServer().getInfo().getTransferGroup() != target.getTransferGroup()) {
 +            reconnectServer = request.getTarget();
 +            InetSocketAddress vHost = getPendingConnection().getVirtualHost();
 +            unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PETransfer(vHost.getHostString(), vHost.getPort()));
@@ -1036,7 +1071,7 @@ index ade817e9..126657a3 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -342,10 +352,26 @@ public final class UserConnection implements ProxiedPlayer
+@@ -342,10 +359,26 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1063,7 +1098,7 @@ index ade817e9..126657a3 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -379,12 +405,24 @@ public final class UserConnection implements ProxiedPlayer
+@@ -379,12 +412,24 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1089,7 +1124,7 @@ index ade817e9..126657a3 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -596,6 +634,10 @@ public final class UserConnection implements ProxiedPlayer
+@@ -596,6 +641,10 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1100,7 +1135,7 @@ index ade817e9..126657a3 100644
      }
  
      @Override
-@@ -711,6 +753,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -711,6 +760,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
@@ -1121,21 +1156,24 @@ index 37fe6ac7..fdb26501 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
-index 44011a96..805907e4 100644
+index 44011a96..e0a37fe3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
-@@ -226,8 +226,9 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -226,8 +226,12 @@ public class YamlConfig implements ConfigurationAdapter
              String addr = get( "address", "localhost:25565", val );
              String motd = ChatColor.translateAlternateColorCodes( '&', get( "motd", "&1Just another Waterfall - Forced Host", val ) );
              boolean restricted = get( "restricted", false, val );
++            // Waterdog start
 +            boolean isRakNet = get( "raknet", false, val );
++            String transferGroup = get( "transfer_group", "default", val );
++            // Waterdog end
              InetSocketAddress address = Util.getAddr( addr );
 -            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted );
-+            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted, isRakNet );
++            ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted, isRakNet, transferGroup ); // Waterdog
              ret.put( name, info );
          }
  
-@@ -272,6 +273,7 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -272,6 +276,7 @@ public class YamlConfig implements ConfigurationAdapter
              int queryPort = get( "query_port", 25577, val );
  
              boolean proxyProtocol = get( "proxy_protocol", false, val );
@@ -1143,7 +1181,7 @@ index 44011a96..805907e4 100644
              List<String> serverPriority = new ArrayList<>( get( "priorities", Collections.EMPTY_LIST, val ) );
  
              // Default server list migration
-@@ -296,7 +298,7 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -296,7 +301,7 @@ public class YamlConfig implements ConfigurationAdapter
              }
              set( "priorities", serverPriority, val );
  

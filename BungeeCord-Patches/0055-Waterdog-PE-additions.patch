@@ -1,4 +1,4 @@
-From d1d67702c2f9342bd1a06ddfe0b40078ea58abb8 Mon Sep 17 00:00:00 2001
+From 49702bbdb9a59aa85475b651c35b4f22283eb818 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -990,13 +990,15 @@ index 00000000..5d785901
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 new file mode 100644
-index 00000000..d94cb82c
+index 00000000..34f03b5d
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,137 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
++import io.netty.buffer.Unpooled;
++import io.netty.channel.Channel;
 +import io.netty.channel.ChannelDuplexHandler;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelPromise;
@@ -1081,6 +1083,51 @@ index 00000000..d94cb82c
 +            return DefinedPacket.readSVarInt(copy) == DIMENSION_CHANGE_ACK;
 +        }
 +        return false;
++    }
++
++    public static void injectForcedDimChange(Channel channel) {
++        ByteBuf publisherUpdate = Unpooled.buffer();
++        DefinedPacket.writeVarInt(publisherUpdate, 0x79); //CHUNK_PUBLISHER_UPDATE_PACKET
++        DefinedPacket.writeSVarInt(publisherUpdate, 0);
++        DefinedPacket.writeVarInt(publisherUpdate, 0);
++        DefinedPacket.writeSVarInt(publisherUpdate, 0);
++        DefinedPacket.writeVarInt(publisherUpdate, 300);
++        channel.write(publisherUpdate);
++        for (int x = -2; x <= 2; x++) {
++            for (int z = -2; z <= 2; z++) {
++                ByteBuf buffer = Unpooled.buffer();
++                DefinedPacket.writeVarInt(buffer, 0x3A); //PLAY_CHUNK_DATA
++                DefinedPacket.writeSVarInt(buffer, x);
++                DefinedPacket.writeSVarInt(buffer, z);
++                buffer.writeBytes(fakePEChunkData);
++                channel.write(buffer);
++            }
++        }
++        ByteBuf lockPacket = Unpooled.buffer();
++        DefinedPacket.writeVarInt(lockPacket, EXT_PS_AWAIT_DIM_SWITCH_ACK_ID);
++        channel.writeAndFlush(lockPacket);
++    }
++
++    private static byte[] fakePEChunkData;
++    static {
++        ByteBuf serializer = Unpooled.buffer();
++        ByteBuf chunkdata = Unpooled.buffer();
++
++        chunkdata.writeByte(1); //1 section
++        chunkdata.writeByte(8); //New subchunk version!
++        chunkdata.writeByte(1); //Zero blockstorages :O
++        chunkdata.writeByte((1 << 1) | 1);  //Runtimeflag and palette id.
++        chunkdata.writeZero(512);
++        DefinedPacket.writeSVarInt(chunkdata, 1); //Palette size
++        DefinedPacket.writeSVarInt(chunkdata, 0); //Air
++        chunkdata.writeZero(512); //heightmap.
++        chunkdata.writeZero(256); //Biomedata.
++        chunkdata.writeByte(0); //borders
++
++        DefinedPacket.writeFixedSizeVarInt(serializer, chunkdata.readableBytes());
++        serializer.writeBytes(chunkdata);
++        fakePEChunkData = new byte[serializer.readableBytes()];
++        serializer.readBytes(fakePEChunkData);
 +    }
 +
 +}
