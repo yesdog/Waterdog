@@ -1,4 +1,4 @@
-From e3d29b8698b6864dcc3d82c46195aa9238f81f3f Mon Sep 17 00:00:00 2001
+From e8a4d02e6aeaaef640b5f4d54349fa908d41f4d7 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1037,7 +1037,7 @@ index 110ac496..ce6e29b3 100644
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index ade817e9..02a98d7c 100644
+index ade817e9..ed5d48b1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -151,6 +151,12 @@ public final class UserConnection implements ProxiedPlayer
@@ -1059,7 +1059,7 @@ index ade817e9..02a98d7c 100644
  
 +        // Waterdog start
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion()) && getServer() != null
-+                && getServer().getInfo().getTransferGroup() != target.getTransferGroup()) {
++                && !getServer().getInfo().getTransferGroup().equals(target.getTransferGroup())) {
 +            reconnectServer = request.getTarget();
 +            InetSocketAddress vHost = getPendingConnection().getVirtualHost();
 +            unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PETransfer(vHost.getHostString(), vHost.getPort()));
