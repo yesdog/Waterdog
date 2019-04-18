@@ -8,7 +8,7 @@
     <version>dev-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Waterfall-Super</name>
+    <name>Waterdog-Super</name>
     <description>Super project for Waterdog.</description>
     <url>https://github.com/yesdog/Waterdog</url>
 
