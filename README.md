@@ -42,7 +42,8 @@ The servers also have a new *transfer_group* config option. This option is used 
 the server mechanic will use the Bedrock 'Server Transfer' packet, or if it will use
 the traditional dimension switch and entity rewriting mechanics of BungeeCord. 
 This can be useful if you have servers that use different resouce packs or may
-operate with a different block ID palette. 
+operate with a different block ID palette. If a user transfers from a server of one
+group to a server of a different group, it will use the Server Transfer method. 
 
 ## How To (Compiling From Source)
 
