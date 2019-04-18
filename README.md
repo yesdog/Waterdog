@@ -32,6 +32,12 @@ Download the latest jar from [CodeMC](https://ci.codemc.org/job/yesdog/job/Water
 
 Waterfall requires **Java 8** or above.
 
+To enable the Bedrock protocol, you need to create a new listener in config.yml and set the *raknet* field to true.
+Each listener can only support Bedrock or Java, but you should be able to add any combination you want. For downstream
+servers, you will need to set *raknet* to true if using a native Bedrock server. If the server is using
+ProtocolSupport for Bedrock, you can leave this field false and Bedrock connections will run over TCP using
+the ProtocolSupport [encapsulation protocol](https://github.com/ProtocolSupport/ProtocolSupport/wiki/Encapsulation-Protocol). 
+
 ## How To (Compiling From Source)
 
 To compile Waterfall, you need JDK8, git, bash, maven, and an internet connection.
