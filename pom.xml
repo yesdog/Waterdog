@@ -58,7 +58,7 @@
                 <configuration>
                     <apiToken>${SNYK_API_TOKEN}</apiToken>
                     <failOnSeverity>medium</failOnSeverity>
-                    <org></org>
+                    <org>yesdog</org>
                 </configuration>
             </plugin>
         </plugins>
