@@ -1,4 +1,4 @@
-From fae7ff9c38d53640963276364abbcfd7dc646b70 Mon Sep 17 00:00:00 2001
+From 2789087b6fb6d72792f6725dd0a1e85082c45cca Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -467,7 +467,7 @@ index 7073b404..f8a34db0 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index fd2bc4cc..1eeb7898 100644
+index fd2bc4cc..25be383b 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -4,23 +4,23 @@
@@ -500,6 +500,37 @@ index fd2bc4cc..1eeb7898 100644
          <url>https://github.com/WaterfallMC</url>
      </organization>
      <licenses>
+@@ -71,22 +71,22 @@
+     </scm>
+     <issueManagement>
+         <system>GitHub</system>
+-        <url>https://github.com/PaperMC/Waterfall/issues</url>
++        <url>https://github.com/yesdog/Waterdog/issues</url>
+     </issueManagement>
+     <ciManagement>
+         <system>jenkins</system>
+-        <url>https://papermc.io/ci/job/Waterfall/</url>
++        <url>https://ci.codemc.org/job/yesdog/job/Waterdog/</url>
+     </ciManagement>
+ 
+     <distributionManagement>
+-        <repository>
+-            <id>papermc-releases</id>
+-            <url>https://papermc.io/repo/repository/maven-releases/</url>
+-        </repository>
+         <snapshotRepository>
+-            <id>papermc-snapshots</id>
+-            <url>https://papermc.io/repo/repository/maven-snapshots/</url>
++            <id>codemc-snapshots</id>
++            <url>https://repo.codemc.org/repository/maven-snapshots</url>
+         </snapshotRepository>
++        <repository>
++            <id>codemc-releases</id>
++            <url>https://repo.codemc.org/repository/maven-releases</url>
++        </repository>
+     </distributionManagement>
+ 
+     <properties>
 diff --git a/protocol/pom.xml b/protocol/pom.xml
 index ee513895..cacf177b 100644
 --- a/protocol/pom.xml
@@ -623,6 +654,19 @@ index 4ff03488..620e3dd9 100644
      }
  
      @Override
+diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
+index 624eb5f0..173f2b68 100644
+--- a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
++++ b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
+@@ -49,7 +49,7 @@ public class BungeeCordLauncher
+             if ( buildDate.before( deadline.getTime() ) )
+             {
+                 System.err.println( "*** Hey! This build is potentially outdated :( ***" );
+-                System.err.println( "*** Please check for a new build from https://papermc.io/ci/job/Waterfall/ ***" );
++                System.err.println( "*** Please check for a new build from https://ci.codemc.org/job/yesdog/job/Waterdog/ ***" );
+                 System.err.println( "*** Should this build be outdated, you will get NO support for it. ***" );
+                 System.err.println( "*** Server will start in 10 seconds ***" );
+                 Thread.sleep( TimeUnit.SECONDS.toMillis( 10 ) );
 diff --git a/proxy/src/main/java/net/md_5/bungee/command/CommandBungee.java b/proxy/src/main/java/net/md_5/bungee/command/CommandBungee.java
 index b26035cf..1bc785eb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/command/CommandBungee.java
@@ -635,6 +679,19 @@ index b26035cf..1bc785eb 100644
 +        sender.sendMessage( ChatColor.BLUE + "This server is running Waterdog version " + ProxyServer.getInstance().getVersion() + " by md_5" );
      }
  }
+diff --git a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
+index 9b20d0df..94711ac8 100644
+--- a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
++++ b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
+@@ -18,7 +18,7 @@ public class JenkinsModuleSource implements ModuleSource
+         System.out.println( "Attempting to Jenkins download module " + module.getName() + " v" + version.getBuild() );
+         try
+         {
+-            URL website = new URL( "https://papermc.io/ci/job/Waterfall/" + version.getBuild() + "/artifact/Waterfall-Proxy/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
++            URL website = new URL( "https://ci.codemc.org/job/yesdog/job/Waterdog/" + version.getBuild() + "/artifact/Waterfall-Proxy/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
+             URLConnection con = website.openConnection();
+             // 15 second timeout at various stages
+             con.setConnectTimeout( 15000 );
 diff --git a/query/pom.xml b/query/pom.xml
 index 4ae682ee..f2bfeb80 100644
 --- a/query/pom.xml
