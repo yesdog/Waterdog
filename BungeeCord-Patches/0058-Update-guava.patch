@@ -1,0 +1,23 @@
+From e13acbed9bfc72c6408c5c3262139ab43f9f3212 Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Fri, 19 Apr 2019 07:42:33 -0600
+Subject: [PATCH] Update guava
+
+fixes https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-32236
+
+diff --git a/pom.xml b/pom.xml
+index 1eeb7898..0005b250 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -108,7 +108,7 @@
+         <dependency>
+             <groupId>com.google.guava</groupId>
+             <artifactId>guava</artifactId>
+-            <version>20.0</version>
++            <version>27.1-jre</version>
+             <scope>compile</scope>
+         </dependency>
+         <dependency>
+-- 
+2.17.2 (Apple Git-113)
+
