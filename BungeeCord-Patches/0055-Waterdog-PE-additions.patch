@@ -1,4 +1,4 @@
-From 49702bbdb9a59aa85475b651c35b4f22283eb818 Mon Sep 17 00:00:00 2001
+From db75278e4654e685011d11e69a73ca61f1d27000 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -172,79 +172,33 @@ index 00000000..bfd8b92b
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..373e7c73
+index 00000000..3ff55f86
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
-@@ -0,0 +1,294 @@
+@@ -0,0 +1,44 @@
 +package network.ycc.waterdog.pe.packet;
 +
-+import com.google.common.base.Charsets;
-+import com.google.common.base.Preconditions;
-+import com.google.common.reflect.TypeToken;
-+import com.google.gson.Gson;
-+import com.google.gson.GsonBuilder;
-+import com.google.gson.JsonElement;
-+import com.google.gson.JsonPrimitive;
-+import com.google.gson.JsonSyntaxException;
 +import com.google.gson.JsonObject;
 +
-+import com.nimbusds.jose.JWSAlgorithm;
-+import com.nimbusds.jose.JWSHeader;
-+import com.nimbusds.jose.Payload;
-+import com.nimbusds.jose.crypto.ECDSASigner;
-+import com.nimbusds.jose.jwk.Curve;
-+
 +import io.netty.buffer.ByteBuf;
-+import io.netty.buffer.ByteBufInputStream;
-+import io.netty.handler.codec.DecoderException;
-+import io.netty.handler.codec.EncoderException;
 +
 +import lombok.Data;
 +import lombok.EqualsAndHashCode;
 +import lombok.NoArgsConstructor;
 +
-+import net.md_5.bungee.protocol.ProtocolConstants;
 +import net.md_5.bungee.protocol.packet.Handshake;
 +
-+import java.io.InputStreamReader;
-+import java.math.BigInteger;
-+import java.net.URI;
-+import java.nio.charset.StandardCharsets;
-+import java.security.Key;
-+import java.security.KeyFactory;
-+import java.security.KeyPair;
-+import java.security.KeyPairGenerator;
-+import java.security.NoSuchAlgorithmException;
-+import java.security.PublicKey;
-+import java.security.spec.InvalidKeySpecException;
-+import java.security.spec.X509EncodedKeySpec;
-+import java.text.ParseException;
-+import java.util.Base64;
-+import java.util.Collections;
-+import java.util.HashMap;
-+import java.util.List;
-+import java.util.Map;
 +import java.util.UUID;
-+
-+import com.nimbusds.jose.JOSEException;
-+import com.nimbusds.jose.JWSObject;
-+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
-+
-+import org.apache.commons.lang3.tuple.ImmutablePair;
-+import org.apache.commons.lang3.tuple.Pair;
 +
 +@Data
 +@NoArgsConstructor
 +@EqualsAndHashCode(callSuper = false)
 +public class PEHandshake extends Handshake {
-+    public static final String MOJANG_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
-+
-+    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-+
 +    private String username;
 +    private UUID uuid;
 +    private boolean authorized;
 +    private JsonObject clientInfo;
++    private byte[] handshakeData;
 +
 +    public PEHandshake(int protocolVersion, String host, int port, int requestedProtocol, String username, UUID uuid, boolean authorized, JsonObject clientInfo) {
 +        super(protocolVersion, host, port, requestedProtocol);
@@ -256,219 +210,15 @@ index 00000000..373e7c73
 +
 +    @Override
 +    public void read(ByteBuf buf) {
-+        final int protocolVersion = buf.readInt() - ProtocolConstants.PE_PROTOCOL_OFFSET;
-+        final ByteBuf loginData = buf.readSlice(readVarInt(buf));
-+        final ByteBuf chainDataBytes = loginData.readSlice(loginData.readIntLE());
-+        final ByteBuf jwsDataBytes = loginData.readSlice(loginData.readIntLE());
-+        final Pair<Key, JsonObject> chainData = extractChainData(GSON.fromJson(
-+                new InputStreamReader(new ByteBufInputStream(chainDataBytes)),
-+                new TypeToken<Map<String, List<String>>>() {}.getType()
-+        ));
-+        final Key key = chainData.getLeft();
-+        final JsonObject identityData = chainData.getRight();
-+        final String jwsString = jwsDataBytes.readCharSequence(jwsDataBytes.readableBytes(), Charsets.UTF_8).toString();
-+        final JWSObject additionalData;
-+        try {
-+            additionalData = JWSObject.parse(jwsString);
-+        } catch (ParseException e) {
-+            throw new DecoderException("Failed to parse jws string: " + jwsString, e);
-+        }
-+        clientInfo = GSON.fromJson(additionalData.getPayload().toString(), JsonObject.class);
-+        final String serverAddr = clientInfo.get("ServerAddress").getAsString();
-+        Preconditions.checkArgument(serverAddr != null, "ServerAddress is missing");
-+        final String[] serverAddrSplit = serverAddr.split("[:]");
-+
-+        username = getString(identityData, "displayName").replaceAll(" ", "_");
-+        uuid = UUID.fromString(getString(identityData, "identity")); //TODO: device UUID?
-+        authorized = key != null;
-+        if (authorized) {
-+            uuid = new UUID(0, new BigInteger(getString(identityData, "XUID")).longValue());
-+        }
-+        setHost(serverAddrSplit[0]);
-+        if (serverAddrSplit.length > 1) {
-+            setPort(Integer.parseInt(serverAddrSplit[1]));
-+        }
-+        setProtocolVersion(protocolVersion);
-+        setRequestedProtocol(2);
++        handshakeData = new byte[buf.readableBytes()];
++        buf.readBytes(handshakeData);
 +    }
 +
 +    @Override
 +    public void write(ByteBuf buf) {
-+        final byte[] identityData = createIdentityData(username, uuid).getBytes(StandardCharsets.UTF_8);
-+        final byte[] clientData = createClientData(clientInfo, getHost(), getPort(), uuid).getBytes(StandardCharsets.UTF_8);
-+        buf.writeInt(getProtocolVersion() + ProtocolConstants.PE_PROTOCOL_OFFSET);
-+        writeVarInt(buf, identityData.length + clientData.length + 8);
-+        buf.writeIntLE(identityData.length);
-+        buf.writeBytes(identityData);
-+        buf.writeIntLE(clientData.length);
-+        buf.writeBytes(clientData);
++        buf.writeBytes(handshakeData);
 +    }
 +
-+    ////// READING
-+
-+    static Pair<Key, JsonObject> extractChainData(Map<String, List<String>> maindata) {
-+        final List<String> chain = maindata.get("chain");
-+        try {
-+            PublicKey key = parseKey(MOJANG_KEY);
-+            boolean foundMojangKey = false;
-+            boolean signatureValid = false;
-+            for (String element : chain) {
-+                final JWSObject jwsobject = JWSObject.parse(element);
-+                if (!foundMojangKey && jwsobject.getHeader().getX509CertURL().toString().equals(MOJANG_KEY)) {
-+                    foundMojangKey = true;
-+                    signatureValid = true;
-+                }
-+                if (foundMojangKey && !verify(jwsobject, key)) {
-+                    signatureValid = false;
-+                }
-+                final JsonObject jsonobject = GSON.fromJson(jwsobject.getPayload().toString(), JsonObject.class);
-+                key = parseKey(getString(jsonobject, "identityPublicKey"));
-+                if (jsonobject.has("extraData")) {
-+                    return new ImmutablePair<>(signatureValid ? key : null, getJsonObject(jsonobject, "extraData"));
-+                }
-+            }
-+        } catch (InvalidKeySpecException | JOSEException e) {
-+            throw new DecoderException("Unable to decode login chain", e);
-+        } catch (ParseException e) {
-+            throw new DecoderException("Unable to parse: " + maindata, e);
-+        }
-+        throw new DecoderException("Unable to find extraData");
-+    }
-+
-+    static String getString(JsonObject jsonObject, String name) {
-+        if (jsonObject.has(name)) {
-+            return getAsString(jsonObject.get(name), name);
-+        }
-+        throw new JsonSyntaxException("Missing " + name + ", expected to find a string");
-+    }
-+
-+    static String getAsString(JsonElement jsonElement, String name) {
-+        if (jsonElement.isJsonPrimitive()) {
-+            return jsonElement.getAsString();
-+        }
-+        throw new JsonSyntaxException("Expected " + name + " to be a string, was " + toString(jsonElement));
-+    }
-+
-+    static JsonObject getAsJsonObject(JsonElement jsonElement, String name) {
-+        if (jsonElement.isJsonObject()) {
-+            return jsonElement.getAsJsonObject();
-+        }
-+        throw new JsonSyntaxException("Expected " + name + " to be a JsonObject, was " + toString(jsonElement));
-+    }
-+
-+    static JsonObject getJsonObject(JsonObject jsonObject, String name) {
-+        if (jsonObject.has(name)) {
-+            return getAsJsonObject(jsonObject.get(name), name);
-+        }
-+        throw new JsonSyntaxException("Missing " + name + ", expected to find an Object");
-+    }
-+
-+    static String toString(JsonElement jsonElement) {
-+        final String abbreviateMiddle = String.valueOf(jsonElement);
-+        if (jsonElement == null) {
-+            return "null (missing)";
-+        }
-+        if (jsonElement.isJsonNull()) {
-+            return "null (json)";
-+        }
-+        if (jsonElement.isJsonArray()) {
-+            return "an array (" + abbreviateMiddle + ")";
-+        }
-+        if (jsonElement.isJsonObject()) {
-+            return "an object (" + abbreviateMiddle + ")";
-+        }
-+        if (jsonElement.isJsonPrimitive()) {
-+            final JsonPrimitive asJsonPrimitive = jsonElement.getAsJsonPrimitive();
-+            if (asJsonPrimitive.isNumber()) {
-+                return "a number (" + abbreviateMiddle + ")";
-+            }
-+            if (asJsonPrimitive.isBoolean()) {
-+                return "a boolean (" + abbreviateMiddle + ")";
-+            }
-+        }
-+        return abbreviateMiddle;
-+    }
-+
-+    static final DefaultJWSVerifierFactory jwsverifierfactory = new DefaultJWSVerifierFactory();
-+    static boolean verify(JWSObject object, PublicKey key) throws JOSEException {
-+        return object.verify(jwsverifierfactory.createJWSVerifier(object.getHeader(), key));
-+    }
-+
-+    static final KeyFactory keyfactory = getKeyFactory();
-+    static KeyFactory getKeyFactory() {
-+        try {
-+            return KeyFactory.getInstance("EC");
-+        } catch (NoSuchAlgorithmException e) {
-+            throw new RuntimeException("Unable to init key factory", e);
-+        }
-+    }
-+
-+    static public PublicKey parseKey(String key) throws InvalidKeySpecException {
-+        return keyfactory.generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(key)));
-+    }
-+
-+    ////// WRITING
-+
-+    static final KeyPair keyPair;
-+    static {
-+        try {
-+            KeyPairGenerator gen = KeyPairGenerator.getInstance("EC");
-+            gen.initialize(Curve.P_384.toECParameterSpec());
-+            keyPair = gen.generateKeyPair();
-+        } catch (Exception e) {
-+            throw new RuntimeException("Unable to generate private keypair", e);
-+        }
-+    }
-+
-+    public static KeyPair getKeyPair() {
-+        return keyPair;
-+    }
-+
-+    @SuppressWarnings("serial")
-+    static String createIdentityData(String username, UUID uuid) {
-+        final Map<String, List<String>> chainmap = new HashMap<>();
-+        final long nbf = System.currentTimeMillis() / 1000;
-+        final long exp = nbf + 24 * 3600;
-+        JsonObject dataChain = new JsonObject();
-+        JsonObject extraData = new JsonObject();
-+        extraData.addProperty("identity", uuid.toString());
-+        extraData.addProperty("displayName", username);
-+        extraData.addProperty("XUID", String.valueOf(uuid.getLeastSignificantBits()));
-+        //chain
-+        dataChain.addProperty("nbf", nbf - 1);
-+        dataChain.addProperty("exp", exp);
-+        dataChain.addProperty("iat", nbf);
-+        dataChain.addProperty("iss", "self");
-+        dataChain.addProperty("certificateAuthority", true);
-+        dataChain.add("extraData", extraData);
-+        dataChain.addProperty("randomNonce", UUID.randomUUID().getLeastSignificantBits());
-+        dataChain.addProperty("identityPublicKey", Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
-+        chainmap.put("chain", Collections.singletonList(encodeJWT(dataChain)));
-+        return GSON.toJson(chainmap, new TypeToken<Map<String, List<String>>>() {}.getType());
-+    }
-+
-+    static String encodeJWT(JsonObject payload) {
-+        try {
-+            JWSObject jwsobject = new JWSObject(
-+                    new JWSHeader.Builder(JWSAlgorithm.ES384)
-+                            .x509CertURL(new URI(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded())))
-+                            .build(),
-+                    new Payload(GSON.toJson(payload))
-+            );
-+            jwsobject.sign(new ECDSASigner(keyPair.getPrivate(), Curve.P_384));
-+            return jwsobject.serialize();
-+        } catch (Exception e) {
-+            throw new EncoderException("Unable to encode jwt", e);
-+        }
-+    }
-+
-+    static String createClientData(JsonObject baseClientInfo, String host, int port, UUID uuid) {
-+        JsonObject out = new JsonObject();
-+        baseClientInfo.entrySet().forEach(entry -> out.add(entry.getKey(), entry.getValue()));
-+        out.addProperty("ServerAddress", host + ":" + port);
-+        out.addProperty("SelfSignedId", uuid.toString());
-+        return encodeJWT(out);
-+    }
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java
 new file mode 100644
@@ -1133,7 +883,7 @@ index 00000000..34f03b5d
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..ffd644e8
+index 00000000..0b21c9f1
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 @@ -0,0 +1,110 @@
@@ -1175,10 +925,10 @@ index 00000000..ffd644e8
 +    protected void initChannel(Channel ch) throws Exception {
 +        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
 +        final JWSObject additionalData = JWSObject.parse(request.getJwtData());
-+        final PublicKey publicKey = PEHandshake.parseKey(additionalData.getHeader().getX509CertURL().toString());
++        final PublicKey publicKey = PEEncryptionUtils.parseKey(additionalData.getHeader().getX509CertURL().toString());
 +        final String saltString = additionalData.getPayload().toJSONObject().getAsString("salt");
 +        final KeyAgreement ka = KeyAgreement.getInstance("ECDH");
-+        ka.init(PEHandshake.getKeyPair().getPrivate());
++        ka.init(PEEncryptionUtils.getKeyPair().getPrivate());
 +        ka.doPhase(publicKey, true);
 +        digest.update(Base64.getDecoder().decode(saltString));
 +        digest.update(ka.generateSecret());
@@ -1249,17 +999,126 @@ index 00000000..ffd644e8
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..eac82efe
+index 00000000..dc5c581e
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,292 @@
 +package network.ycc.waterdog.pe;
++
++import com.google.common.base.Charsets;
++import com.google.common.base.Preconditions;
++import com.google.common.reflect.TypeToken;
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++import com.google.gson.JsonElement;
++import com.google.gson.JsonObject;
++import com.google.gson.JsonPrimitive;
++import com.google.gson.JsonSyntaxException;
++
++import com.nimbusds.jose.JOSEException;
++import com.nimbusds.jose.JWSAlgorithm;
++import com.nimbusds.jose.JWSHeader;
++import com.nimbusds.jose.JWSObject;
++import com.nimbusds.jose.Payload;
++import com.nimbusds.jose.crypto.ECDSASigner;
++import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
++import com.nimbusds.jose.jwk.Curve;
 +
 +import io.netty.buffer.ByteBuf;
 +import io.netty.buffer.ByteBufAllocator;
++import io.netty.buffer.ByteBufInputStream;
++import io.netty.buffer.Unpooled;
++import io.netty.handler.codec.DecoderException;
++import io.netty.handler.codec.EncoderException;
++
++import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
++
++import network.ycc.waterdog.pe.packet.PEHandshake;
++
++import org.apache.commons.lang3.tuple.ImmutablePair;
++import org.apache.commons.lang3.tuple.Pair;
++
++import java.io.InputStreamReader;
++import java.math.BigInteger;
++import java.net.URI;
++import java.nio.charset.StandardCharsets;
++import java.security.Key;
++import java.security.KeyFactory;
++import java.security.KeyPair;
++import java.security.KeyPairGenerator;
++import java.security.NoSuchAlgorithmException;
++import java.security.PublicKey;
++import java.security.spec.InvalidKeySpecException;
++import java.security.spec.X509EncodedKeySpec;
++import java.text.ParseException;
++import java.util.Base64;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.UUID;
 +
 +public class PEEncryptionUtils {
-+    //TODO: actually move the encryption stuff here
++    public static final String MOJANG_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
++
++    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
++
++    public static void parseHandshake(PEHandshake handshake) {
++        final ByteBuf buf = Unpooled.wrappedBuffer(handshake.getHandshakeData());
++        final int protocolVersion = buf.readInt() - ProtocolConstants.PE_PROTOCOL_OFFSET;
++        final ByteBuf loginData = buf.readSlice(DefinedPacket.readVarInt(buf));
++        final ByteBuf chainDataBytes = loginData.readSlice(loginData.readIntLE());
++        final ByteBuf jwsDataBytes = loginData.readSlice(loginData.readIntLE());
++        final Pair<Key, JsonObject> chainData = extractChainData(GSON.fromJson(
++                new InputStreamReader(new ByteBufInputStream(chainDataBytes)),
++                new TypeToken<Map<String, List<String>>>() {}.getType()
++        ));
++        final Key key = chainData.getLeft();
++        final JsonObject identityData = chainData.getRight();
++        final String jwsString = jwsDataBytes.readCharSequence(jwsDataBytes.readableBytes(), Charsets.UTF_8).toString();
++        final JWSObject additionalData;
++        try {
++            additionalData = JWSObject.parse(jwsString);
++        } catch (ParseException e) {
++            throw new DecoderException("Failed to parse jws string: " + jwsString, e);
++        }
++        final JsonObject clientInfo = GSON.fromJson(additionalData.getPayload().toString(), JsonObject.class);
++        final String serverAddr = clientInfo.get("ServerAddress").getAsString();
++        Preconditions.checkArgument(serverAddr != null, "ServerAddress is missing");
++        final String[] serverAddrSplit = serverAddr.split("[:]");
++
++        handshake.setClientInfo(clientInfo);
++        handshake.setUsername(getString(identityData, "displayName").replaceAll(" ", "_"));
++        handshake.setUuid(UUID.fromString(getString(identityData, "identity")));
++        handshake.setAuthorized(key != null);
++        if (handshake.isAuthorized()) {
++            handshake.setUuid(new UUID(0, new BigInteger(getString(identityData, "XUID")).longValue()));
++        }
++        handshake.setHost(serverAddrSplit[0]);
++        if (serverAddrSplit.length > 1) {
++            handshake.setPort(Integer.parseInt(serverAddrSplit[1]));
++        }
++        handshake.setProtocolVersion(protocolVersion);
++        handshake.setRequestedProtocol(2);
++    }
++
++    public static void createHandshake(PEHandshake handshake) {
++        final ByteBuf buf = Unpooled.buffer(512);
++        final byte[] identityData = createIdentityData(handshake.getUsername(),
++                handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
++        final byte[] clientData = createClientData(handshake.getClientInfo(),
++                handshake.getHost(), handshake.getPort(), handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
++        buf.writeInt(handshake.getProtocolVersion() + ProtocolConstants.PE_PROTOCOL_OFFSET);
++        DefinedPacket.writeVarInt(identityData.length + clientData.length + 8, buf);
++        buf.writeIntLE(identityData.length);
++        buf.writeBytes(identityData);
++        buf.writeIntLE(clientData.length);
++        buf.writeBytes(clientData);
++        handshake.setHandshakeData(new byte[buf.readableBytes()]);
++        buf.readBytes(handshake.getHandshakeData());
++    }
++
 +    static public ByteBuf makeDirectOrRetain(ByteBufAllocator alloc, ByteBuf in) {
 +        if (in.hasMemoryAddress()) {
 +            return in.retain();
@@ -1267,6 +1126,173 @@ index 00000000..eac82efe
 +        final ByteBuf out = alloc.directBuffer(in.readableBytes());
 +        out.writeBytes(in);
 +        return out;
++    }
++
++
++    ////// READING
++
++    static Pair<Key, JsonObject> extractChainData(Map<String, List<String>> maindata) {
++        final List<String> chain = maindata.get("chain");
++        try {
++            PublicKey key = parseKey(MOJANG_KEY);
++            boolean foundMojangKey = false;
++            boolean signatureValid = false;
++            for (String element : chain) {
++                final JWSObject jwsobject = JWSObject.parse(element);
++                if (!foundMojangKey && jwsobject.getHeader().getX509CertURL().toString().equals(MOJANG_KEY)) {
++                    foundMojangKey = true;
++                    signatureValid = true;
++                }
++                if (foundMojangKey && !verify(jwsobject, key)) {
++                    signatureValid = false;
++                }
++                final JsonObject jsonobject = GSON.fromJson(jwsobject.getPayload().toString(), JsonObject.class);
++                key = parseKey(getString(jsonobject, "identityPublicKey"));
++                if (jsonobject.has("extraData")) {
++                    return new ImmutablePair<>(signatureValid ? key : null, getJsonObject(jsonobject, "extraData"));
++                }
++            }
++        } catch (InvalidKeySpecException | JOSEException e) {
++            throw new DecoderException("Unable to decode login chain", e);
++        } catch (ParseException e) {
++            throw new DecoderException("Unable to parse: " + maindata, e);
++        }
++        throw new DecoderException("Unable to find extraData");
++    }
++
++    static String getString(JsonObject jsonObject, String name) {
++        if (jsonObject.has(name)) {
++            return getAsString(jsonObject.get(name), name);
++        }
++        throw new JsonSyntaxException("Missing " + name + ", expected to find a string");
++    }
++
++    static String getAsString(JsonElement jsonElement, String name) {
++        if (jsonElement.isJsonPrimitive()) {
++            return jsonElement.getAsString();
++        }
++        throw new JsonSyntaxException("Expected " + name + " to be a string, was " + toString(jsonElement));
++    }
++
++    static JsonObject getAsJsonObject(JsonElement jsonElement, String name) {
++        if (jsonElement.isJsonObject()) {
++            return jsonElement.getAsJsonObject();
++        }
++        throw new JsonSyntaxException("Expected " + name + " to be a JsonObject, was " + toString(jsonElement));
++    }
++
++    static JsonObject getJsonObject(JsonObject jsonObject, String name) {
++        if (jsonObject.has(name)) {
++            return getAsJsonObject(jsonObject.get(name), name);
++        }
++        throw new JsonSyntaxException("Missing " + name + ", expected to find an Object");
++    }
++
++    static String toString(JsonElement jsonElement) {
++        final String abbreviateMiddle = String.valueOf(jsonElement);
++        if (jsonElement == null) {
++            return "null (missing)";
++        }
++        if (jsonElement.isJsonNull()) {
++            return "null (json)";
++        }
++        if (jsonElement.isJsonArray()) {
++            return "an array (" + abbreviateMiddle + ")";
++        }
++        if (jsonElement.isJsonObject()) {
++            return "an object (" + abbreviateMiddle + ")";
++        }
++        if (jsonElement.isJsonPrimitive()) {
++            final JsonPrimitive asJsonPrimitive = jsonElement.getAsJsonPrimitive();
++            if (asJsonPrimitive.isNumber()) {
++                return "a number (" + abbreviateMiddle + ")";
++            }
++            if (asJsonPrimitive.isBoolean()) {
++                return "a boolean (" + abbreviateMiddle + ")";
++            }
++        }
++        return abbreviateMiddle;
++    }
++
++    static final DefaultJWSVerifierFactory jwsverifierfactory = new DefaultJWSVerifierFactory();
++    static boolean verify(JWSObject object, PublicKey key) throws JOSEException {
++        return object.verify(jwsverifierfactory.createJWSVerifier(object.getHeader(), key));
++    }
++
++    static final KeyFactory keyfactory = getKeyFactory();
++    static KeyFactory getKeyFactory() {
++        try {
++            return KeyFactory.getInstance("EC");
++        } catch (NoSuchAlgorithmException e) {
++            throw new RuntimeException("Unable to init key factory", e);
++        }
++    }
++
++    static public PublicKey parseKey(String key) throws InvalidKeySpecException {
++        return keyfactory.generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(key)));
++    }
++
++    ////// WRITING
++
++    static final KeyPair keyPair;
++    static {
++        try {
++            KeyPairGenerator gen = KeyPairGenerator.getInstance("EC");
++            gen.initialize(Curve.P_384.toECParameterSpec());
++            keyPair = gen.generateKeyPair();
++        } catch (Exception e) {
++            throw new RuntimeException("Unable to generate private keypair", e);
++        }
++    }
++
++    public static KeyPair getKeyPair() {
++        return keyPair;
++    }
++
++    @SuppressWarnings("serial")
++    static String createIdentityData(String username, UUID uuid) {
++        final Map<String, List<String>> chainmap = new HashMap<>();
++        final long nbf = System.currentTimeMillis() / 1000;
++        final long exp = nbf + 24 * 3600;
++        JsonObject dataChain = new JsonObject();
++        JsonObject extraData = new JsonObject();
++        extraData.addProperty("identity", uuid.toString());
++        extraData.addProperty("displayName", username);
++        extraData.addProperty("XUID", String.valueOf(uuid.getLeastSignificantBits()));
++        //chain
++        dataChain.addProperty("nbf", nbf - 1);
++        dataChain.addProperty("exp", exp);
++        dataChain.addProperty("iat", nbf);
++        dataChain.addProperty("iss", "self");
++        dataChain.addProperty("certificateAuthority", true);
++        dataChain.add("extraData", extraData);
++        dataChain.addProperty("randomNonce", UUID.randomUUID().getLeastSignificantBits());
++        dataChain.addProperty("identityPublicKey", Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
++        chainmap.put("chain", Collections.singletonList(encodeJWT(dataChain)));
++        return GSON.toJson(chainmap, new TypeToken<Map<String, List<String>>>() {}.getType());
++    }
++
++    static String encodeJWT(JsonObject payload) {
++        try {
++            JWSObject jwsobject = new JWSObject(
++                    new JWSHeader.Builder(JWSAlgorithm.ES384)
++                            .x509CertURL(new URI(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded())))
++                            .build(),
++                    new Payload(GSON.toJson(payload))
++            );
++            jwsobject.sign(new ECDSASigner(keyPair.getPrivate(), Curve.P_384));
++            return jwsobject.serialize();
++        } catch (Exception e) {
++            throw new EncoderException("Unable to encode jwt", e);
++        }
++    }
++
++    static String createClientData(JsonObject baseClientInfo, String host, int port, UUID uuid) {
++        JsonObject out = new JsonObject();
++        baseClientInfo.entrySet().forEach(entry -> out.add(entry.getKey(), entry.getValue()));
++        out.addProperty("ServerAddress", host + ":" + port);
++        out.addProperty("SelfSignedId", uuid.toString());
++        return encodeJWT(out);
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java

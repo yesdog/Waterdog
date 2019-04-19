@@ -1,4 +1,4 @@
-From e8a4d02e6aeaaef640b5f4d54349fa908d41f4d7 Mon Sep 17 00:00:00 2001
+From e4315a86e68329f3ba6e685e5dd83986c705f6f5 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -125,29 +125,6 @@ index 7b0ecb09..1e82b290 100644
          free();
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
-diff --git a/protocol/pom.xml b/protocol/pom.xml
-index cacf177b..439526f7 100644
---- a/protocol/pom.xml
-+++ b/protocol/pom.xml
-@@ -34,6 +34,18 @@
-     </repositories>
- 
-     <dependencies>
-+        <!-- Waterdog start -->
-+        <dependency>
-+            <groupId>com.nimbusds</groupId>
-+            <artifactId>nimbus-jose-jwt</artifactId>
-+            <version>5.2</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>org.apache.commons</groupId>
-+            <artifactId>commons-lang3</artifactId>
-+            <version>3.0</version>
-+        </dependency>
-+        <!-- Waterdog end -->
-         <dependency>
-             <groupId>net.md-5</groupId>
-             <artifactId>brigadier</artifactId>
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 index bef7b370..70b7b7a1 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
@@ -821,7 +798,7 @@ index d0a7529e..032391fa 100644
          buf.writeByte( difficulty );
          buf.writeByte( gameMode );
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index ac46172e..47969111 100644
+index ac46172e..651f77e4 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -22,6 +22,15 @@
@@ -840,12 +817,22 @@ index ac46172e..47969111 100644
      <dependencies>
          <dependency>
              <groupId>com.flowpowered</groupId>
-@@ -118,6 +127,29 @@
+@@ -118,6 +127,39 @@
              <scope>runtime</scope>
          </dependency>
          <!-- Waterfall end -->
 +
 +        <!-- Waterdog start -->
++        <dependency>
++            <groupId>com.nimbusds</groupId>
++            <artifactId>nimbus-jose-jwt</artifactId>
++            <version>5.2</version>
++        </dependency>
++        <dependency>
++            <groupId>org.apache.commons</groupId>
++            <artifactId>commons-lang3</artifactId>
++            <version>3.0</version>
++        </dependency>
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>raknet</artifactId>
@@ -948,10 +935,18 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 110ac496..ce6e29b3 100644
+index 110ac496..b8ed902b 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -98,7 +98,14 @@ public class ServerConnector extends PacketHandler
+@@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
+ import net.md_5.bungee.protocol.packet.SetCompression;
+ import net.md_5.bungee.util.BufUtil;
+ import net.md_5.bungee.util.QuietException;
++import network.ycc.waterdog.pe.packet.PEHandshake;
+ 
+ @RequiredArgsConstructor
+ public class ServerConnector extends PacketHandler
+@@ -98,7 +99,15 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -961,13 +956,14 @@ index 110ac496..ce6e29b3 100644
 +            network.ycc.waterdog.pe.packet.PEHandshake oPEHandshake = (network.ycc.waterdog.pe.packet.PEHandshake) originalHandshake;
 +            copiedHandshake = new network.ycc.waterdog.pe.packet.PEHandshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2,
 +                    oPEHandshake.getUsername(), oPEHandshake.getUuid(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
++            network.ycc.waterdog.pe.PEEncryptionUtils.createHandshake((PEHandshake) copiedHandshake);
 +        }
 +        // Waterdog end
 +        if ( BungeeCord.getInstance().config.isIpForward() && !target.isRakNet()) // Waterdog
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -142,6 +149,7 @@ public class ServerConnector extends PacketHandler
+@@ -142,6 +151,7 @@ public class ServerConnector extends PacketHandler
          channel.write( copiedHandshake );
  
          channel.setProtocol( Protocol.LOGIN );
@@ -975,7 +971,7 @@ index 110ac496..ce6e29b3 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -156,6 +164,7 @@ public class ServerConnector extends PacketHandler
+@@ -156,6 +166,7 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -983,7 +979,7 @@ index 110ac496..ce6e29b3 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -186,6 +195,7 @@ public class ServerConnector extends PacketHandler
+@@ -186,6 +197,7 @@ public class ServerConnector extends PacketHandler
              user.getForgeClientHandler().resetHandshake();
          }
  
@@ -991,7 +987,7 @@ index 110ac496..ce6e29b3 100644
          throw CancelSendSignal.INSTANCE;
      }
  
-@@ -195,6 +205,28 @@ public class ServerConnector extends PacketHandler
+@@ -195,6 +207,28 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1020,7 +1016,7 @@ index 110ac496..ce6e29b3 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -245,6 +277,15 @@ public class ServerConnector extends PacketHandler
+@@ -245,6 +279,15 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.isReducedDebugInfo() );
  
@@ -1191,10 +1187,22 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 765731d8..aef1f823 100644
+index 765731d8..694bafc6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -333,6 +333,20 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -278,6 +278,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+     public void handle(Handshake handshake) throws Exception
+     {
+         Preconditions.checkState( thisState == State.HANDSHAKE, "Not expecting HANDSHAKE" );
++        // Waterdog start - parse handshake
++        if (handshake instanceof network.ycc.waterdog.pe.packet.PEHandshake) {
++            network.ycc.waterdog.pe.PEEncryptionUtils.parseHandshake((network.ycc.waterdog.pe.packet.PEHandshake) handshake);
++        }
++        // Waterdog end
+         this.handshake = handshake;
+         ch.setVersion( handshake.getProtocolVersion() );
+ 
+@@ -333,6 +338,20 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                      }
                      return;
                  }
@@ -1215,7 +1223,7 @@ index 765731d8..aef1f823 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -387,7 +401,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -387,7 +406,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
@@ -1224,7 +1232,7 @@ index 765731d8..aef1f823 100644
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
                  } else
-@@ -590,10 +604,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -590,10 +609,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  
@@ -1330,6 +1338,19 @@ index 4882b8ed..3cf45753 100644
                  ch.writeAndFlush( ( (PacketWrapper) packet ).buf, ch.voidPromise() );
              } else
              {
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
+index dc5c581e..8255d61c 100644
+--- a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
+@@ -105,7 +105,7 @@ public class PEEncryptionUtils {
+         final byte[] clientData = createClientData(handshake.getClientInfo(),
+                 handshake.getHost(), handshake.getPort(), handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
+         buf.writeInt(handshake.getProtocolVersion() + ProtocolConstants.PE_PROTOCOL_OFFSET);
+-        DefinedPacket.writeVarInt(identityData.length + clientData.length + 8, buf);
++        DefinedPacket.writeVarInt(buf, identityData.length + clientData.length + 8);
+         buf.writeIntLE(identityData.length);
+         buf.writeBytes(identityData);
+         buf.writeIntLE(clientData.length);
 -- 
 2.17.2 (Apple Git-113)
 
