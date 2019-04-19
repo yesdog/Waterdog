@@ -29,8 +29,8 @@ Waterfall will still track upstream BungeeCord and merge changes as needed.
 This is a pretty crazy addition to waterfall.
 
 ## How To and Downloads (Server Admins)
-
-Download the latest jar from [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/)
+Build history can be found at [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/).
+Latest jar can be downloaded directly from [here](https://ci.codemc.org/job/yesdog/job/Waterdog/lastSuccessfulBuild/artifact/Waterfall-Proxy/bootstrap/target/Waterdog.jar).
 
 Waterfall requires **Java 8** or above.
 
