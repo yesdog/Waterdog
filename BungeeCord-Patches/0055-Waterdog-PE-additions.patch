@@ -1,4 +1,4 @@
-From 5447769fb6b13f1854f8ccc186551875f157e289 Mon Sep 17 00:00:00 2001
+From c04ae3ee0571a2645780d8d73de7eef5d8336699 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -943,10 +943,10 @@ index 00000000..0b21c9f1
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..8255d61c
+index 00000000..e954144f
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,292 @@
+@@ -0,0 +1,290 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
@@ -1006,7 +1006,27 @@ index 00000000..8255d61c
 +public class PEEncryptionUtils {
 +    public static final String MOJANG_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
 +
-+    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
++    static final Gson GSON;
++    static final DefaultJWSVerifierFactory jwsverifierfactory;
++    static final KeyPair keyPair;
++    static final KeyFactory keyfactory;
++
++    static {
++        GSON = new GsonBuilder().setPrettyPrinting().create();
++        jwsverifierfactory = new DefaultJWSVerifierFactory();
++        try {
++            KeyPairGenerator gen = KeyPairGenerator.getInstance("EC");
++            gen.initialize(Curve.P_384.toECParameterSpec());
++            keyPair = gen.generateKeyPair();
++        } catch (Exception e) {
++            throw new RuntimeException("Unable to generate private keypair", e);
++        }
++        try {
++            keyfactory = KeyFactory.getInstance("EC");
++        } catch (NoSuchAlgorithmException e) {
++            throw new RuntimeException("Unable to init key factory", e);
++        }
++    }
 +
 +    public static void parseHandshake(PEHandshake handshake) {
 +        final ByteBuf buf = Unpooled.wrappedBuffer(handshake.getHandshakeData());
@@ -1054,7 +1074,7 @@ index 00000000..8255d61c
 +        final byte[] clientData = createClientData(handshake.getClientInfo(),
 +                handshake.getHost(), handshake.getPort(), handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
 +        buf.writeInt(handshake.getProtocolVersion() + ProtocolConstants.PE_PROTOCOL_OFFSET);
-+        DefinedPacket.writeVarInt(buf, identityData.length + clientData.length + 8);
++        DefinedPacket.writeVarInt(identityData.length + clientData.length + 8, buf);
 +        buf.writeIntLE(identityData.length);
 +        buf.writeBytes(identityData);
 +        buf.writeIntLE(clientData.length);
@@ -1071,7 +1091,6 @@ index 00000000..8255d61c
 +        out.writeBytes(in);
 +        return out;
 +    }
-+
 +
 +    ////// READING
 +
@@ -1158,18 +1177,8 @@ index 00000000..8255d61c
 +        return abbreviateMiddle;
 +    }
 +
-+    static final DefaultJWSVerifierFactory jwsverifierfactory = new DefaultJWSVerifierFactory();
 +    static boolean verify(JWSObject object, PublicKey key) throws JOSEException {
 +        return object.verify(jwsverifierfactory.createJWSVerifier(object.getHeader(), key));
-+    }
-+
-+    static final KeyFactory keyfactory = getKeyFactory();
-+    static KeyFactory getKeyFactory() {
-+        try {
-+            return KeyFactory.getInstance("EC");
-+        } catch (NoSuchAlgorithmException e) {
-+            throw new RuntimeException("Unable to init key factory", e);
-+        }
 +    }
 +
 +    static public PublicKey parseKey(String key) throws InvalidKeySpecException {
@@ -1177,17 +1186,6 @@ index 00000000..8255d61c
 +    }
 +
 +    ////// WRITING
-+
-+    static final KeyPair keyPair;
-+    static {
-+        try {
-+            KeyPairGenerator gen = KeyPairGenerator.getInstance("EC");
-+            gen.initialize(Curve.P_384.toECParameterSpec());
-+            keyPair = gen.generateKeyPair();
-+        } catch (Exception e) {
-+            throw new RuntimeException("Unable to generate private keypair", e);
-+        }
-+    }
 +
 +    public static KeyPair getKeyPair() {
 +        return keyPair;

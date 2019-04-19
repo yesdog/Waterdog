@@ -1,4 +1,4 @@
-From 974b60de8a3a12b847c3d14b072b10fe2953f5b0 Mon Sep 17 00:00:00 2001
+From 1643e30cdaee8e5331598eeb2c64d3b147ed90bc Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -157,10 +157,10 @@ index bef7b370..70b7b7a1 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index d2d23b34..29c3b259 100644
+index d2d23b34..9f84aff0 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -11,6 +11,73 @@ import java.util.UUID;
+@@ -11,6 +11,70 @@ import java.util.UUID;
  @RequiredArgsConstructor
  public abstract class DefinedPacket
  {
@@ -202,11 +202,8 @@ index d2d23b34..29c3b259 100644
 +    }
 +
 +    public static void writeVarInt(ByteBuf to, int i) {
-+        while ((i & 0xFFFFFF80) != 0x0) {
-+            to.writeByte(i | 0x80);
-+            i >>>= 7;
-+        }
-+        to.writeByte(i);
++        //TODO: ffs.... fix this later
++        writeVarInt(i, to);
 +    }
 +
 +    public static void writeSVarInt(ByteBuf to, int varint) {
@@ -935,7 +932,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 110ac496..51c8d1f3 100644
+index 110ac496..80c89984 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -946,7 +943,7 @@ index 110ac496..51c8d1f3 100644
  
  @RequiredArgsConstructor
  public class ServerConnector extends PacketHandler
-@@ -98,7 +99,15 @@ public class ServerConnector extends PacketHandler
+@@ -98,7 +99,14 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -956,14 +953,22 @@ index 110ac496..51c8d1f3 100644
 +            network.ycc.waterdog.pe.packet.PEHandshake oPEHandshake = (network.ycc.waterdog.pe.packet.PEHandshake) originalHandshake;
 +            copiedHandshake = new network.ycc.waterdog.pe.packet.PEHandshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2,
 +                    oPEHandshake.getUsername(), oPEHandshake.getUuid(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
-+            network.ycc.waterdog.pe.PEEncryptionUtils.createHandshake((PEHandshake) copiedHandshake);
 +        }
 +        // Waterdog end
 +        if ( BungeeCord.getInstance().config.isIpForward() && !target.isRakNet()) // Waterdog
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -142,6 +151,7 @@ public class ServerConnector extends PacketHandler
+@@ -139,9 +147,16 @@ public class ServerConnector extends PacketHandler
+             copiedHandshake.setHost( copiedHandshake.getHost() + user.getExtraDataInHandshake() );
+         }
+ 
++        // Waterdog start - PE handshake
++        if (originalHandshake instanceof network.ycc.waterdog.pe.packet.PEHandshake) {
++            network.ycc.waterdog.pe.PEEncryptionUtils.createHandshake((PEHandshake) copiedHandshake);
++        }
++        // Waterdog end
++
          channel.write( copiedHandshake );
  
          channel.setProtocol( Protocol.LOGIN );
@@ -971,7 +976,7 @@ index 110ac496..51c8d1f3 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -156,6 +166,7 @@ public class ServerConnector extends PacketHandler
+@@ -156,6 +171,7 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -979,7 +984,7 @@ index 110ac496..51c8d1f3 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -186,6 +197,7 @@ public class ServerConnector extends PacketHandler
+@@ -186,6 +202,7 @@ public class ServerConnector extends PacketHandler
              user.getForgeClientHandler().resetHandshake();
          }
  
@@ -987,7 +992,7 @@ index 110ac496..51c8d1f3 100644
          throw CancelSendSignal.INSTANCE;
      }
  
-@@ -195,6 +207,28 @@ public class ServerConnector extends PacketHandler
+@@ -195,6 +212,28 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1016,7 +1021,7 @@ index 110ac496..51c8d1f3 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -245,6 +279,15 @@ public class ServerConnector extends PacketHandler
+@@ -245,6 +284,15 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.isReducedDebugInfo() );
  
@@ -1032,7 +1037,7 @@ index 110ac496..51c8d1f3 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -310,6 +353,12 @@ public class ServerConnector extends PacketHandler
+@@ -310,6 +358,12 @@ public class ServerConnector extends PacketHandler
              user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getDifficulty(), login.getGameMode(), login.getLevelType() ) );
              user.setDimension( login.getDimension() );
  
