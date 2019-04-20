@@ -1,4 +1,4 @@
-From 9ab08138aa096a22878db5b5892eee92fde1fcc7 Mon Sep 17 00:00:00 2001
+From b35e108a2f7d36755e293757b9076d5dea54ef15 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1051,15 +1051,16 @@ index 110ac496..80c89984 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index ade817e9..1de194b1 100644
+index ade817e9..a8de227d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -151,6 +151,12 @@ public final class UserConnection implements ProxiedPlayer
+@@ -151,6 +151,13 @@ public final class UserConnection implements ProxiedPlayer
          public void sendPacket(DefinedPacket packet)
          {
              ch.write( packet );
 +            // Waterdog start
-+            if (packet instanceof net.md_5.bungee.protocol.packet.Respawn) {
++            if (packet instanceof net.md_5.bungee.protocol.packet.Respawn &&
++                    net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())) {
 +                // TODO: find a better place for this
 +                network.ycc.waterdog.pe.PERawPacketData.injectForcedDimChange(ch.getHandle());
 +            }
@@ -1067,7 +1068,7 @@ index ade817e9..1de194b1 100644
          }
      };
  
-@@ -335,6 +341,17 @@ public final class UserConnection implements ProxiedPlayer
+@@ -335,6 +342,17 @@ public final class UserConnection implements ProxiedPlayer
              return;
          }
  
@@ -1085,7 +1086,7 @@ index ade817e9..1de194b1 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -342,10 +359,26 @@ public final class UserConnection implements ProxiedPlayer
+@@ -342,10 +360,26 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1112,7 +1113,7 @@ index ade817e9..1de194b1 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -379,12 +412,24 @@ public final class UserConnection implements ProxiedPlayer
+@@ -379,12 +413,24 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1138,7 +1139,7 @@ index ade817e9..1de194b1 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -596,6 +641,10 @@ public final class UserConnection implements ProxiedPlayer
+@@ -596,6 +642,10 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1149,7 +1150,7 @@ index ade817e9..1de194b1 100644
      }
  
      @Override
-@@ -711,6 +760,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -711,6 +761,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
