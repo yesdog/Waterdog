@@ -1,4 +1,4 @@
-From 706642a082e3561303edd4f8ba4d924d336476e6 Mon Sep 17 00:00:00 2001
+From 068a82ff2d301c9304e3d7b38743b81889f47a77 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -467,10 +467,10 @@ index 7073b404..f8a34db0 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index fd2bc4cc..535a0e22 100644
+index fd2bc4cc..757c1fea 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -4,23 +4,29 @@
+@@ -4,23 +4,23 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -484,12 +484,6 @@ index fd2bc4cc..535a0e22 100644
  
 -    <groupId>io.github.waterfallmc</groupId>
 -    <artifactId>waterfall-parent</artifactId>
-+    <!-- Waterfall Start -->
-+    <properties>
-+        <maven.deploy.skip>true</maven.deploy.skip>
-+    </properties>
-+    <!-- Waterfall End -->
-+
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-parent</artifactId>
      <version>1.13-SNAPSHOT</version>
@@ -506,7 +500,7 @@ index fd2bc4cc..535a0e22 100644
          <url>https://github.com/WaterfallMC</url>
      </organization>
      <licenses>
-@@ -71,22 +77,22 @@
+@@ -71,25 +71,26 @@
      </scm>
      <issueManagement>
          <system>GitHub</system>
@@ -537,6 +531,10 @@ index fd2bc4cc..535a0e22 100644
      </distributionManagement>
  
      <properties>
++        <maven.deploy.skip>true</maven.deploy.skip> <!-- Waterdog -->
+         <build.number>unknown</build.number>
+         <netty.version>4.1.34.Final</netty.version>
+         <!-- Require Java 8 -->
 diff --git a/protocol/pom.xml b/protocol/pom.xml
 index ee513895..cacf177b 100644
 --- a/protocol/pom.xml
