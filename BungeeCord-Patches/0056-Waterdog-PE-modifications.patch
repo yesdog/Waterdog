@@ -1,4 +1,4 @@
-From 36c0a23fc91583bc367369691a50a7f5ce1b0bf8 Mon Sep 17 00:00:00 2001
+From d818f64872f0ae225d6e7175657b37ba1b3004a1 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1205,10 +1205,18 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 765731d8..694bafc6 100644
+index 765731d8..43f03d8d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -278,6 +278,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -135,6 +135,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+     {
+         if ( packet.packet == null )
+         {
++            if (ProtocolConstants.isPE(getVersion())) return; // Waterdog - weird nukkit packets, TODO: need better filtering
+             throw new QuietException( "Unexpected packet received during login process! " + BufUtil.dump( packet.buf, 16 ) );
+         }
+     }
+@@ -278,6 +279,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
      public void handle(Handshake handshake) throws Exception
      {
          Preconditions.checkState( thisState == State.HANDSHAKE, "Not expecting HANDSHAKE" );
@@ -1220,7 +1228,7 @@ index 765731d8..694bafc6 100644
          this.handshake = handshake;
          ch.setVersion( handshake.getProtocolVersion() );
  
-@@ -333,6 +338,20 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -333,6 +339,20 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                      }
                      return;
                  }
@@ -1241,7 +1249,7 @@ index 765731d8..694bafc6 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -387,7 +406,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -387,7 +407,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
@@ -1250,7 +1258,7 @@ index 765731d8..694bafc6 100644
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
                  } else
-@@ -590,10 +609,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -590,10 +610,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  
