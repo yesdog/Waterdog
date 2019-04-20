@@ -1,4 +1,4 @@
-From 1643e30cdaee8e5331598eeb2c64d3b147ed90bc Mon Sep 17 00:00:00 2001
+From 5f1e6a6a1d3aa078bd689adc97842257864e3654 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -751,7 +751,7 @@ index 0e06b49d..08077b5b 100644
      }
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
-index d0a7529e..032391fa 100644
+index d0a7529e..6b09464e 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
 @@ -21,8 +21,18 @@ public class Respawn extends DefinedPacket
@@ -785,7 +785,7 @@ index d0a7529e..032391fa 100644
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(protocolVersion)) {
 +            writeSVarInt(buf, network.ycc.waterdog.pe.PEDataValues.getPeDimensionId(dimension));
 +            buf.writeFloatLE(0); //x
-+            buf.writeFloatLE(0); //y
++            buf.writeFloatLE(300); //y
 +            buf.writeFloatLE(0); //z
 +            buf.writeBoolean(true); //respawn
 +            return;
