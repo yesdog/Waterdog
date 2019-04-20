@@ -1,4 +1,4 @@
-From d818f64872f0ae225d6e7175657b37ba1b3004a1 Mon Sep 17 00:00:00 2001
+From 9ab08138aa096a22878db5b5892eee92fde1fcc7 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1205,14 +1205,14 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 765731d8..43f03d8d 100644
+index 765731d8..d1cc37ee 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -135,6 +135,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
      {
          if ( packet.packet == null )
          {
-+            if (ProtocolConstants.isPE(getVersion())) return; // Waterdog - weird nukkit packets, TODO: need better filtering
++            if (true) return; // Waterdog - login garbage TODO: need better filtering
              throw new QuietException( "Unexpected packet received during login process! " + BufUtil.dump( packet.buf, 16 ) );
          }
      }
