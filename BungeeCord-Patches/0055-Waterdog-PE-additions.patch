@@ -1,4 +1,4 @@
-From c04ae3ee0571a2645780d8d73de7eef5d8336699 Mon Sep 17 00:00:00 2001
+From 3e3357aec5ad1b408f0eb5e6338f220150c8fde0 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1239,10 +1239,10 @@ index 00000000..e954144f
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..9941de24
+index 00000000..c91c709c
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,76 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.channel.Channel;
@@ -1261,6 +1261,7 @@ index 00000000..9941de24
 +
 +import net.md_5.bungee.protocol.MinecraftDecoder;
 +import net.md_5.bungee.protocol.ProtocolConstants;
++import net.md_5.bungee.query.QueryHandler;
 +import network.ycc.raknet.server.RakNetServer;
 +
 +import java.util.logging.Level;
@@ -1313,10 +1314,8 @@ index 00000000..9941de24
 +                });
 +            });
 +            channel.pipeline()
-+                    .addLast(new PEProxyServerInfoHandler(bungee, listener));
-+                                /*
-+                                .addLast(new PEQueryHandler(bungee, listenerInfo))
-+                                .addLast(new PluginLoggerInitializer());*/
++                    .addLast(new PEProxyServerInfoHandler(bungee, listener))
++                    .addLast(new QueryHandler(bungee, listener));
 +        }
 +    }
 +}

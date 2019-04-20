@@ -1,4 +1,4 @@
-From 5f1e6a6a1d3aa078bd689adc97842257864e3654 Mon Sep 17 00:00:00 2001
+From 36c0a23fc91583bc367369691a50a7f5ce1b0bf8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1356,6 +1356,60 @@ index 4882b8ed..3cf45753 100644
                  ch.writeAndFlush( ( (PacketWrapper) packet ).buf, ch.voidPromise() );
              } else
              {
+diff --git a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
+index ac99d02c..96dc06c9 100644
+--- a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
++++ b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
+@@ -100,12 +100,16 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket>
+             }
+ 
+             // Waterfall start
++            // Waterdog start - rewrite event
+             List<String> players = bungee.getPlayers().stream().map(ProxiedPlayer::getName).collect(Collectors.toList());
+ 
+-            ProxyQueryEvent event = new ProxyQueryEvent(listener, new QueryResult(listener.getMotd(), "SMP", "Waterfall_Proxy",
++            ProxyQueryEvent event = new ProxyQueryEvent(listener, new QueryResult(listener.getMotd(),
++                    "SMP", "Waterdog_Proxy",
+                     bungee.getOnlineCount(), listener.getMaxPlayers(), listener.getHost().getPort(),
+-                    listener.getHost().getHostString(), "MINECRAFT",  players, bungee.getGameVersion()));
++                    listener.getHost().getHostString(), listener.isRakNet() ? "MINECRAFTPE" : "MINECRAFT",
++                    players, bungee.getGameVersion()));
+             QueryResult result = bungee.getPluginManager().callEvent(event).getResult();
++            // Waterdog end
+             // Waterfall end
+ 
+             out.writeByte( 0x00 );
+@@ -169,9 +173,30 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket>
+         ctx.writeAndFlush( response );
+     }
+ 
++    // Waterdog start
++    @Override
++    public boolean acceptInboundMessage(Object msg) throws Exception {
++        if (!listener.isRakNet()) {
++            return super.acceptInboundMessage(msg);
++        }
++        if (listener.isRakNet() && !listener.isQueryEnabled()) {
++            return false;
++        }
++        //PE UDP channel gets some garbage sometimes, so lets filter it out here
++        if (super.acceptInboundMessage(msg)) {
++            final ByteBuf data = ((DatagramPacket) msg).content();
++            return data.readableBytes() >= 2
++                    && data.getUnsignedByte(data.readerIndex()) == 0xFE
++                    && data.getUnsignedByte(data.readerIndex() + 1) == 0xFD;
++        }
++        return false;
++    }
++    // Waterdog end
++
+     @Override
+     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
+     {
++        if (!listener.isRakNet()) // Waterdog
+         bungee.getLogger().log( Level.WARNING, "Error whilst handling query packet from " + ctx.channel().remoteAddress(), cause );
+     }
+ 
 -- 
 2.17.2 (Apple Git-113)
 
