@@ -1,4 +1,4 @@
-From b35e108a2f7d36755e293757b9076d5dea54ef15 Mon Sep 17 00:00:00 2001
+From 41a77f22e6de5a14f44952c436224c3159c6826a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -855,7 +855,7 @@ index ac46172e..651f77e4 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 620e3dd9..03cee58a 100644
+index 620e3dd9..38068eeb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -331,6 +331,7 @@ public class BungeeCord extends ProxyServer
@@ -892,6 +892,15 @@ index 620e3dd9..03cee58a 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
+@@ -636,7 +653,7 @@ public class BungeeCord extends ProxyServer
+ 
+     public PluginMessage registerChannels(int protocolVersion)
+     {
+-        if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 )
++        if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) )
+         {
+             return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
+         }
 @@ -657,9 +674,9 @@ public class BungeeCord extends ProxyServer
      }
  
