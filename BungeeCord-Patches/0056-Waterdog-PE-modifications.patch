@@ -1,4 +1,4 @@
-From 41a77f22e6de5a14f44952c436224c3159c6826a Mon Sep 17 00:00:00 2001
+From b51cc363035e5e05cb2029b3cfe65faf5ad935cd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -729,7 +729,7 @@ index 09c718b5..7392f2fe 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
-index 0e06b49d..08077b5b 100644
+index 0e06b49d..87ba3c04 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 @@ -82,7 +82,7 @@ public class PluginMessage extends DefinedPacket
@@ -741,12 +741,13 @@ index 0e06b49d..08077b5b 100644
          int maxSize = direction == ProtocolConstants.Direction.TO_SERVER ? Short.MAX_VALUE : 0x100000;
          Preconditions.checkArgument( buf.readableBytes() < maxSize );
          data = new byte[ buf.readableBytes() ];
-@@ -92,7 +92,7 @@ public class PluginMessage extends DefinedPacket
+@@ -92,7 +92,8 @@ public class PluginMessage extends DefinedPacket
      @Override
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 -        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( tag ) : tag, buf );
 +        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) ) ? MODERNISE.apply( tag ) : tag, buf ); // Waterdog
++        if (ProtocolConstants.isPE(protocolVersion)) writeVarInt(buf, data.length); // Waterdog - pmmp wants varint lengths
          buf.writeBytes( data );
      }
  
