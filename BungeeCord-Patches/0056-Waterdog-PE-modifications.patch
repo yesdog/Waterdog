@@ -1,4 +1,4 @@
-From b51cc363035e5e05cb2029b3cfe65faf5ad935cd Mon Sep 17 00:00:00 2001
+From 78289aefcf20ba7de847668bd33e442543fca33d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -942,7 +942,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 110ac496..80c89984 100644
+index 110ac496..69998c1a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -1047,13 +1047,14 @@ index 110ac496..80c89984 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -310,6 +358,12 @@ public class ServerConnector extends PacketHandler
+@@ -310,6 +358,13 @@ public class ServerConnector extends PacketHandler
              user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getDifficulty(), login.getGameMode(), login.getLevelType() ) );
              user.setDimension( login.getDimension() );
  
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
 +                network.ycc.waterdog.pe.PERawPacketData.injectGameMode(user.getCh().getHandle(), login.getGameMode());
++                server.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PELocalPlayerInitialized());
 +            }
 +            // Waterdog end
 +
