@@ -1,4 +1,4 @@
-From 82f9c1d728650cb7b47aa1e241fea52086e30542 Mon Sep 17 00:00:00 2001
+From 4850d5a4b67ba38c962c7bce8804b3da4651ae67 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1296,10 +1296,22 @@ index 3a9dab68..5393455b 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..88f40286 100644
+index 51d0c6cf..24cb79d3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-@@ -124,6 +124,14 @@ public class UpstreamBridge extends PacketHandler
+@@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
+         if ( con.getServer() != null )
+         {
+             Channel server = con.getServer().getCh().getHandle();
++            // Waterdog start
++            if (network.ycc.waterdog.pe.PEDimSwitchLock.isChannelLocked(channel.getHandle())) {
++                server.config().setAutoRead(false);
++            } else
++            // Waterdog end
+             if ( channel.getHandle().isWritable() )
+             {
+                 server.config().setAutoRead( true );
+@@ -124,6 +129,14 @@ public class UpstreamBridge extends PacketHandler
      @Override
      public void handle(KeepAlive alive) throws Exception
      {
@@ -1314,7 +1326,7 @@ index 51d0c6cf..88f40286 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,6 +143,35 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,6 +148,35 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  

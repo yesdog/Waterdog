@@ -1,4 +1,4 @@
-From 9a3f0f2027ee1d06e9a948b8894540ab75421981 Mon Sep 17 00:00:00 2001
+From ec4b731556f6db9eddd7ad6eb94600d5828e490a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -740,13 +740,14 @@ index 00000000..5d785901
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 new file mode 100644
-index 00000000..5fa7b653
+index 00000000..02baea14
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,75 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
++import io.netty.channel.Channel;
 +import io.netty.channel.ChannelDuplexHandler;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelPromise;
@@ -768,6 +769,11 @@ index 00000000..5fa7b653
 +    protected final Queue<ByteBuf> queue = new ArrayDeque<>(32);
 +    protected boolean isLocked = false;
 +
++    public static boolean isChannelLocked(Channel channel) {
++        final PEDimSwitchLock thiz = (PEDimSwitchLock) channel.pipeline().get(NAME);
++        return thiz != null ? thiz.isLocked : false;
++    }
++
 +    @Override
 +    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 +        super.channelUnregistered(ctx);
@@ -776,16 +782,11 @@ index 00000000..5fa7b653
 +    }
 +
 +    @Override
-+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-+        //TODO: implement some stable backpressure support here
-+        super.channelWritabilityChanged(ctx);
-+    }
-+
-+    @Override
 +    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 +        if (msg instanceof ByteBuf) {
 +            if(isLocked && PERawPacketData.isDimSwitchAck((ByteBuf) msg)) {
 +                isLocked = false;
++                ctx.fireChannelWritabilityChanged(); //alert UpstreamBridge
 +                while (!queue.isEmpty() && !isLocked) {
 +                    write(ctx, queue.remove(), ctx.voidPromise());
 +                }
@@ -810,6 +811,7 @@ index 00000000..5fa7b653
 +            } else if (PERawPacketData.peekPacketId((ByteBuf) msg)
 +                    == PERawPacketData.EXT_PS_AWAIT_DIM_SWITCH_ACK_ID) {
 +                isLocked = true;
++                ctx.fireChannelWritabilityChanged(); //alert UpstreamBridge
 +                return;
 +            }
 +        }
