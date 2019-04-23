@@ -1,4 +1,4 @@
-From ab4cd2791caaf67ba0de5d7d327a8fc2f8d9d361 Mon Sep 17 00:00:00 2001
+From 9a3f0f2027ee1d06e9a948b8894540ab75421981 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -740,10 +740,10 @@ index 00000000..5d785901
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 new file mode 100644
-index 00000000..0d89a68d
+index 00000000..5fa7b653
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,73 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -767,7 +767,6 @@ index 00000000..0d89a68d
 +
 +    protected final Queue<ByteBuf> queue = new ArrayDeque<>(32);
 +    protected boolean isLocked = false;
-+    protected boolean isNormallyWritable = false;
 +
 +    @Override
 +    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
@@ -778,10 +777,7 @@ index 00000000..0d89a68d
 +
 +    @Override
 +    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-+        isNormallyWritable = ctx.channel().isWritable();
-+        if (isLocked) {
-+            ctx.channel().attr(RakNet.WRITABLE).set(Boolean.FALSE);
-+        }
++        //TODO: implement some stable backpressure support here
 +        super.channelWritabilityChanged(ctx);
 +    }
 +
@@ -790,8 +786,6 @@ index 00000000..0d89a68d
 +        if (msg instanceof ByteBuf) {
 +            if(isLocked && PERawPacketData.isDimSwitchAck((ByteBuf) msg)) {
 +                isLocked = false;
-+                ctx.channel().attr(RakNet.WRITABLE).set(isNormallyWritable);
-+                ctx.fireChannelWritabilityChanged();
 +                while (!queue.isEmpty() && !isLocked) {
 +                    write(ctx, queue.remove(), ctx.voidPromise());
 +                }
@@ -816,8 +810,6 @@ index 00000000..0d89a68d
 +            } else if (PERawPacketData.peekPacketId((ByteBuf) msg)
 +                    == PERawPacketData.EXT_PS_AWAIT_DIM_SWITCH_ACK_ID) {
 +                isLocked = true;
-+                ctx.channel().attr(RakNet.WRITABLE).set(Boolean.FALSE);
-+                ctx.fireChannelWritabilityChanged();
 +                return;
 +            }
 +        }
