@@ -1,4 +1,4 @@
-From 09844bb543ea318a2db0fb75b71b381cbcf5c92a Mon Sep 17 00:00:00 2001
+From e9155dbea0b3234eac25d58d88bc7d50e1b0a002 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -260,7 +260,7 @@ index 00000000..711f1bb5
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..56ba3e42
+index 00000000..54286a84
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 @@ -0,0 +1,60 @@
@@ -282,8 +282,8 @@ index 00000000..56ba3e42
 +public class PELogin extends Login {
 +    private byte[] tailPayload;
 +
-+    public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, boolean reducedDebugInfo, byte[] tailPayload) {
-+        super(entityId, gameMode, dimension, difficulty, maxPlayers, levelType, reducedDebugInfo);
++    public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, int viewDistance, boolean reducedDebugInfo, byte[] tailPayload) {
++        super(entityId, gameMode, dimension, difficulty, maxPlayers, levelType, viewDistance, reducedDebugInfo);
 +        this.tailPayload = tailPayload;
 +    }
 +
