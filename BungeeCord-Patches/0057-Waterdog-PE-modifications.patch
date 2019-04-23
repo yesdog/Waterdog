@@ -1,4 +1,4 @@
-From 15da50d7fab6b5c5fa28bc1682987946ef601c8a Mon Sep 17 00:00:00 2001
+From 82f9c1d728650cb7b47aa1e241fea52086e30542 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -469,7 +469,7 @@ index 3a319cff..77330fd9 100644
                      {
                          // Mapping is non current, but the next one may be ok
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index fb583238..fc20bc40 100644
+index a0c0b5ca..90d8f992 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -6,6 +6,14 @@ import java.util.List;
@@ -489,7 +489,7 @@ index fb583238..fc20bc40 100644
      public static final int MINECRAFT_1_9_1 = 108;
 @@ -22,6 +30,13 @@ public class ProtocolConstants
      public static final int MINECRAFT_1_13_2 = 404;
-     public static final int MINECRAFT_1_14 = 476;
+     public static final int MINECRAFT_1_14 = 477;
      public static final List<String> SUPPORTED_VERSIONS = Arrays.asList(
 +            // Waterdog start
 +            "PE-1.8.x",
