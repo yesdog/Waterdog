@@ -1,4 +1,4 @@
-From 0abb6531b4c6b5dfa68eae9ef3db1c9a8992b6c5 Mon Sep 17 00:00:00 2001
+From 15da50d7fab6b5c5fa28bc1682987946ef601c8a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -469,10 +469,10 @@ index 3a319cff..77330fd9 100644
                      {
                          // Mapping is non current, but the next one may be ok
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index fb583238..607a61f2 100644
+index fb583238..fc20bc40 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-@@ -6,6 +6,13 @@ import java.util.List;
+@@ -6,6 +6,14 @@ import java.util.List;
  public class ProtocolConstants
  {
  
@@ -482,11 +482,12 @@ index fb583238..607a61f2 100644
 +    public static final int MINECRAFT_PE_1_9 = 332 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_10 = 340 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_12 = 360 - PE_PROTOCOL_OFFSET;
 +    // Waterdog end
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -22,6 +29,12 @@ public class ProtocolConstants
+@@ -22,6 +30,13 @@ public class ProtocolConstants
      public static final int MINECRAFT_1_13_2 = 404;
      public static final int MINECRAFT_1_14 = 476;
      public static final List<String> SUPPORTED_VERSIONS = Arrays.asList(
@@ -495,11 +496,12 @@ index fb583238..607a61f2 100644
 +            "PE-1.9.x",
 +            "PE-1.10.x",
 +            "PE-1.11.x",
++            "PE-1.12.x",
 +            // Waterdog end
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -31,6 +44,12 @@ public class ProtocolConstants
+@@ -31,6 +46,13 @@ public class ProtocolConstants
              "1.14.x"
      );
      public static final List<Integer> SUPPORTED_VERSION_IDS = Arrays.asList(
@@ -508,11 +510,12 @@ index fb583238..607a61f2 100644
 +            ProtocolConstants.MINECRAFT_PE_1_9,
 +            ProtocolConstants.MINECRAFT_PE_1_10,
 +            ProtocolConstants.MINECRAFT_PE_1_11,
++            ProtocolConstants.MINECRAFT_PE_1_12,
 +            // Waterdog end
              ProtocolConstants.MINECRAFT_1_8,
              ProtocolConstants.MINECRAFT_1_9,
              ProtocolConstants.MINECRAFT_1_9_1,
-@@ -50,14 +69,22 @@ public class ProtocolConstants
+@@ -50,14 +72,22 @@ public class ProtocolConstants
  
      public static final boolean isBeforeOrEq(int before, int other)
      {
@@ -1065,7 +1068,7 @@ index 94545251..a9473359 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..2b9ac70f 100644
+index 15f7c5b5..044ed4c1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -152,6 +152,13 @@ public final class UserConnection implements ProxiedPlayer
@@ -1076,7 +1079,7 @@ index 15f7c5b5..2b9ac70f 100644
 +            if (packet instanceof net.md_5.bungee.protocol.packet.Respawn &&
 +                    net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())) {
 +                // TODO: find a better place for this
-+                network.ycc.waterdog.pe.PERawPacketData.injectForcedDimChange(ch.getHandle());
++                network.ycc.waterdog.pe.PERawPacketData.injectForcedDimChange(ch.getHandle(), getPendingConnection().getVersion());
 +            }
 +            // Waterdog end
          }

@@ -1,4 +1,4 @@
-From e9155dbea0b3234eac25d58d88bc7d50e1b0a002 Mon Sep 17 00:00:00 2001
+From 90f1c470244e6068ce25857c6368ae2685c47a68 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1353,7 +1353,7 @@ index 00000000..4e573ed9
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 new file mode 100644
-index 00000000..f0053ce1
+index 00000000..249ec69b
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 @@ -0,0 +1,143 @@
@@ -1448,7 +1448,7 @@ index 00000000..f0053ce1
 +        }
 +
 +        public int getVersion() {
-+            return ProtocolConstants.MINECRAFT_PE_1_11;
++            return ProtocolConstants.MINECRAFT_PE_1_12;
 +        }
 +
 +        public InetSocketAddress getVirtualHost() {
@@ -1613,17 +1613,19 @@ index 00000000..b2658d4c
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..e73fb057
+index 00000000..7c616168
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,101 @@
 +package network.ycc.waterdog.pe;
 +
++import com.google.common.base.Preconditions;
 +import io.netty.buffer.ByteBuf;
 +import io.netty.buffer.Unpooled;
 +import io.netty.channel.Channel;
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
 +
 +public class PERawPacketData {
 +    protected static final int PLAYER_ACTION_ID = 36;
@@ -1651,7 +1653,7 @@ index 00000000..e73fb057
 +        return false;
 +    }
 +
-+    public static void injectForcedDimChange(Channel channel) {
++    public static void injectForcedDimChange(Channel channel, int version) {
 +        ByteBuf publisherUpdate = Unpooled.buffer();
 +        DefinedPacket.writeVarInt(publisherUpdate, 0x79); //CHUNK_PUBLISHER_UPDATE_PACKET
 +        DefinedPacket.writeSVarInt(publisherUpdate, 0);
@@ -1665,7 +1667,11 @@ index 00000000..e73fb057
 +                DefinedPacket.writeVarInt(buffer, 0x3A); //PLAY_CHUNK_DATA
 +                DefinedPacket.writeSVarInt(buffer, x);
 +                DefinedPacket.writeSVarInt(buffer, z);
-+                buffer.writeBytes(fakePEChunkData);
++                if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++                    buffer.writeBytes(fakePEChunkData112);
++                } else {
++                    buffer.writeBytes(fakePEChunkData);
++                }
 +                channel.write(buffer);
 +            }
 +        }
@@ -1682,6 +1688,7 @@ index 00000000..e73fb057
 +    }
 +
 +    private static byte[] fakePEChunkData;
++    private static byte[] fakePEChunkData112;
 +    static {
 +        ByteBuf serializer = Unpooled.buffer();
 +        ByteBuf chunkdata = Unpooled.buffer();
@@ -1697,10 +1704,18 @@ index 00000000..e73fb057
 +        chunkdata.writeZero(256); //Biomedata.
 +        chunkdata.writeByte(0); //borders
 +
++        chunkdata.markReaderIndex();
 +        DefinedPacket.writeFixedSizeVarInt(serializer, chunkdata.readableBytes());
 +        serializer.writeBytes(chunkdata);
 +        fakePEChunkData = new byte[serializer.readableBytes()];
 +        serializer.readBytes(fakePEChunkData);
++
++        chunkdata.resetReaderIndex();
++        fakePEChunkData112 = new byte[chunkdata.readableBytes()];
++        chunkdata.readBytes(fakePEChunkData112);
++
++        Preconditions.checkArgument(fakePEChunkData.length > 0);
++        Preconditions.checkArgument(fakePEChunkData112.length > 0);
 +    }
 +}
 diff --git a/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
