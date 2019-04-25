@@ -1,0 +1,78 @@
+From 5dc0dc55a5921d8426c2363307f21d8a9bd7cfb0 Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Thu, 25 Apr 2019 17:51:18 -0600
+Subject: [PATCH] UserChannelTapEvent
+
+
+diff --git a/api/src/main/java/network/ycc/waterdog/api/event/UserChannelTapEvent.java b/api/src/main/java/network/ycc/waterdog/api/event/UserChannelTapEvent.java
+new file mode 100644
+index 00000000..231fc70d
+--- /dev/null
++++ b/api/src/main/java/network/ycc/waterdog/api/event/UserChannelTapEvent.java
+@@ -0,0 +1,16 @@
++package network.ycc.waterdog.api.event;
++
++import io.netty.channel.Channel;
++
++import lombok.AllArgsConstructor;
++import lombok.EqualsAndHashCode;
++import lombok.Getter;
++
++import net.md_5.bungee.api.plugin.Event;
++
++@AllArgsConstructor
++@EqualsAndHashCode(callSuper = false)
++public class UserChannelTapEvent extends Event {
++    @Getter
++    private Channel channel;
++}
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
+index 708b8fb5..32b88dd8 100644
+--- a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
+@@ -1,17 +1,18 @@
+ package network.ycc.waterdog.pe;
+ 
+ import io.netty.channel.Channel;
+-import io.netty.channel.ChannelHandler;
+ import io.netty.channel.ChannelHandlerContext;
+ import io.netty.channel.ChannelInboundHandlerAdapter;
+ import io.netty.channel.ChannelInitializer;
+-
+ import io.netty.channel.ChannelPipeline;
+ import io.netty.channel.socket.DatagramPacket;
+ import io.netty.handler.timeout.ReadTimeoutHandler;
+ import io.netty.util.ReferenceCountUtil;
++
+ import lombok.RequiredArgsConstructor;
++
+ import net.md_5.bungee.BungeeCord;
++import net.md_5.bungee.UserConnection;
+ import net.md_5.bungee.api.ProxyServer;
+ import net.md_5.bungee.api.config.ListenerInfo;
+ import net.md_5.bungee.netty.PipelineUtils;
+@@ -19,7 +20,8 @@ import net.md_5.bungee.netty.PipelineUtils;
+ import net.md_5.bungee.protocol.MinecraftDecoder;
+ import net.md_5.bungee.protocol.ProtocolConstants;
+ import net.md_5.bungee.query.QueryHandler;
+-import network.ycc.raknet.server.RakNetServer;
++
++import network.ycc.waterdog.api.event.UserChannelTapEvent;
+ 
+ import java.util.concurrent.TimeUnit;
+ import java.util.logging.Level;
+@@ -30,7 +32,10 @@ public class PEPipelineUtils {
+             ChannelPipeline pipeline = channel.pipeline();
+             pipeline
+             .addLast(PECompressor.NAME, new PECompressor())
+-            .addLast(PEDecompressor.NAME, new PEDecompressor())
++            .addLast(PEDecompressor.NAME, new PEDecompressor());
++            BungeeCord.getInstance().getPluginManager().callEvent(
++                    new UserChannelTapEvent(pipeline.channel()));
++            pipeline
+             .addLast(PEDimSwitchLock.NAME, new PEDimSwitchLock())
+             .addLast(new ChannelInboundHandlerAdapter() {
+                 @Override
+-- 
+2.17.2 (Apple Git-113)
+
