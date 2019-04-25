@@ -1,4 +1,4 @@
-From bb6866503f20ef0b4f2a1627e51fe9ada4359640 Mon Sep 17 00:00:00 2001
+From 8ba469ca1f2f8b12620797a9c9efda468f007976 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -222,24 +222,26 @@ index 00000000..3ff55f86
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java
 new file mode 100644
-index 00000000..711f1bb5
+index 00000000..b5abc3d5
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,34 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import io.netty.buffer.ByteBuf;
 +
 +import lombok.AllArgsConstructor;
 +import lombok.Data;
++import lombok.EqualsAndHashCode;
 +import lombok.NoArgsConstructor;
 +
 +import net.md_5.bungee.protocol.AbstractPacketHandler;
 +import net.md_5.bungee.protocol.DefinedPacket;
 +
 +@Data
-+@AllArgsConstructor
 +@NoArgsConstructor
++@AllArgsConstructor
++@EqualsAndHashCode(callSuper = false)
 +public class PELocalPlayerInitialized extends DefinedPacket {
 +    private long playerId;
 +
@@ -322,6 +324,46 @@ index 00000000..54286a84
 +        writeSVarInt(buf, 0); //world gamemode
 +        writeSVarInt(buf, getDifficulty()); //world difficulty
 +        buf.writeBytes(tailPayload);
++    }
++}
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PERemoveObjectivePacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PERemoveObjectivePacket.java
+new file mode 100644
+index 00000000..7fe81e63
+--- /dev/null
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PERemoveObjectivePacket.java
+@@ -0,0 +1,34 @@
++package network.ycc.waterdog.pe.packet;
++
++import io.netty.buffer.ByteBuf;
++
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.EqualsAndHashCode;
++import lombok.NoArgsConstructor;
++
++import net.md_5.bungee.protocol.AbstractPacketHandler;
++import net.md_5.bungee.protocol.DefinedPacket;
++
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++@EqualsAndHashCode(callSuper = false)
++public class PERemoveObjectivePacket extends DefinedPacket {
++    private String objectiveName;
++
++    @Override
++    public void write(ByteBuf buf) {
++        writeString(objectiveName, buf);
++    }
++
++    @Override
++    public void read(ByteBuf buf) {
++        objectiveName = readString(buf);
++    }
++
++    @Override
++    public void handle(AbstractPacketHandler handler) throws Exception {
++        handler.handle(this);
 +    }
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourcePack.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourcePack.java
@@ -444,6 +486,58 @@ index 00000000..42d63c02
 +        writeVarInt(buf, 0); //res packs count
 +        writeVarInt(buf, 0); //?
 +        writeVarInt(buf, 0); //?
++    }
++
++    @Override
++    public void handle(AbstractPacketHandler handler) throws Exception {
++        handler.handle(this);
++    }
++}
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PESetDisplayObjectivePacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PESetDisplayObjectivePacket.java
+new file mode 100644
+index 00000000..c6eb87eb
+--- /dev/null
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PESetDisplayObjectivePacket.java
+@@ -0,0 +1,46 @@
++package network.ycc.waterdog.pe.packet;
++
++import io.netty.buffer.ByteBuf;
++
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.EqualsAndHashCode;
++import lombok.NoArgsConstructor;
++
++import net.md_5.bungee.protocol.AbstractPacketHandler;
++import net.md_5.bungee.protocol.DefinedPacket;
++
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++@EqualsAndHashCode(callSuper = false)
++public class PESetDisplayObjectivePacket extends DefinedPacket {
++    private String displaySlot;
++    private String objectiveName;
++    private String displayName;
++    private String criteriaName;
++    private int sortOrder;
++
++    @Override
++    public void write(ByteBuf buf) {
++        writeString(displaySlot, buf);
++        writeString(objectiveName, buf);
++        writeString(displayName, buf);
++        writeString(criteriaName, buf);
++        buf.writeByte(sortOrder);
++    }
++
++    @Override
++    public void read(ByteBuf buf) {
++        displaySlot = readString(buf);
++        objectiveName = readString(buf);
++        displayName = readString(buf);
++        criteriaName = readString(buf);
++        sortOrder = buf.readUnsignedByte();
 +    }
 +
 +    @Override

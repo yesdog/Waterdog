@@ -1,4 +1,4 @@
-From 0530a46e546038c234bec825ffeae5e9957dc396 Mon Sep 17 00:00:00 2001
+From ae9eb9344338bd237915abecafc23e6604a304a0 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -126,10 +126,10 @@ index 7797a46b..5449cf9b 100644
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-index 581503b8..7e1d2c38 100644
+index 581503b8..a416d358 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-@@ -180,4 +180,26 @@ public abstract class AbstractPacketHandler
+@@ -180,4 +180,34 @@ public abstract class AbstractPacketHandler
      {
      }
      // Waterfall end
@@ -152,6 +152,14 @@ index 581503b8..7e1d2c38 100644
 +    }
 +
 +    public void handle(network.ycc.waterdog.pe.packet.PEResourcePackResponse resourcePackResponse) throws Exception
++    {
++    }
++
++    public void handle(network.ycc.waterdog.pe.packet.PESetDisplayObjectivePacket setDisplayObjectivePacket) throws Exception
++    {
++    }
++
++    public void handle(network.ycc.waterdog.pe.packet.PERemoveObjectivePacket removeObjectivePacket) throws Exception
 +    {
 +    }
 +    // Waterdog end
@@ -281,7 +289,7 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 3a319cff..77330fd9 100644
+index 3a319cff..33aee5c9 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 @@ -50,6 +50,16 @@ public enum Protocol
@@ -301,7 +309,7 @@ index 3a319cff..77330fd9 100644
              TO_SERVER.registerPacket(
                      Handshake.class,
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
-@@ -61,8 +71,39 @@ public enum Protocol
+@@ -61,8 +71,47 @@ public enum Protocol
      {
  
          {
@@ -322,6 +330,14 @@ index 3a319cff..77330fd9 100644
 +                    network.ycc.waterdog.pe.packet.PETransfer.class,
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x55 )
 +            );
++            TO_CLIENT.registerPacket(
++                    network.ycc.waterdog.pe.packet.PESetDisplayObjectivePacket.class,
++                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x6b )
++            );
++            TO_CLIENT.registerPacket(
++                    network.ycc.waterdog.pe.packet.PERemoveObjectivePacket.class,
++                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x6a )
++            );
 +            TO_SERVER.registerPacket(
 +                    network.ycc.waterdog.pe.packet.PECommand.class,
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x4D )
@@ -341,7 +357,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x21 ),
-@@ -76,12 +117,14 @@ public enum Protocol
+@@ -76,12 +125,14 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Chat.class,
@@ -356,7 +372,15 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x07 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x33 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x34 ),
-@@ -166,6 +209,7 @@ public enum Protocol
+@@ -91,6 +142,7 @@ public enum Protocol
+             );
+             TO_CLIENT.registerPacket(
+                     BossBar.class,
++                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x4A ), // Waterdog
+                     map( ProtocolConstants.MINECRAFT_1_9, 0x0C )
+             );
+             // Waterfall start
+@@ -166,6 +218,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      PluginMessage.class,
@@ -364,7 +388,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x3F ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x18 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x19 ),
-@@ -173,6 +217,7 @@ public enum Protocol
+@@ -173,6 +226,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Kick.class,
@@ -372,7 +396,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x40 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1A ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x1B ),
-@@ -210,6 +255,7 @@ public enum Protocol
+@@ -210,6 +264,7 @@ public enum Protocol
  
              TO_SERVER.registerPacket(
                      KeepAlive.class,
@@ -380,7 +404,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0B ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0C ),
-@@ -219,6 +265,7 @@ public enum Protocol
+@@ -219,6 +274,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      Chat.class,
@@ -388,7 +412,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x03 ),
-@@ -236,6 +283,7 @@ public enum Protocol
+@@ -236,6 +292,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      ClientSettings.class,
@@ -396,7 +420,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x15 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x04 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x05 ),
-@@ -244,6 +292,7 @@ public enum Protocol
+@@ -244,6 +301,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      PluginMessage.class,
@@ -404,7 +428,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x17 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x09 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0A ),
-@@ -282,8 +331,19 @@ public enum Protocol
+@@ -282,8 +340,19 @@ public enum Protocol
      {
  
          {
@@ -424,7 +448,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
              );
              TO_CLIENT.registerPacket(
-@@ -292,6 +352,7 @@ public enum Protocol
+@@ -292,6 +361,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      LoginSuccess.class,
@@ -432,7 +456,7 @@ index 3a319cff..77330fd9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 )
              );
              TO_CLIENT.registerPacket(
-@@ -414,6 +475,13 @@ public enum Protocol
+@@ -414,6 +484,13 @@ public enum Protocol
              return supportsForge || i >= 0 && i <= MAX_PACKET_ID;
          }
  
@@ -446,7 +470,7 @@ index 3a319cff..77330fd9 100644
          public final DefinedPacket createPacket(int id, int version)
          {
              return createPacket(id, version, true);
-@@ -428,6 +496,7 @@ public enum Protocol
+@@ -428,6 +505,7 @@ public enum Protocol
              }
              if ( !hasPacket(id, supportsForge) )
              {
@@ -454,7 +478,7 @@ index 3a319cff..77330fd9 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -457,6 +526,13 @@ public enum Protocol
+@@ -457,6 +535,13 @@ public enum Protocol
                          continue;
                      }
  
@@ -537,6 +561,129 @@ index a0c0b5ca..90d8f992 100644
 +
      public enum Direction
      {
+ 
+diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
+index a26fba6e..22ad455c 100644
+--- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
++++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
+@@ -32,6 +32,58 @@ public class BossBar extends DefinedPacket
+     @Override
+     public void read(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
+     {
++        // Waterdog start
++        if (ProtocolConstants.isPE(protocolVersion)) {
++            uuid = new UUID(0, readSVarLong(buf));
++            final int peAction = readVarInt(buf);
++            switch (peAction) {
++                // Add
++                case 0:
++                    title = readString(buf);
++                    health = buf.readFloatLE();
++                    buf.readShortLE(); // darken screen
++                    color = readVarInt(buf);
++                    division = readVarInt(buf);
++                    action = 0;
++                    break;
++                // Remove
++                case 2:
++                    action = 1;
++                    break;
++                // Player add
++                case 1:
++                // Player remove
++                case 3:
++                    readVarInt(buf); // player id
++                    action = peAction == 1 ? 6 : 7;
++                    break;
++                // Health
++                case 4:
++                    health = buf.readFloatLE();
++                    action = 2;
++                    break;
++                // Title
++                case 5:
++                    title = readString(buf);
++                    action = 3;
++                    break;
++                // Flags
++                case 6:
++                    buf.readShortLE(); // darken screen
++                    color = readVarInt(buf);
++                    division = readVarInt(buf);
++                    action = 5;
++                    break;
++                // Style
++                case 7:
++                    color = readVarInt(buf);
++                    division = readVarInt(buf);
++                    action = 4;
++                    break;
++            }
++            return;
++        }
++        // Waterdog end
+         uuid = readUUID( buf );
+         action = readVarInt( buf );
+ 
+@@ -68,6 +120,59 @@ public class BossBar extends DefinedPacket
+     @Override
+     public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
+     {
++        // Waterdog start
++        if (ProtocolConstants.isPE(protocolVersion)) {
++            writeSVarLong(buf, uuid.getLeastSignificantBits());
++            switch (action) {
++                // Add
++                case 0:
++                    writeVarInt(0, buf);
++                    writeString(title, buf);
++                    buf.writeFloatLE(health);
++                    buf.writeShortLE(12); // darken
++                    writeVarInt(color, buf);
++                    writeVarInt(division, buf);
++                    break;
++                // Remove
++                case 1:
++                    writeVarInt(2, buf);
++                    break;
++                // Health
++                case 2:
++                    writeVarInt(4, buf);
++                    buf.writeFloatLE(health);
++                    break;
++                // Title
++                case 3:
++                    writeVarInt(5, buf);
++                    writeString(title, buf);
++                    break;
++                // Style
++                case 4:
++                    writeVarInt(7, buf);
++                    writeVarInt(color, buf);
++                    writeVarInt(division, buf);
++                    break;
++                // Flags
++                case 5:
++                    writeVarInt(6, buf);
++                    buf.writeShortLE(12); // darken
++                    writeVarInt(color, buf);
++                    writeVarInt(division, buf);
++                    break;
++                // Player add
++                case 6:
++                // Player remove
++                case 7:
++                    writeVarInt(action == 6 ? 1 : 3, buf);
++                    writeVarInt(0, buf); // player id
++                    break;
++                default:
++                    writeVarInt(action, buf);
++            }
++            return;
++        }
++        // Waterdog end
+         writeUUID( uuid, buf );
+         writeVarInt( action, buf );
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Chat.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Chat.java
 index 0ded6739..4485e26f 100644
@@ -940,7 +1087,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 94545251..a9473359 100644
+index 94545251..c28474d6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -1053,7 +1200,21 @@ index 94545251..a9473359 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -310,6 +366,13 @@ public class ServerConnector extends PacketHandler
+@@ -259,6 +315,13 @@ public class ServerConnector extends PacketHandler
+             user.getTabListHandler().onServerChange();
+ 
+             Scoreboard serverScoreboard = user.getServerSentScoreboard();
++            // Waterdog start
++            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
++                for ( Objective objective : serverScoreboard.getObjectives() ) {
++                    user.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PERemoveObjectivePacket(objective.getName()));
++                }
++            } else
++            // Waterdog end
+             if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
+             for ( Objective objective : serverScoreboard.getObjectives() )
+             {
+@@ -310,6 +373,13 @@ public class ServerConnector extends PacketHandler
              user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getDifficulty(), login.getGameMode(), login.getLevelType() ) );
              user.setDimension( login.getDimension() );
  
@@ -1222,6 +1383,31 @@ index 44011a96..e0a37fe3 100644
              ret.add( info );
          }
  
+diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
+index 1f8a2439..029320dc 100644
+--- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
++++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
+@@ -154,6 +154,20 @@ public class DownstreamBridge extends PacketHandler
+         throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
+     }
+ 
++    // Waterdog start
++    public void handle(network.ycc.waterdog.pe.packet.PESetDisplayObjectivePacket setDisplayObjectivePacket) throws Exception
++    {
++        con.getServerSentScoreboard().addObjective(new Objective(
++                setDisplayObjectivePacket.getObjectiveName(), setDisplayObjectivePacket.getDisplayName(),
++                setDisplayObjectivePacket.getDisplaySlot()));
++    }
++
++    public void handle(network.ycc.waterdog.pe.packet.PERemoveObjectivePacket removeObjectivePacket) throws Exception
++    {
++        con.getServerSentScoreboard().removeObjective(removeObjectivePacket.getObjectiveName());
++    }
++    // Waterdog end
++
+     @Override
+     public void handle(ScoreboardObjective objective) throws Exception
+     {
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 index 3a9dab68..5393455b 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
