@@ -64,9 +64,9 @@ To compile Waterfall, you need JDK8, git, bash, maven, and an internet connectio
 Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/bootstrap/target/
 
 ## Gotchas
-* Synapse support coming soon.
+* Synapse support will not be included.
 * PocketMine will randomize palette IDs on start, making server transfer break. 
-You can get around this by using the Synapse support in the future, or can use 
+You can get around this by using 
 [this plugin](https://github.com/TobiasG-DE/RuntimeID-Fixer) for PocketMine to disable the randomization.
 
 ## Join us
