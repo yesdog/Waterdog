@@ -1,4 +1,4 @@
-From 686b8e384b3562c2b4e40154a69bece90890e0c1 Mon Sep 17 00:00:00 2001
+From f4628c6c02352714b9329967ea4075f3550c365d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -957,7 +957,7 @@ index dbb24e22..25d6110b 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index bcc625cd..2ef6e9ae 100644
+index bcc625cd..8a71cde3 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -22,6 +22,15 @@
@@ -976,7 +976,7 @@ index bcc625cd..2ef6e9ae 100644
      <dependencies>
          <dependency>
              <groupId>com.flowpowered</groupId>
-@@ -118,6 +127,39 @@
+@@ -118,6 +127,24 @@
              <scope>runtime</scope>
          </dependency>
          <!-- Waterfall end -->
@@ -997,27 +997,12 @@ index bcc625cd..2ef6e9ae 100644
 +            <artifactId>raknet</artifactId>
 +            <version>0.6-SNAPSHOT</version>
 +        </dependency>
-+        <dependency>
-+            <groupId>io.prometheus</groupId>
-+            <artifactId>simpleclient</artifactId>
-+            <version>0.6.0</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>io.prometheus</groupId>
-+            <artifactId>simpleclient_hotspot</artifactId>
-+            <version>0.6.0</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>io.prometheus</groupId>
-+            <artifactId>simpleclient_httpserver</artifactId>
-+            <version>0.6.0</version>
-+        </dependency>
 +        <!-- Waterdog end -->
      </dependencies>
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..5b31c21b 100644
+index 615c7247..48495d2d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -1028,7 +1013,7 @@ index 615c7247..5b31c21b 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -338,8 +339,24 @@ public class BungeeCord extends ProxyServer
+@@ -338,8 +339,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1039,7 +1024,6 @@ index 615c7247..5b31c21b 100644
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
 +                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
-+                    .option(network.ycc.raknet.RakNet.METRICS, network.ycc.waterdog.pe.PERakNetMetrics.INSTANCE)
 +                    .childOption(network.ycc.raknet.RakNet.USER_DATA_ID, 0xFE)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
 +                    .childHandler(network.ycc.waterdog.pe.PEPipelineUtils.SERVER_CHILD)
@@ -1054,7 +1038,7 @@ index 615c7247..5b31c21b 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -635,7 +652,7 @@ public class BungeeCord extends ProxyServer
+@@ -635,7 +651,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1063,7 +1047,7 @@ index 615c7247..5b31c21b 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -656,9 +673,9 @@ public class BungeeCord extends ProxyServer
+@@ -656,9 +672,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override

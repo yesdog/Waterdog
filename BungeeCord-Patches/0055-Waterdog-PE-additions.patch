@@ -1,9 +1,22 @@
-From 8ba469ca1f2f8b12620797a9c9efda468f007976 Mon Sep 17 00:00:00 2001
+From fc164f0800d0622e90aa92dfc90d4e1364f4f8d3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
 
 
+diff --git a/api/src/main/java/network/ycc/waterdog/api/metrics/RakNetMetrics.java b/api/src/main/java/network/ycc/waterdog/api/metrics/RakNetMetrics.java
+new file mode 100644
+index 00000000..73495872
+--- /dev/null
++++ b/api/src/main/java/network/ycc/waterdog/api/metrics/RakNetMetrics.java
+@@ -0,0 +1,7 @@
++package network.ycc.waterdog.api.metrics;
++
++public interface RakNetMetrics {
++    void preCompressionBytes(int i);
++    void postCompressionBytes(int i);
++    void preCompressionPacket(int i);
++}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java
 new file mode 100644
 index 00000000..fa848edc
@@ -703,10 +716,10 @@ index 00000000..97dffa9e
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..0ae0109a
+index 00000000..a0fdac06
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,91 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -721,7 +734,11 @@ index 00000000..0ae0109a
 +import net.md_5.bungee.compress.CompressFactory;
 +import net.md_5.bungee.jni.zlib.BungeeZlib;
 +import net.md_5.bungee.protocol.DefinedPacket;
++import network.ycc.raknet.RakNet;
++import network.ycc.waterdog.api.metrics.RakNetMetrics;
 +
++import java.util.function.BiConsumer;
++import java.util.function.Consumer;
 +import java.util.zip.DataFormatException;
 +import java.util.zip.Deflater;
 +
@@ -763,7 +780,7 @@ index 00000000..0ae0109a
 +                flushData(ctx);
 +            }
 +            promise.trySuccess();
-+            PERakNetMetrics.INSTANCE.outPrePacket.inc(1);
++            metricsIncrement(ctx, 1, RakNetMetrics::preCompressionPacket);
 +            return;
 +        }
 +        super.write(ctx, msg, promise);
@@ -780,13 +797,19 @@ index 00000000..0ae0109a
 +    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
 +        final ByteBuf out = ctx.alloc().directBuffer(128);
 +        Preconditions.checkArgument(stashBuffer.hasMemoryAddress(), "pre-compression buffer is not direct");
-+        PERakNetMetrics.INSTANCE.outPreComp.inc(stashBuffer.readableBytes());
++        metricsIncrement(ctx, stashBuffer.readableBytes(), RakNetMetrics::preCompressionBytes);
 +        zlib.process(stashBuffer, out);
-+        PERakNetMetrics.INSTANCE.outPostComp.inc(out.readableBytes());
++        metricsIncrement(ctx, out.readableBytes(), RakNetMetrics::postCompressionBytes);
 +        stashBuffer.clear();
 +        ctx.write(out).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 +    }
 +
++    protected void metricsIncrement(ChannelHandlerContext ctx, int i, BiConsumer<RakNetMetrics, Integer> consumer) {
++        final RakNet.MetricsLogger metrics = ctx.channel().config().getOption(RakNet.METRICS);
++        if (metrics instanceof RakNetMetrics) {
++            consumer.accept((RakNetMetrics) metrics, i);
++        }
++    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
 new file mode 100644
@@ -1587,117 +1610,6 @@ index 00000000..249ec69b
 +
 +    }
 +
-+}
-diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERakNetMetrics.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERakNetMetrics.java
-new file mode 100644
-index 00000000..b2658d4c
---- /dev/null
-+++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERakNetMetrics.java
-@@ -0,0 +1,105 @@
-+package network.ycc.waterdog.pe;
-+
-+import io.prometheus.client.Counter;
-+import io.prometheus.client.Gauge;
-+import io.prometheus.client.Histogram;
-+import io.prometheus.client.exporter.HTTPServer;
-+import io.prometheus.client.hotspot.DefaultExports;
-+
-+import network.ycc.raknet.RakNet;
-+
-+import java.io.IOException;
-+import java.util.concurrent.TimeUnit;
-+
-+public class PERakNetMetrics implements RakNet.MetricsLogger {
-+    private static double sPerNs = 1.0 / TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
-+
-+    public static final PERakNetMetrics INSTANCE = new PERakNetMetrics();
-+
-+    static {
-+        final int port = 1271; //Utils.getJavaPropertyValue("metrics-port", 1271, Integer::parseInt);
-+        DefaultExports.initialize();
-+        try {
-+            new HTTPServer(port);
-+        } catch (IOException e) {
-+            System.err.println("Failed to start HTTP Prometheus metrics exporter on port " + port);
-+            e.printStackTrace();
-+        }
-+    }
-+
-+    final Counter packetsIn = Counter.build().name("packetsIn").help("packetsIn").register();
-+    final Counter framesIn = Counter.build().name("framesIn").help("framesIn").register();
-+    final Counter bytesIn = Counter.build().name("bytesIn").help("bytesIn").register();
-+    final Counter packetsOut = Counter.build().name("packetsOut").help("packetsOut").register();
-+    final Counter framesOut = Counter.build().name("framesOut").help("framesOut").register();
-+    final Counter bytesOut = Counter.build().name("bytesOut").help("bytesOut").register();
-+    final Counter bytesRecalled = Counter.build().name("bytesRecalled").help("bytesRecalled").register();
-+    final Counter bytesACKd = Counter.build().name("bytesACKd").help("bytesACKd").register();
-+    final Counter bytesNACKd = Counter.build().name("bytesNACKd").help("bytesNACKd").register();
-+    final Counter acksSent = Counter.build().name("acksSent").help("acksSent").register();
-+    final Counter nacksSent = Counter.build().name("nacksSent").help("nacksSent").register();
-+    final Histogram rtt = Histogram.build().name("rtt").help("RTT in seconds").register();
-+    final Histogram burstTokens = Histogram.build().name("burstTokens").help("Burst tokens").register();
-+    final Gauge rttGauge = Gauge.build().name("rttGauge").help("RTT in seconds").register();
-+    final Counter outPrePacket = Counter.build().name("out_pre_comp_packet").help("Game packets sent (pre compression)").register();
-+    public final Counter outPreComp = Counter.build().name("out_pre_comp").help("Bytes out pre-compression").register();
-+    public final Counter outPostComp = Counter.build().name("out_post_comp").help("Bytes out post-compression").register();
-+
-+    private PERakNetMetrics() {}
-+
-+    public void packetsIn(int i) {
-+        packetsIn.inc(i);
-+    }
-+
-+    public void framesIn(int i) {
-+        framesIn.inc(i);
-+    }
-+
-+    public void bytesIn(int i) {
-+        bytesIn.inc(i);
-+    }
-+
-+    public void packetsOut(int i) {
-+        packetsOut.inc(i);
-+    }
-+
-+    public void framesOut(int i) {
-+        framesOut.inc(i);
-+    }
-+
-+    public void bytesOut(int i) {
-+        bytesOut.inc(i);
-+    }
-+
-+    public void bytesRecalled(int i) {
-+        bytesRecalled.inc(i);
-+    }
-+
-+    public void bytesACKd(int i) {
-+        bytesACKd.inc(i);
-+    }
-+
-+    public void bytesNACKd(int i) {
-+        bytesNACKd.inc(i);
-+    }
-+
-+    public void acksSent(int i) {
-+        acksSent.inc(i);
-+    }
-+
-+    public void nacksSent(int i) {
-+        nacksSent.inc(i);
-+    }
-+
-+    public void measureRTTns(long l) {
-+        rtt.observe(l * sPerNs);
-+    }
-+
-+    public void measureBurstTokens(int n) {
-+        burstTokens.observe(n * 0.001);
-+    }
-+
-+    public void measureRTTnsStdDev(long n) {
-+        rttGauge.set(n * sPerNs);
-+    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
