@@ -53,9 +53,9 @@ group to a server of a different group, it will use the Server Transfer method.
 *Does Waterdog support synapse protocol?*
 
 No, Waterdog does not and will not support Synapse. There are several fundamental design flaws with that pattern
-that could put the stability of Waterdog at risk, so we will not support it. You are always better off
-running Nukkit or PocketMine servers in RakNet mode by setting the servers to offline (non-xbox) and configuring 
-firewall access as normal. 
+that could put the stability of Waterdog (or any other Synapse enabled proxy) at risk, 
+so we will not support it. You are always better off running Nukkit or PocketMine servers in RakNet mode 
+by setting the servers to offline (non-xbox) and configuring firewall access as normal. 
 
 ## How To (Compiling From Source)
 
