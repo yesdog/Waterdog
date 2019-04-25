@@ -1,4 +1,4 @@
-From 48382e3ef1358dc10c8daa0cfe221dbcb753bf7e Mon Sep 17 00:00:00 2001
+From 730d7e4ee01bf8e1b5eb8dfa660474db877654f4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -467,7 +467,7 @@ index b5aeb99e..fc2b6b73 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index 98df957c..d626dbf6 100644
+index eff0bf2e..fab04d48 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -4,23 +4,23 @@
