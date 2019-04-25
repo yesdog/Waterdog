@@ -9,6 +9,9 @@ which is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/Bunge
 Waterdog provides native support for the Minecraft Bedrock protocols along with the existing java protocols.
 It is capable of using the ProtocolSupport PE encapsulation protocol over TCP, or it can use the native RakNet Bedrock protocol for traditional downstream Bedrock servers such as Nukkit, Pocketmine, MiNET, and others. 
 
+Waterdog supports online and offline authorization for Bedrock clients. Downstream servers are generally
+required to run in offline mode, having authorization secured through Waterdog. 
+
 Waterfall focuses on three main areas:
 
 - **Stability**: Waterfall aims to be stable. We will achieve this through making the code base testable and discouraging practices that lead to proxy lag.
@@ -47,6 +50,13 @@ This can be useful if you have servers that use different resouce packs or may
 operate with a different block ID palette. If a user transfers from a server of one
 group to a server of a different group, it will use the Server Transfer method. 
 
+*Does Waterdog support synapse protocol?*
+
+No, Waterdog does not and will not support Synapse. There are several fundamental design flaws with that pattern
+that could put the stability of Waterdog (or any other Synapse enabled proxy) at risk, 
+so we will not support it. You are always better off running Nukkit or PocketMine servers in RakNet mode 
+by setting the servers to offline (non-xbox) and configuring firewall access as normal. 
+
 ## How To (Compiling From Source)
 
 To compile Waterfall, you need JDK8, git, bash, maven, and an internet connection.
@@ -54,9 +64,9 @@ To compile Waterfall, you need JDK8, git, bash, maven, and an internet connectio
 Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/bootstrap/target/
 
 ## Gotchas
-* Synapse support coming soon.
+* Synapse support will not be included.
 * PocketMine will randomize palette IDs on start, making server transfer break. 
-You can get around this by using the Synapse support in the future, or can use 
+You can get around this by using 
 [this plugin](https://github.com/TobiasG-DE/RuntimeID-Fixer) for PocketMine to disable the randomization.
 
 ## Join us
