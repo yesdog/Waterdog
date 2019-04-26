@@ -1,4 +1,4 @@
-From 3642478be442e3d6ca90ac7f791c90b128836771 Mon Sep 17 00:00:00 2001
+From 730d7e4ee01bf8e1b5eb8dfa660474db877654f4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -112,10 +112,10 @@ index 487fb3bb..64488fb9 100644
              <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
 diff --git a/chat/pom.xml b/chat/pom.xml
-index 7ad05abb..a965393c 100644
+index 7ad05abb..2e5814f2 100644
 --- a/chat/pom.xml
 +++ b/chat/pom.xml
-@@ -4,20 +4,26 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -138,15 +138,7 @@ index 7ad05abb..a965393c 100644
 +    <name>Waterdog-Chat</name>
      <description>Minecraft JSON chat API intended for use with Waterfall</description>
  
-+    <!-- Waterdog start -->
-+    <properties>
-+        <maven.deploy.skip>false</maven.deploy.skip>
-+    </properties>
-+    <!-- Waterdog end -->
-+
      <dependencies>
-         <dependency>
-             <groupId>com.google.code.gson</groupId>
 diff --git a/config/pom.xml b/config/pom.xml
 index 9d0fe24b..066821f0 100644
 --- a/config/pom.xml
