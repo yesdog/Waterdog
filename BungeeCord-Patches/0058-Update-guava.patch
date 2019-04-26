@@ -1,4 +1,4 @@
-From ed7eaebcca794333ae8fabe3edcb925d275cb852 Mon Sep 17 00:00:00 2001
+From 66e7cd312f7ea39ca1efc8bd4c92c82075d0b92f Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Fri, 19 Apr 2019 07:42:33 -0600
 Subject: [PATCH] Update guava
@@ -6,10 +6,10 @@ Subject: [PATCH] Update guava
 fixes https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-32236
 
 diff --git a/pom.xml b/pom.xml
-index cabce1a3..adb02686 100644
+index fab04d48..0295c1dd 100644
 --- a/pom.xml
 +++ b/pom.xml
-@@ -108,7 +108,7 @@
+@@ -109,7 +109,7 @@
          <dependency>
              <groupId>com.google.guava</groupId>
              <artifactId>guava</artifactId>
