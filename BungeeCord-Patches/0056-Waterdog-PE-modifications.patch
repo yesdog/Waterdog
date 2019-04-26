@@ -1,4 +1,4 @@
-From c097616dfba0013223f8e12895a1f26d1a5e66e6 Mon Sep 17 00:00:00 2001
+From 511cc120c68aa36cdb8b7edfcc1f349930d986ec Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -578,10 +578,10 @@ index a0c0b5ca..90d8f992 100644
      {
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
-index a26fba6e..22ad455c 100644
+index a26fba6e..d73b9883 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
-@@ -32,6 +32,58 @@ public class BossBar extends DefinedPacket
+@@ -32,6 +32,64 @@ public class BossBar extends DefinedPacket
      @Override
      public void read(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
@@ -589,58 +589,64 @@ index a26fba6e..22ad455c 100644
 +        if (ProtocolConstants.isPE(protocolVersion)) {
 +            uuid = new UUID(0, readSVarLong(buf));
 +            final int peAction = readVarInt(buf);
-+            switch (peAction) {
-+                // Add
-+                case 0:
-+                    title = readString(buf);
-+                    health = buf.readFloatLE();
-+                    buf.readShortLE(); // darken screen
-+                    color = readVarInt(buf);
-+                    division = readVarInt(buf);
-+                    action = 0;
-+                    break;
-+                // Remove
-+                case 2:
-+                    action = 1;
-+                    break;
-+                // Player add
-+                case 1:
-+                // Player remove
-+                case 3:
-+                    readVarInt(buf); // player id
-+                    action = peAction == 1 ? 6 : 7;
-+                    break;
-+                // Health
-+                case 4:
-+                    health = buf.readFloatLE();
-+                    action = 2;
-+                    break;
-+                // Title
-+                case 5:
-+                    title = readString(buf);
-+                    action = 3;
-+                    break;
-+                // Flags
-+                case 6:
-+                    buf.readShortLE(); // darken screen
-+                    color = readVarInt(buf);
-+                    division = readVarInt(buf);
-+                    action = 5;
-+                    break;
-+                // Style
-+                case 7:
-+                    color = readVarInt(buf);
-+                    division = readVarInt(buf);
-+                    action = 4;
-+                    break;
-+            }
++            try {
++                title = "";
++                health = 1.0f;
++                color = 5;
++                division = 0;
++                switch (peAction) {
++                    // Add
++                    case 0:
++                        action = 0;
++                        title = readString(buf);
++                        health = buf.readFloatLE();
++                        buf.readShortLE(); // darken screen
++                        color = readVarInt(buf);
++                        division = readVarInt(buf);
++                        break;
++                    // Remove
++                    case 2:
++                        action = 1;
++                        break;
++                    // Player add
++                    case 1:
++                        // Player remove
++                    case 3:
++                        action = peAction == 1 ? 6 : 7;
++                        readVarInt(buf); // player id
++                        break;
++                    // Health
++                    case 4:
++                        action = 2;
++                        health = buf.readFloatLE();
++                        break;
++                    // Title
++                    case 5:
++                        action = 3;
++                        title = readString(buf);
++                        break;
++                    // Flags
++                    case 6:
++                        action = 5;
++                        buf.readShortLE(); // darken screen
++                        color = readVarInt(buf);
++                        division = readVarInt(buf);
++                        break;
++                    // Style
++                    case 7:
++                        action = 4;
++                        color = readVarInt(buf);
++                        division = readVarInt(buf);
++                        break;
++                }
++            } catch (IndexOutOfBoundsException e) {} //Support truncated format too
 +            return;
 +        }
 +        // Waterdog end
          uuid = readUUID( buf );
          action = readVarInt( buf );
  
-@@ -68,6 +120,59 @@ public class BossBar extends DefinedPacket
+@@ -68,6 +126,59 @@ public class BossBar extends DefinedPacket
      @Override
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
