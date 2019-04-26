@@ -1,4 +1,4 @@
-From f4628c6c02352714b9329967ea4075f3550c365d Mon Sep 17 00:00:00 2001
+From c097616dfba0013223f8e12895a1f26d1a5e66e6 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1384,16 +1384,17 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..029320dc 100644
+index 1f8a2439..2e379e55 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -154,6 +154,20 @@ public class DownstreamBridge extends PacketHandler
+@@ -154,6 +154,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
 +    // Waterdog start
 +    public void handle(network.ycc.waterdog.pe.packet.PESetDisplayObjectivePacket setDisplayObjectivePacket) throws Exception
 +    {
++        con.getServerSentScoreboard().removeObjective(setDisplayObjectivePacket.getObjectiveName());
 +        con.getServerSentScoreboard().addObjective(new Objective(
 +                setDisplayObjectivePacket.getObjectiveName(), setDisplayObjectivePacket.getDisplayName(),
 +                setDisplayObjectivePacket.getDisplaySlot()));
@@ -1482,22 +1483,23 @@ index 3a9dab68..5393455b 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..24cb79d3 100644
+index 51d0c6cf..c8b5904f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-@@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
+@@ -95,6 +95,12 @@ public class UpstreamBridge extends PacketHandler
          if ( con.getServer() != null )
          {
              Channel server = con.getServer().getCh().getHandle();
 +            // Waterdog start
-+            if (network.ycc.waterdog.pe.PEDimSwitchLock.isChannelLocked(channel.getHandle())) {
++            //TODO: why is this still deadlocking channels?
++            /*if (network.ycc.waterdog.pe.PEDimSwitchLock.isChannelLocked(channel.getHandle())) {
 +                server.config().setAutoRead(false);
-+            } else
++            } else */
 +            // Waterdog end
              if ( channel.getHandle().isWritable() )
              {
                  server.config().setAutoRead( true );
-@@ -124,6 +129,14 @@ public class UpstreamBridge extends PacketHandler
+@@ -124,6 +130,14 @@ public class UpstreamBridge extends PacketHandler
      @Override
      public void handle(KeepAlive alive) throws Exception
      {
@@ -1512,7 +1514,7 @@ index 51d0c6cf..24cb79d3 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,6 +148,35 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,6 +149,35 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  
