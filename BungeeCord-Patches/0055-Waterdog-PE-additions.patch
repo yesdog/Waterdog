@@ -1,4 +1,4 @@
-From fc164f0800d0622e90aa92dfc90d4e1364f4f8d3 Mon Sep 17 00:00:00 2001
+From b0f856a8cf03d2349a0067c08ff6b0202b510e24 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -605,10 +605,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..97dffa9e
+index 00000000..7023eff0
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,119 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -622,14 +622,20 @@ index 00000000..97dffa9e
 +    static final EntityMap_PE INSTANCE = new EntityMap_PE();
 +
 +    @Override
-+    public void rewriteServerbound(ByteBuf packet, int oldId, int newId)
-+    {
-+
++    public void rewriteServerbound(ByteBuf packet, int oldId, int newId) {
++        doRewrite(packet, oldId, newId, true);
 +    }
 +
 +    @Override
-+    public void rewriteClientbound(ByteBuf from, int oldId, int newId)
++    public void rewriteClientbound(ByteBuf from, int oldId, int newId) {
++        doRewrite(from, oldId, newId, false);
++    }
++
++    public void doRewrite(ByteBuf from, int oldId, int newId, boolean isServerBound)
 +    {
++        if (!from.isReadable()) {
++            return;
++        }
 +        final ByteBuf to = from.duplicate();
 +        final int originalReader = from.readerIndex();
 +        final int packetId = DefinedPacket.readVarInt(from);
@@ -639,7 +645,14 @@ index 00000000..97dffa9e
 +        to.writerIndex(to.readerIndex());
 +        DefinedPacket.writeVarInt(packetId, to);
 +
-+        switch (packetId) {
++        if (isServerBound) switch (packetId) {
++            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
++                act.accept(VARLONG);
++                break;
++            default:
++                from.readerIndex(originalReader);
++                return;
++        } else switch (packetId) {
 +            case 0x12: //PLAY_ENTITY_TELEPORT
 +            case 0x1B: //PLAY_ENTITY_STATUS
 +            case 0x1C: //PLAY_ENTITY_EFFECT
@@ -650,6 +663,7 @@ index 00000000..97dffa9e
 +                act.accept(VARLONG);
 +                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
++            case 0x4A: //PLAY_BOSS_EVENT
 +                act.accept(SVARLONG);
 +                break;
 +            case 0x11: //PLAY_ENTITY_COLLECT_EFFECT

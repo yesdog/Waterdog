@@ -1,4 +1,4 @@
-From 511cc120c68aa36cdb8b7edfcc1f349930d986ec Mon Sep 17 00:00:00 2001
+From 148f694ea48f04b15c54d5c1591f234dd6419aeb Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -901,7 +901,7 @@ index 2aa5ad58..fac91c32 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
-index 17e12655..fc1982b5 100644
+index 17e12655..89ea468d 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 @@ -82,7 +82,8 @@ public class PluginMessage extends DefinedPacket
@@ -910,7 +910,7 @@ index 17e12655..fc1982b5 100644
      {
 -        tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( readString( buf ) ) : readString( buf );
 +        tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) ) ? MODERNISE.apply( readString( buf ) ) : readString( buf ); // Waterdog
-+        DefinedPacket.removeVarIntLengthHack(buf); // Waterdog - temporary hack to account for both formats of this
++        if (ProtocolConstants.isPE(protocolVersion)) DefinedPacket.removeVarIntLengthHack(buf); // Waterdog - temporary hack to account for both formats of this
          int maxSize = direction == ProtocolConstants.Direction.TO_SERVER ? Short.MAX_VALUE : 0x100000;
          Preconditions.checkArgument( buf.readableBytes() < maxSize );
          data = new byte[ buf.readableBytes() ];
