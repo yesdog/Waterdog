@@ -1,4 +1,4 @@
-From 148f694ea48f04b15c54d5c1591f234dd6419aeb Mon Sep 17 00:00:00 2001
+From 1f5adae737d841e2e85fd8385a8d3863ce2d38c4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1008,7 +1008,7 @@ index bcc625cd..8a71cde3 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..48495d2d 100644
+index 615c7247..e9f5a1a8 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -1026,7 +1026,7 @@ index 615c7247..48495d2d 100644
 +            // Waterdog start
 +            } else {
 +                new ServerBootstrap()
-+                    .channelFactory(() -> new network.ycc.raknet.server.RakNetServer(PipelineUtils.getDatagramChannel()))
++                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
 +                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
@@ -1093,7 +1093,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 94545251..c28474d6 100644
+index 94545251..5770d939 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -1227,7 +1227,7 @@ index 94545251..c28474d6 100644
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
 +                network.ycc.waterdog.pe.PERawPacketData.injectGameMode(user.getCh().getHandle(), login.getGameMode());
-+                server.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PELocalPlayerInitialized());
++                server.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PELocalPlayerInitialized(login.getEntityId()));
 +            }
 +            // Waterdog end
 +
