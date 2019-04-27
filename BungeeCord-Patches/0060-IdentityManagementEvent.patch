@@ -1,6 +1,6 @@
-From 4b6e3b4a356a88e70b3aa6a995cb675b92cba7d9 Mon Sep 17 00:00:00 2001
+From c8afd9a89990df705bd8e68226fe5918378d466d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
-Date: Sat, 27 Apr 2019 17:36:52 -0600
+Date: Sat, 27 Apr 2019 17:43:44 -0600
 Subject: [PATCH] IdentityManagementEvent
 
 
@@ -35,10 +35,10 @@ index 00000000..b351d38f
 +    }
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 5393455b..6386482c 100644
+index 5393455b..36310f96 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -475,7 +475,19 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -475,7 +475,21 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          HttpClient.get( authURL, ch.getHandle().eventLoop(), handler );
      }
  
@@ -46,9 +46,11 @@ index 5393455b..6386482c 100644
 +    // Waterdog start
 +    private void finish() {
 +        Callback<network.ycc.waterdog.api.event.IdentityManagementEvent> complete = (result, error) -> {
-+            uniqueId = result.getUuid();
-+            name = result.getUsername();
-+            finish0();
++            ch.getHandle().eventLoop().execute(() -> {
++                uniqueId = result.getUuid();
++                name = result.getUsername();
++                finish0();
++            });
 +        };
 +
 +        bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.IdentityManagementEvent(uniqueId, name, complete));
