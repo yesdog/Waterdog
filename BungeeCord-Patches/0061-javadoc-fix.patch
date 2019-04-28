@@ -1,0 +1,36 @@
+From 341328fd7eb1e91e74886bf0ef67cba443937cbb Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Sun, 28 Apr 2019 16:58:30 -0600
+Subject: [PATCH] javadoc fix
+
+
+diff --git a/proxy/src/main/java/net/md_5/bungee/util/ChatComponentTransformer.java b/proxy/src/main/java/net/md_5/bungee/util/ChatComponentTransformer.java
+index d69c35d9..24e2f91d 100644
+--- a/proxy/src/main/java/net/md_5/bungee/util/ChatComponentTransformer.java
++++ b/proxy/src/main/java/net/md_5/bungee/util/ChatComponentTransformer.java
+@@ -17,10 +17,10 @@ import net.md_5.bungee.api.score.Score;
+  * fields with the appropriate value.
+  * <br>
+  * ScoreComponents are transformed by replacing their
+- * {@link ScoreComponent#getName()}} into the matching entity's name as well as
+- * replacing the {@link ScoreComponent#getValue()} with the matching value in
++ * name into the matching entity's name as well as
++ * replacing the value with the matching value in
+  * the {@link net.md_5.bungee.api.score.Scoreboard} if and only if the
+- * {@link ScoreComponent#getValue()} is not present.
++ * value is not present.
+  */
+ @NoArgsConstructor(access = AccessLevel.PRIVATE)
+ public final class ChatComponentTransformer
+@@ -41,7 +41,7 @@ public final class ChatComponentTransformer
+      * Transform a set of components, and attempt to transform the transformable
+      * fields. Entity selectors <b>cannot</b> be evaluated. This will
+      * recursively search for all extra components (see
+-     * {@link BaseComponent#getExtra()}).
++     * extra).
+      *
+      * @param player player
+      * @param component the component to transform
+-- 
+2.17.2 (Apple Git-113)
+
