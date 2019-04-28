@@ -21,6 +21,28 @@
         <module>Waterfall-Proxy</module>
     </modules>
 
+    <scm>
+        <connection>scm:git:git@github.com:com:WaterfallMC/Waterfall.git</connection>
+        <developerConnection>scm:git:git@github.com:WaterfallMC/Waterfall.git</developerConnection>
+        <url>git@github.com:WaterfallMC/Waterfall.git</url>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/yesdog/Waterdog/issues</url>
+    </issueManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>codemc-snapshots</id>
+            <url>https://repo.codemc.org/repository/maven-snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>codemc-releases</id>
+            <url>https://repo.codemc.org/repository/maven-releases</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <defaultGoal>clean install</defaultGoal>
         <plugins>
@@ -54,6 +76,11 @@
     </build>
 
     <properties>
+        <build.number>unknown</build.number>
+        <netty.version>4.1.34.Final</netty.version>
+        <!-- Require Java 8 -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 </project>
