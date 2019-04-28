@@ -1,4 +1,4 @@
-From 1f5adae737d841e2e85fd8385a8d3863ce2d38c4 Mon Sep 17 00:00:00 2001
+From 9b237a4779d273535806f75e601ab514c09f45d0 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -165,10 +165,10 @@ index 581503b8..a416d358 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index 9951c1f9..42f47f7c 100644
+index 9951c1f9..e5797181 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -10,6 +10,85 @@ import lombok.RequiredArgsConstructor;
+@@ -10,6 +10,70 @@ import lombok.RequiredArgsConstructor;
  @RequiredArgsConstructor
  public abstract class DefinedPacket
  {
@@ -233,21 +233,6 @@ index 9951c1f9..42f47f7c 100644
 +                to.writeByte(0x80);
 +            }
 +            to.writeByte(0);
-+        }
-+    }
-+
-+    //TODO: remove this when this format gets unified. Removes a varint length if present
-+    public static void removeVarIntLengthHack(ByteBuf buf) {
-+        if (!buf.isReadable()) {
-+            return;
-+        }
-+        int varIntLength = -1;
-+        buf.markReaderIndex();
-+        try {
-+            varIntLength = readVarInt(buf);
-+        } catch (Throwable e) {}
-+        if (varIntLength != buf.readableBytes()) {
-+            buf.resetReaderIndex(); //length doesnt match, put buffer back
 +        }
 +    }
 +    // Waterdog end
@@ -901,7 +886,7 @@ index 2aa5ad58..fac91c32 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
-index 17e12655..89ea468d 100644
+index 17e12655..38a0a488 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 @@ -82,7 +82,8 @@ public class PluginMessage extends DefinedPacket
@@ -910,7 +895,7 @@ index 17e12655..89ea468d 100644
      {
 -        tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( readString( buf ) ) : readString( buf );
 +        tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) ) ? MODERNISE.apply( readString( buf ) ) : readString( buf ); // Waterdog
-+        if (ProtocolConstants.isPE(protocolVersion)) DefinedPacket.removeVarIntLengthHack(buf); // Waterdog - temporary hack to account for both formats of this
++        if (ProtocolConstants.isPE(protocolVersion) && buf.isReadable()) buf = buf.readSlice(readVarInt(buf)); // Waterdog - varint slice
          int maxSize = direction == ProtocolConstants.Direction.TO_SERVER ? Short.MAX_VALUE : 0x100000;
          Preconditions.checkArgument( buf.readableBytes() < maxSize );
          data = new byte[ buf.readableBytes() ];
@@ -920,7 +905,7 @@ index 17e12655..89ea468d 100644
      {
 -        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( tag ) : tag, buf );
 +        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) ) ? MODERNISE.apply( tag ) : tag, buf ); // Waterdog
-+        if (ProtocolConstants.isPE(protocolVersion)) writeVarInt(buf, data.length); // Waterdog - pmmp wants varint lengths
++        if (ProtocolConstants.isPE(protocolVersion)) writeVarInt(buf, data.length); // Waterdog - varint lengths
          buf.writeBytes( data );
      }
  
