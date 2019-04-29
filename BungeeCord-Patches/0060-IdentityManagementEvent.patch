@@ -53,7 +53,7 @@ index 5393455b..36310f96 100644
 +            });
 +        };
 +
-+        bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.IdentityManagementEvent(uniqueId, name, complete));
++        bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.IdentityManagementEvent(uniqueId, getName(), complete));
 +    }
 +    // Waterdog end
 +
