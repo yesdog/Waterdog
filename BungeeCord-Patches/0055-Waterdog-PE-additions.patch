@@ -1,4 +1,4 @@
-From b0f856a8cf03d2349a0067c08ff6b0202b510e24 Mon Sep 17 00:00:00 2001
+From 993a3a37036ff8a7f51562bb24b9cdc7e51c85a7 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -605,7 +605,7 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..7023eff0
+index 00000000..707b9ff2
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 @@ -0,0 +1,119 @@
@@ -623,15 +623,15 @@ index 00000000..7023eff0
 +
 +    @Override
 +    public void rewriteServerbound(ByteBuf packet, int oldId, int newId) {
-+        doRewrite(packet, oldId, newId, true);
++        doRewrite(packet, oldId, newId);
 +    }
 +
 +    @Override
 +    public void rewriteClientbound(ByteBuf from, int oldId, int newId) {
-+        doRewrite(from, oldId, newId, false);
++        doRewrite(from, oldId, newId);
 +    }
 +
-+    public void doRewrite(ByteBuf from, int oldId, int newId, boolean isServerBound)
++    public void doRewrite(ByteBuf from, int oldId, int newId)
 +    {
 +        if (!from.isReadable()) {
 +            return;
@@ -645,21 +645,21 @@ index 00000000..7023eff0
 +        to.writerIndex(to.readerIndex());
 +        DefinedPacket.writeVarInt(packetId, to);
 +
-+        if (isServerBound) switch (packetId) {
-+            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
-+                act.accept(VARLONG);
-+                break;
-+            default:
-+                from.readerIndex(originalReader);
-+                return;
-+        } else switch (packetId) {
++        switch (packetId) {
 +            case 0x12: //PLAY_ENTITY_TELEPORT
 +            case 0x1B: //PLAY_ENTITY_STATUS
 +            case 0x1C: //PLAY_ENTITY_EFFECT
 +            case 0x1D: //PLAY_ENTITY_ATTRIBUTES
++            case 0x1F: //PLAY_MOB_EQUIPMENT
++            case 0x24: //PLAY_PLAYER_ACTION
 +            case 0x27: //PLAY_ENTITY_METADATA
 +            case 0x28: //PLAY_ENTITY_VELOCITY
-+            case 0x6F: //MOVE_ENTITY_DELTA
++            case 0x6F: //PLAY_MOVE_ENTITY_DELTA
++            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
++                act.accept(VARLONG);
++                break;
++            case 0x21: //PLAY_INTERACT
++                to.writeBytes(from, 1);
 +                act.accept(VARLONG);
 +                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
