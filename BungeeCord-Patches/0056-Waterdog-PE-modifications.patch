@@ -1,4 +1,4 @@
-From 9b237a4779d273535806f75e601ab514c09f45d0 Mon Sep 17 00:00:00 2001
+From e705c171b549fad2317661d64c2bb594fc66f19a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -993,7 +993,7 @@ index bcc625cd..8a71cde3 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..e9f5a1a8 100644
+index 615c7247..ba34c177 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -1013,8 +1013,8 @@ index 615c7247..e9f5a1a8 100644
 +                new ServerBootstrap()
 +                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
-+                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
++                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .childOption(network.ycc.raknet.RakNet.USER_DATA_ID, 0xFE)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
 +                    .childHandler(network.ycc.waterdog.pe.PEPipelineUtils.SERVER_CHILD)
@@ -1078,7 +1078,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 94545251..5770d939 100644
+index 94545251..4a7273f3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
@@ -1205,12 +1205,15 @@ index 94545251..5770d939 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -310,6 +373,13 @@ public class ServerConnector extends PacketHandler
+@@ -310,6 +373,16 @@ public class ServerConnector extends PacketHandler
              user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getDifficulty(), login.getGameMode(), login.getLevelType() ) );
              user.setDimension( login.getDimension() );
  
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
++                final network.ycc.waterdog.pe.packet.PELogin peLogin = (network.ycc.waterdog.pe.packet.PELogin) login;
++                network.ycc.waterdog.pe.PERawPacketData.injectChunkPublisherUpdate(user.getCh().getHandle(),
++                        (int) peLogin.getSpawnX(), (int) peLogin.getSpawnY(), (int) peLogin.getSpawnZ());
 +                network.ycc.waterdog.pe.PERawPacketData.injectGameMode(user.getCh().getHandle(), login.getGameMode());
 +                server.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PELocalPlayerInitialized(login.getEntityId()));
 +            }

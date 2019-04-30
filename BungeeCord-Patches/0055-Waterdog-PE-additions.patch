@@ -1,4 +1,4 @@
-From 993a3a37036ff8a7f51562bb24b9cdc7e51c85a7 Mon Sep 17 00:00:00 2001
+From 2aa5fdb7efeb66d6b45762b0b12cf0193044d8d6 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -275,10 +275,10 @@ index 00000000..b5abc3d5
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..54286a84
+index 00000000..3132ffc6
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,63 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import io.netty.buffer.ByteBuf;
@@ -295,6 +295,9 @@ index 00000000..54286a84
 +@NoArgsConstructor
 +@EqualsAndHashCode(callSuper = false)
 +public class PELogin extends Login {
++    private float spawnX;
++    private float spawnY;
++    private float spawnZ;
 +    private byte[] tailPayload;
 +
 +    public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, int viewDistance, boolean reducedDebugInfo, byte[] tailPayload) {
@@ -307,9 +310,9 @@ index 00000000..54286a84
 +        readSVarLong(buf); //entity id (but it's actually signed varlong, so we use the field below, which is unsigned)
 +        setEntityId((int) readVarLong(buf));
 +        setGameMode((short) readSVarInt(buf));
-+        buf.readFloatLE(); //x
-+        buf.readFloatLE(); //y
-+        buf.readFloatLE(); //z
++        spawnX = buf.readFloatLE(); //x
++        spawnY = buf.readFloatLE(); //y
++        spawnZ = buf.readFloatLE(); //z
 +        buf.readFloatLE(); //yaw
 +        buf.readFloatLE(); //pitch
 +        readSVarInt(buf); //seed
@@ -326,9 +329,9 @@ index 00000000..54286a84
 +        writeSVarLong(buf, getEntityId());
 +        writeVarLong(buf, getEntityId());
 +        writeSVarInt(buf, getGameMode());
-+        buf.writeFloatLE(0); //player x
-+        buf.writeFloatLE(0); //player y
-+        buf.writeFloatLE(0); //player z
++        buf.writeFloatLE(spawnX); //player x
++        buf.writeFloatLE(spawnY); //player y
++        buf.writeFloatLE(spawnZ); //player z
 +        buf.writeFloatLE(0); //player pitch
 +        buf.writeFloatLE(0); //player yaw
 +        writeSVarInt(buf, 0); //seed
@@ -605,10 +608,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..707b9ff2
+index 00000000..3b922046
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,126 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -675,7 +678,7 @@ index 00000000..707b9ff2
 +                act.accept(SVARLONG);
 +                break;
 +            case 0x2C: //PLAY_ENTITY_ANIMATION
-+                DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
++                act.accept(SK_SVARINT);
 +                act.accept(VARLONG);
 +                break;
 +            case 0x13: //PLAY_PLAYER_MOVE_LOOK
@@ -689,15 +692,15 @@ index 00000000..707b9ff2
 +                break;
 +            case 0x0C: //PLAY_SPAWN_PLAYER
 +                to.writeBytes(from, Long.BYTES * 2);
-+                DefinedPacket.writeString(DefinedPacket.readString(from), to);
++                act.accept(SK_STRING);
 +                act.accept(SVARLONG);
 +                act.accept(VARLONG);
 +                break;
 +            case 0x50: //PLAY_TRADE_UPDATE
 +                to.writeBytes(from, 2);
-+                DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
-+                DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
-+                DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
++                act.accept(SK_SVARINT);
++                act.accept(SK_SVARINT);
++                act.accept(SK_SVARINT);
 +                to.writeBytes(from, 1);
 +                act.accept(SVARLONG);
 +                act.accept(SVARLONG);
@@ -707,8 +710,7 @@ index 00000000..707b9ff2
 +                return;
 +        }
 +
-+        //fill in the rest
-+        to.writeBytes(from);
++        to.writeBytes(from); //copy the rest
 +
 +        from.readerIndex(to.readerIndex());
 +        from.writerIndex(to.writerIndex());
@@ -717,6 +719,14 @@ index 00000000..707b9ff2
 +    interface Rewrite {
 +        void rewrite(ByteBuf from, ByteBuf to, int oldId, int newId);
 +    }
++
++    static final Rewrite SK_STRING = (from, to, oldId, newId) -> {
++        DefinedPacket.writeString(DefinedPacket.readString(from), to);
++    };
++
++    static final Rewrite SK_SVARINT = (from, to, oldId, newId) -> {
++        DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
++    };
 +
 +    static final Rewrite VARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readVarLong(from);
@@ -1627,10 +1637,10 @@ index 00000000..249ec69b
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..7c616168
+index 00000000..08fc034f
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,105 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -1667,14 +1677,18 @@ index 00000000..7c616168
 +        return false;
 +    }
 +
-+    public static void injectForcedDimChange(Channel channel, int version) {
++    public static void injectChunkPublisherUpdate(Channel channel, int x, int y, int z) {
 +        ByteBuf publisherUpdate = Unpooled.buffer();
 +        DefinedPacket.writeVarInt(publisherUpdate, 0x79); //CHUNK_PUBLISHER_UPDATE_PACKET
-+        DefinedPacket.writeSVarInt(publisherUpdate, 0);
-+        DefinedPacket.writeVarInt(publisherUpdate, 0);
-+        DefinedPacket.writeSVarInt(publisherUpdate, 0);
++        DefinedPacket.writeSVarInt(publisherUpdate, x);
++        DefinedPacket.writeVarInt(publisherUpdate, y);
++        DefinedPacket.writeSVarInt(publisherUpdate, z);
 +        DefinedPacket.writeVarInt(publisherUpdate, 300);
 +        channel.write(publisherUpdate);
++    }
++
++    public static void injectForcedDimChange(Channel channel, int version) {
++        injectChunkPublisherUpdate(channel, 0, 0, 0);
 +        for (int x = -2; x <= 2; x++) {
 +            for (int z = -2; z <= 2; z++) {
 +                ByteBuf buffer = Unpooled.buffer();
