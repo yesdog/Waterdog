@@ -7,7 +7,7 @@ Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfa
 which is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/BungeeCord) server teleportation suite.
 
 Waterdog provides native support for the Minecraft Bedrock protocols along with the existing java protocols.
-It is capable of using the ProtocolSupport PE encapsulation protocol over TCP, or it can use the native RakNet Bedrock protocol for traditional downstream Bedrock servers such as Nukkit, Pocketmine, MiNET, and others. 
+It is capable of using the ProtocolSupport PE encapsulation protocol over TCP, or it can use the native RakNet Bedrock protocol for traditional downstream Bedrock servers such as Nukkit, Pocketmine, Bedrock Alpha server, MiNET, and others. 
 
 Waterdog supports online and offline authorization for Bedrock clients. Downstream servers are generally
 required to run in offline mode, having authorization secured through Waterdog. 
