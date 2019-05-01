@@ -3,7 +3,7 @@ Waterdog
 [![Known Vulnerabilities](https://snyk.io/test/github/yesdog/Waterdog/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/yesdog/Waterdog?targetFile=pom.xml)
 =========
 
-Waterdog is fork of the well-know [Waterfall](https://github.com/papermc/waterfall), 
+Waterdog is fork of the well-known [Waterfall](https://github.com/papermc/waterfall), 
 which is a fork of the well-known [BungeeCord](https://github.com/SpigotMC/BungeeCord) server teleportation suite.
 
 Waterdog provides native support for the Minecraft Bedrock protocols along with the existing java protocols.
