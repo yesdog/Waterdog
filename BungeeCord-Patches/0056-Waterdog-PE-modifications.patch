@@ -1,4 +1,4 @@
-From b1d799f583e4fc2e50a23e84ce747887deb2a610 Mon Sep 17 00:00:00 2001
+From 7c19ccfbc8383238f122c7f9fdd6c7558a5486dd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -126,10 +126,10 @@ index 7797a46b..5449cf9b 100644
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-index 581503b8..a416d358 100644
+index e4f14974..24c236d6 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-@@ -180,4 +180,34 @@ public abstract class AbstractPacketHandler
+@@ -185,4 +185,34 @@ public abstract class AbstractPacketHandler
      {
      }
      // Waterfall end
@@ -289,10 +289,10 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 3a319cff..33aee5c9 100644
+index 87093807..1d721d67 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-@@ -50,6 +50,16 @@ public enum Protocol
+@@ -51,6 +51,16 @@ public enum Protocol
      {
  
          {
@@ -309,7 +309,7 @@ index 3a319cff..33aee5c9 100644
              TO_SERVER.registerPacket(
                      Handshake.class,
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
-@@ -61,8 +71,47 @@ public enum Protocol
+@@ -62,8 +72,47 @@ public enum Protocol
      {
  
          {
@@ -357,7 +357,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x21 ),
-@@ -76,12 +125,14 @@ public enum Protocol
+@@ -77,12 +126,14 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Chat.class,
@@ -372,7 +372,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x07 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x33 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x34 ),
-@@ -91,6 +142,7 @@ public enum Protocol
+@@ -92,6 +143,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      BossBar.class,
@@ -380,7 +380,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0C )
              );
              // Waterfall start
-@@ -166,6 +218,7 @@ public enum Protocol
+@@ -167,6 +219,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      PluginMessage.class,
@@ -388,7 +388,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x3F ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x18 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x19 ),
-@@ -173,6 +226,7 @@ public enum Protocol
+@@ -174,6 +227,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Kick.class,
@@ -396,7 +396,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x40 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1A ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x1B ),
-@@ -210,6 +264,7 @@ public enum Protocol
+@@ -215,6 +269,7 @@ public enum Protocol
  
              TO_SERVER.registerPacket(
                      KeepAlive.class,
@@ -404,7 +404,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0B ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0C ),
-@@ -219,6 +274,7 @@ public enum Protocol
+@@ -224,6 +279,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      Chat.class,
@@ -412,7 +412,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x03 ),
-@@ -236,6 +292,7 @@ public enum Protocol
+@@ -241,6 +297,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      ClientSettings.class,
@@ -420,7 +420,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x15 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x04 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x05 ),
-@@ -244,6 +301,7 @@ public enum Protocol
+@@ -249,6 +306,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      PluginMessage.class,
@@ -428,7 +428,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x17 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x09 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0A ),
-@@ -282,8 +340,19 @@ public enum Protocol
+@@ -287,8 +345,19 @@ public enum Protocol
      {
  
          {
@@ -448,7 +448,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
              );
              TO_CLIENT.registerPacket(
-@@ -292,6 +361,7 @@ public enum Protocol
+@@ -297,6 +366,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      LoginSuccess.class,
@@ -456,7 +456,7 @@ index 3a319cff..33aee5c9 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 )
              );
              TO_CLIENT.registerPacket(
-@@ -414,6 +484,13 @@ public enum Protocol
+@@ -419,6 +489,13 @@ public enum Protocol
              return supportsForge || i >= 0 && i <= MAX_PACKET_ID;
          }
  
@@ -470,7 +470,7 @@ index 3a319cff..33aee5c9 100644
          public final DefinedPacket createPacket(int id, int version)
          {
              return createPacket(id, version, true);
-@@ -428,6 +505,7 @@ public enum Protocol
+@@ -433,6 +510,7 @@ public enum Protocol
              }
              if ( !hasPacket(id, supportsForge) )
              {
@@ -478,7 +478,7 @@ index 3a319cff..33aee5c9 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -457,6 +535,13 @@ public enum Protocol
+@@ -462,6 +540,13 @@ public enum Protocol
                          continue;
                      }
  
@@ -1078,18 +1078,18 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 94545251..4a7273f3 100644
+index 1375d1e2..34ab9a24 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -51,6 +51,7 @@ import net.md_5.bungee.protocol.packet.ScoreboardScore;
- import net.md_5.bungee.protocol.packet.SetCompression;
+@@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
+ import net.md_5.bungee.protocol.packet.ViewDistance;
  import net.md_5.bungee.util.BufUtil;
  import net.md_5.bungee.util.QuietException;
 +import network.ycc.waterdog.pe.packet.PEHandshake;
  
  @RequiredArgsConstructor
  public class ServerConnector extends PacketHandler
-@@ -98,7 +99,14 @@ public class ServerConnector extends PacketHandler
+@@ -99,7 +100,14 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -1105,7 +1105,7 @@ index 94545251..4a7273f3 100644
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -139,9 +147,16 @@ public class ServerConnector extends PacketHandler
+@@ -140,9 +148,16 @@ public class ServerConnector extends PacketHandler
              copiedHandshake.setHost( copiedHandshake.getHost() + user.getExtraDataInHandshake() );
          }
  
@@ -1122,7 +1122,7 @@ index 94545251..4a7273f3 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -156,6 +171,12 @@ public class ServerConnector extends PacketHandler
+@@ -157,6 +172,12 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -1135,7 +1135,7 @@ index 94545251..4a7273f3 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -186,6 +207,7 @@ public class ServerConnector extends PacketHandler
+@@ -187,6 +208,7 @@ public class ServerConnector extends PacketHandler
              user.getForgeClientHandler().resetHandshake();
          }
  
@@ -1143,7 +1143,7 @@ index 94545251..4a7273f3 100644
          throw CancelSendSignal.INSTANCE;
      }
  
-@@ -195,6 +217,28 @@ public class ServerConnector extends PacketHandler
+@@ -196,6 +218,28 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1172,7 +1172,7 @@ index 94545251..4a7273f3 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -245,6 +289,18 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +290,18 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
@@ -1191,7 +1191,7 @@ index 94545251..4a7273f3 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -259,6 +315,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +316,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1205,8 +1205,8 @@ index 94545251..4a7273f3 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -310,6 +373,16 @@ public class ServerConnector extends PacketHandler
-             user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getDifficulty(), login.getGameMode(), login.getLevelType() ) );
+@@ -315,6 +378,16 @@ public class ServerConnector extends PacketHandler
+             }
              user.setDimension( login.getDimension() );
  
 +            // Waterdog start
