@@ -42,7 +42,7 @@ To enable the Bedrock protocol, you need to create a new listener in config.yml 
 Each listener can only support Bedrock or Java, but you should be able to add any combination you want. For downstream
 servers, you will need to set *raknet* to true if using a native Bedrock server. If the server is using
 ProtocolSupport for Bedrock, you can leave this field false and Bedrock connections will run over TCP using
-the ProtocolSupport [encapsulation protocol](https://github.com/ProtocolSupport/ProtocolSupport/wiki/Encapsulation-Protocol). 
+the ProtocolSupport [encapsulation protocol](https://github.com/ProtocolSupport/ProtocolSupport/wiki/Encapsulation-Protocol), as well as normal Java version connections. 
 
 The servers also have a new *transfer_group* config option. This option is used to determine if 
 the server mechanic will use the Bedrock 'Server Transfer' packet, or if it will use
