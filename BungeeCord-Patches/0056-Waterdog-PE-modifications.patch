@@ -1,4 +1,4 @@
-From 7c19ccfbc8383238f122c7f9fdd6c7558a5486dd Mon Sep 17 00:00:00 2001
+From fc08e2eedc6c7a6d76186c26a9087314b13c4be8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -289,7 +289,7 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 87093807..1d721d67 100644
+index 87093807..6acc1f00 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 @@ -51,6 +51,16 @@ public enum Protocol
@@ -478,10 +478,10 @@ index 87093807..1d721d67 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -462,6 +540,13 @@ public enum Protocol
-                         continue;
-                     }
- 
+@@ -456,6 +534,13 @@ public enum Protocol
+                 ProtocolMapping mapping = mappings[mappingIndex];
+                 for ( int protocol : ProtocolConstants.SUPPORTED_VERSION_IDS )
+                 {
 +                    // Waterdog start - dont carry pe mappings into pc
 +                    while (protocol > 0 && mapping.protocolVersion < 0) {
 +                        if (mappingIndex + 1 < mappings.length) mapping = mappings[++mappingIndex];
@@ -489,9 +489,9 @@ index 87093807..1d721d67 100644
 +                    }
 +                    // Waterdog end
 +
-                     if ( mapping.protocolVersion < protocol && mappingIndex + 1 < mappings.length )
+                     if ( protocol < mapping.protocolVersion )
                      {
-                         // Mapping is non current, but the next one may be ok
+                         // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 index a0c0b5ca..90d8f992 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java

@@ -1,4 +1,4 @@
-From 2aa5fdb7efeb66d6b45762b0b12cf0193044d8d6 Mon Sep 17 00:00:00 2001
+From eeb1ecbdaa910dafd682860eb223cda902cfda74 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -740,15 +740,14 @@ index 00000000..3b922046
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..a0fdac06
+index 00000000..c1c50a17
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,90 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
 +import io.netty.buffer.ByteBuf;
-+import io.netty.buffer.ByteBufUtil;
 +import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -762,7 +761,6 @@ index 00000000..a0fdac06
 +import network.ycc.waterdog.api.metrics.RakNetMetrics;
 +
 +import java.util.function.BiConsumer;
-+import java.util.function.Consumer;
 +import java.util.zip.DataFormatException;
 +import java.util.zip.Deflater;
 +
@@ -792,6 +790,7 @@ index 00000000..a0fdac06
 +            final ByteBuf buf = (ByteBuf) msg;
 +            if (!buf.isReadable()) {
 +                buf.release();
++                promise.trySuccess();
 +                return;
 +            }
 +            try {
@@ -803,8 +802,8 @@ index 00000000..a0fdac06
 +            if (stashBuffer.readableBytes() > MAX_POOL_BYTES) {
 +                flushData(ctx);
 +            }
-+            promise.trySuccess();
 +            metricsIncrement(ctx, 1, RakNetMetrics::preCompressionPacket);
++            promise.trySuccess();
 +            return;
 +        }
 +        super.write(ctx, msg, promise);
