@@ -1,4 +1,4 @@
-From eeb1ecbdaa910dafd682860eb223cda902cfda74 Mon Sep 17 00:00:00 2001
+From 415b6d73db14a56f582bee908cefac20cd4c8b74 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1636,10 +1636,10 @@ index 00000000..249ec69b
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..08fc034f
+index 00000000..e828986d
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,111 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -1737,9 +1737,15 @@ index 00000000..08fc034f
 +        fakePEChunkData = new byte[serializer.readableBytes()];
 +        serializer.readBytes(fakePEChunkData);
 +
++        // 1.12 chunks
 +        chunkdata.resetReaderIndex();
-+        fakePEChunkData112 = new byte[chunkdata.readableBytes()];
-+        chunkdata.readBytes(fakePEChunkData112);
++        ByteBuf buf112 = Unpooled.buffer();
++        DefinedPacket.writeVarInt(buf112, chunkdata.readUnsignedByte());
++        buf112.writeByte(0);
++        DefinedPacket.writeFixedSizeVarInt(buf112, chunkdata.readableBytes());
++        buf112.writeBytes(chunkdata);
++        fakePEChunkData112 = new byte[buf112.readableBytes()];
++        buf112.readBytes(fakePEChunkData112);
 +
 +        Preconditions.checkArgument(fakePEChunkData.length > 0);
 +        Preconditions.checkArgument(fakePEChunkData112.length > 0);

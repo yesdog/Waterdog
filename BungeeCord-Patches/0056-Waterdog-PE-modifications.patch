@@ -1,4 +1,4 @@
-From fc08e2eedc6c7a6d76186c26a9087314b13c4be8 Mon Sep 17 00:00:00 2001
+From 3e9be05fb574c996e398a8367aa553f4e5cd90ba Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -493,7 +493,7 @@ index 87093807..6acc1f00 100644
                      {
                          // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index a0c0b5ca..90d8f992 100644
+index a0c0b5ca..a9832842 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -6,6 +6,14 @@ import java.util.List;
@@ -501,12 +501,12 @@ index a0c0b5ca..90d8f992 100644
  {
  
 +    // Waterdog start
-+    public static final int PE_PROTOCOL_OFFSET = 1000;
++    public static final int PE_PROTOCOL_OFFSET = 2000;
 +    public static final int MINECRAFT_PE_1_8 = 313 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_9 = 332 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_10 = 340 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
-+    public static final int MINECRAFT_PE_1_12 = 360 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_12 = 361 - PE_PROTOCOL_OFFSET;
 +    // Waterdog end
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
@@ -1078,7 +1078,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..34ab9a24 100644
+index 1375d1e2..3d4432da 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1172,7 +1172,7 @@ index 1375d1e2..34ab9a24 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -246,6 +290,18 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +290,19 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
@@ -1185,13 +1185,14 @@ index 1375d1e2..34ab9a24 100644
 +                        (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(),
 +                        login.getViewDistance(), login.isReducedDebugInfo(),
 +                        ((network.ycc.waterdog.pe.packet.PELogin) login).getTailPayload() );
++                ((network.ycc.waterdog.pe.packet.PELogin) login).setTailPayload(null);
 +            }
 +            // Waterdog end
 +
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -260,6 +316,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +317,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1205,7 +1206,7 @@ index 1375d1e2..34ab9a24 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -315,6 +378,16 @@ public class ServerConnector extends PacketHandler
+@@ -315,6 +379,16 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
