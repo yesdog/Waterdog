@@ -1,4 +1,4 @@
-From e1c70c2fdcf0f48fa36cc268581cd34de526f90a Mon Sep 17 00:00:00 2001
+From 853febbfc052e425318c22506cff4a1e494b8c10 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -947,53 +947,8 @@ index dbb24e22..25d6110b 100644
          buf.writeInt( dimension );
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
-diff --git a/proxy/pom.xml b/proxy/pom.xml
-index bcc625cd..8a71cde3 100644
---- a/proxy/pom.xml
-+++ b/proxy/pom.xml
-@@ -22,6 +22,15 @@
-         <maven.deploy.skip>true</maven.deploy.skip>
-     </properties>
- 
-+    <!-- Waterdog start -->
-+    <repositories>
-+        <repository>
-+            <id>codemc-repo</id>
-+            <url>https://repo.codemc.org/repository/maven-public</url>
-+        </repository>
-+    </repositories>
-+    <!-- Waterdog end -->
-+
-     <dependencies>
-         <dependency>
-             <groupId>com.flowpowered</groupId>
-@@ -118,6 +127,24 @@
-             <scope>runtime</scope>
-         </dependency>
-         <!-- Waterfall end -->
-+
-+        <!-- Waterdog start -->
-+        <dependency>
-+            <groupId>com.nimbusds</groupId>
-+            <artifactId>nimbus-jose-jwt</artifactId>
-+            <version>5.2</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>org.apache.commons</groupId>
-+            <artifactId>commons-lang3</artifactId>
-+            <version>3.0</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>network.ycc</groupId>
-+            <artifactId>raknet</artifactId>
-+            <version>0.6-SNAPSHOT</version>
-+        </dependency>
-+        <!-- Waterdog end -->
-     </dependencies>
- 
-     <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..ba34c177 100644
+index 615c7247..69232e7d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -1004,7 +959,7 @@ index 615c7247..ba34c177 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -338,8 +339,23 @@ public class BungeeCord extends ProxyServer
+@@ -338,8 +339,22 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1015,7 +970,6 @@ index 615c7247..ba34c177 100644
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
 +                    .childAttr(PipelineUtils.LISTENER, info)
-+                    .childOption(network.ycc.raknet.RakNet.USER_DATA_ID, 0xFE)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
 +                    .childHandler(network.ycc.waterdog.pe.PEPipelineUtils.SERVER_CHILD)
 +                    .group(bossEventLoopGroup, workerEventLoopGroup)
@@ -1029,7 +983,7 @@ index 615c7247..ba34c177 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -635,7 +651,7 @@ public class BungeeCord extends ProxyServer
+@@ -635,7 +650,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1038,7 +992,7 @@ index 615c7247..ba34c177 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -656,9 +672,9 @@ public class BungeeCord extends ProxyServer
+@@ -656,9 +671,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override
@@ -1224,7 +1178,7 @@ index 1375d1e2..3d4432da 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..044ed4c1 100644
+index 15f7c5b5..7e571ebc 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -152,6 +152,13 @@ public final class UserConnection implements ProxiedPlayer
@@ -1259,7 +1213,7 @@ index 15f7c5b5..044ed4c1 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -350,10 +368,26 @@ public final class UserConnection implements ProxiedPlayer
+@@ -350,10 +368,28 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1268,8 +1222,10 @@ index 15f7c5b5..044ed4c1 100644
 +                    if (!target.isRakNet()) {
 +                        ch.pipeline().addLast(new protocolsupport.protocol.connection.PSInitEncapsulation(getAddress(), false));
 +                    } else {
-+                        ch.pipeline().addLast(network.ycc.waterdog.pe.PECompressor.NAME, new network.ycc.waterdog.pe.PECompressor());
-+                        ch.pipeline().addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
++                        ch.pipeline()
++                        .addLast(network.ycc.raknet.pipeline.UserDataCodec.NAME, network.ycc.waterdog.pe.PEPipelineUtils.MC_USER_DATA_CODEC)
++                        .addLast(network.ycc.waterdog.pe.PECompressor.NAME, new network.ycc.waterdog.pe.PECompressor())
++                        .addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
 +                    }
 +                }
 +                // Waterdog end
@@ -1286,7 +1242,7 @@ index 15f7c5b5..044ed4c1 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +421,24 @@ public final class UserConnection implements ProxiedPlayer
+@@ -387,12 +423,23 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1304,7 +1260,6 @@ index 15f7c5b5..044ed4c1 100644
 +                .channelFactory(() -> new network.ycc.raknet.client.channel.RakNetClientChannel(PipelineUtils.getDatagramChannel()))
 +                .group(ch.getHandle().eventLoop())
 +                .handler( initializer )
-+                .option(network.ycc.raknet.RakNet.USER_DATA_ID, 0xFE)
 +                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout())
 +                .remoteAddress(target.getAddress());
 +        }
@@ -1312,7 +1267,7 @@ index 15f7c5b5..044ed4c1 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,6 +650,10 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,6 +651,10 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1323,7 +1278,7 @@ index 15f7c5b5..044ed4c1 100644
      }
  
      @Override
-@@ -719,6 +769,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -719,6 +770,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {

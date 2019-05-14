@@ -1,4 +1,4 @@
-From 1e48f6e1011d200eeef3e5e713dbbd28d01a6ec9 Mon Sep 17 00:00:00 2001
+From 7687716d6732e6c3ec349d6cba65be6bb7bc1006 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -584,10 +584,10 @@ index 2493fc17..2ed54c98 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f15927ec..bcc625cd 100644
+index f15927ec..0b4fc522 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
-@@ -4,18 +4,18 @@
+@@ -4,24 +4,33 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -611,7 +611,22 @@ index f15927ec..bcc625cd 100644
      <description>Proxy component of the Elastic Portal Suite</description>
  
      <properties>
-@@ -63,32 +63,32 @@
+         <maven.deploy.skip>true</maven.deploy.skip>
+     </properties>
+ 
++    <!-- Waterdog start -->
++    <repositories>
++        <repository>
++            <id>codemc-repo</id>
++            <url>https://repo.codemc.org/repository/maven-public</url>
++        </repository>
++    </repositories>
++    <!-- Waterdog end -->
++
+     <dependencies>
+         <dependency>
+             <groupId>com.flowpowered</groupId>
+@@ -63,32 +72,32 @@
              <scope>compile</scope>
          </dependency>
          <dependency>
@@ -654,6 +669,36 @@ index f15927ec..bcc625cd 100644
              <version>${project.version}</version>
              <scope>compile</scope>
          </dependency>
+@@ -118,6 +127,29 @@
+             <scope>runtime</scope>
+         </dependency>
+         <!-- Waterfall end -->
++
++        <!-- Waterdog start -->
++        <dependency>
++            <groupId>com.nimbusds</groupId>
++            <artifactId>nimbus-jose-jwt</artifactId>
++            <version>5.2</version>
++        </dependency>
++        <dependency>
++            <groupId>org.apache.commons</groupId>
++            <artifactId>commons-lang3</artifactId>
++            <version>3.0</version>
++        </dependency>
++        <dependency>
++            <groupId>network.ycc</groupId>
++            <artifactId>netty-raknet-server</artifactId>
++            <version>0.7-SNAPSHOT</version>
++        </dependency>
++        <dependency>
++            <groupId>network.ycc</groupId>
++            <artifactId>netty-raknet-client</artifactId>
++            <version>0.7-SNAPSHOT</version>
++        </dependency>
++        <!-- Waterdog end -->
+     </dependencies>
+ 
+     <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 index 8acdc22d..615c7247 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java

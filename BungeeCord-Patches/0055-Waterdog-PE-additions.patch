@@ -1,4 +1,4 @@
-From 415b6d73db14a56f582bee908cefac20cd4c8b74 Mon Sep 17 00:00:00 2001
+From 39c75d3736035fa9ea35c341e511b416aeab091b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1373,14 +1373,13 @@ index 00000000..e954144f
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..708b8fb5
+index 00000000..5ef25093
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,88 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.channel.Channel;
-+import io.netty.channel.ChannelHandler;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelInboundHandlerAdapter;
 +import io.netty.channel.ChannelInitializer;
@@ -1394,20 +1393,25 @@ index 00000000..708b8fb5
 +import net.md_5.bungee.api.ProxyServer;
 +import net.md_5.bungee.api.config.ListenerInfo;
 +import net.md_5.bungee.netty.PipelineUtils;
-+
 +import net.md_5.bungee.protocol.MinecraftDecoder;
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +import net.md_5.bungee.query.QueryHandler;
-+import network.ycc.raknet.server.RakNetServer;
++
++import network.ycc.raknet.pipeline.UserDataCodec;
++
++import network.ycc.waterdog.api.event.UserChannelTapEvent;
 +
 +import java.util.concurrent.TimeUnit;
 +import java.util.logging.Level;
 +
 +public class PEPipelineUtils {
++    public static final UserDataCodec MC_USER_DATA_CODEC = new UserDataCodec(0xFE);
++
 +    public static final ChannelInitializer<Channel> SERVER_CHILD = new ChannelInitializer<Channel>() {
 +        protected void initChannel(Channel channel) {
 +            ChannelPipeline pipeline = channel.pipeline();
 +            pipeline
++            .addLast(UserDataCodec.NAME, MC_USER_DATA_CODEC)
 +            .addLast(PECompressor.NAME, new PECompressor())
 +            .addLast(PEDecompressor.NAME, new PEDecompressor())
 +            .addLast(PEDimSwitchLock.NAME, new PEDimSwitchLock())
@@ -1456,14 +1460,14 @@ index 00000000..708b8fb5
 +                });
 +            });
 +            channel.pipeline()
-+                    .addLast(new PEProxyServerInfoHandler(bungee, listener))
-+                    .addLast(new QueryHandler(bungee, listener));
++            .addLast(new PEProxyServerInfoHandler(bungee, listener))
++            .addLast(new QueryHandler(bungee, listener));
 +        }
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java
 new file mode 100644
-index 00000000..4e573ed9
+index 00000000..59a9c22a
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java
 @@ -0,0 +1,18 @@
@@ -1482,17 +1486,18 @@ index 00000000..4e573ed9
 +    protected void channelRead0(ChannelHandlerContext ctx, Pong pong) {
 +        super.channelRead0(ctx, pong);
 +        final RakNet.Config config = (RakNet.Config) ctx.channel().config();
-+        ctx.fireChannelRead(new PacketWrapper(new KeepAlive(config.getRTT()), Unpooled.EMPTY_BUFFER));
++        ctx.fireChannelRead(new PacketWrapper(new KeepAlive(config.getRTTNanos()), Unpooled.EMPTY_BUFFER));
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 new file mode 100644
-index 00000000..249ec69b
+index 00000000..6e6c1750
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
-@@ -0,0 +1,143 @@
+@@ -0,0 +1,146 @@
 +package network.ycc.waterdog.pe;
 +
++import io.netty.buffer.ByteBuf;
 +import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.socket.DatagramPacket;
@@ -1507,10 +1512,10 @@ index 00000000..249ec69b
 +import net.md_5.bungee.api.event.ProxyPingEvent;
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +
++import network.ycc.raknet.RakNet;
 +import network.ycc.raknet.packet.Packet;
 +import network.ycc.raknet.packet.UnconnectedPing;
 +import network.ycc.raknet.packet.UnconnectedPong;
-+import network.ycc.raknet.server.channel.RakNetServerChannel;
 +import network.ycc.raknet.server.pipeline.UdpPacketHandler;
 +
 +import java.net.InetSocketAddress;
@@ -1529,8 +1534,7 @@ index 00000000..249ec69b
 +    }
 +
 +    protected void handle(ChannelHandlerContext ctx, InetSocketAddress sender, UnconnectedPing ping) {
-+        final RakNetServerChannel channel = (RakNetServerChannel) ctx.channel();
-+        final long serverId = channel.config().getServerId();
++        final RakNet.Config config = RakNet.config(ctx);
 +        final long clientTime = ping.getClientTime(); //must ditch references to ping
 +        final ServerPing.Protocol protocol = new ServerPing.Protocol(
 +                "", //leave version blank, we do multi-version.
@@ -1555,15 +1559,18 @@ index 00000000..249ec69b
 +                        result.getVersion().getName(),
 +                        String.valueOf(result.getPlayers().getOnline()),
 +                        String.valueOf(result.getPlayers().getMax()),
-+                        String.valueOf(serverId)
++                        String.valueOf(config.getServerId())
 +                );
 +            }
-+            final Packet pong = new UnconnectedPong(clientTime, serverId, response);
++            final Packet pong = new UnconnectedPong(clientTime, config.getServerId(), config.getMagic(), response);
++            final ByteBuf tmpBuf = ctx.alloc().ioBuffer(pong.sizeHint());
 +            try {
-+                ctx.writeAndFlush(new DatagramPacket(pong.createData(ctx.alloc()), sender))
++                config.getCodec().encode(pong, tmpBuf);
++                ctx.writeAndFlush(new DatagramPacket(tmpBuf.retain(), sender))
 +                        .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 +            } finally {
-+                ReferenceCountUtil.release(pong);
++                ReferenceCountUtil.safeRelease(pong);
++                tmpBuf.release();
 +            }
 +        });
 +        bungee.getPluginManager().callEvent(ev);
