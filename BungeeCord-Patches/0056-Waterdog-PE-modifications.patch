@@ -1,4 +1,4 @@
-From 3e9be05fb574c996e398a8367aa553f4e5cd90ba Mon Sep 17 00:00:00 2001
+From e1c70c2fdcf0f48fa36cc268581cd34de526f90a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -493,7 +493,7 @@ index 87093807..6acc1f00 100644
                      {
                          // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index a0c0b5ca..a9832842 100644
+index eea7ed98..6c2e182a 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -6,6 +6,14 @@ import java.util.List;
@@ -511,9 +511,9 @@ index a0c0b5ca..a9832842 100644
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -22,6 +30,13 @@ public class ProtocolConstants
-     public static final int MINECRAFT_1_13_2 = 404;
+@@ -23,6 +31,13 @@ public class ProtocolConstants
      public static final int MINECRAFT_1_14 = 477;
+     public static final int MINECRAFT_1_14_1 = 480;
      public static final List<String> SUPPORTED_VERSIONS = Arrays.asList(
 +            // Waterdog start
 +            "PE-1.8.x",
@@ -525,7 +525,7 @@ index a0c0b5ca..a9832842 100644
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -31,6 +46,13 @@ public class ProtocolConstants
+@@ -32,6 +47,13 @@ public class ProtocolConstants
              "1.14.x"
      );
      public static final List<Integer> SUPPORTED_VERSION_IDS = Arrays.asList(
@@ -539,7 +539,7 @@ index a0c0b5ca..a9832842 100644
              ProtocolConstants.MINECRAFT_1_8,
              ProtocolConstants.MINECRAFT_1_9,
              ProtocolConstants.MINECRAFT_1_9_1,
-@@ -50,14 +72,22 @@ public class ProtocolConstants
+@@ -52,14 +74,22 @@ public class ProtocolConstants
  
      public static final boolean isBeforeOrEq(int before, int other)
      {
@@ -1545,7 +1545,7 @@ index 51d0c6cf..24cb79d3 100644
      public void handle(Chat chat) throws Exception
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index f1ed6050..881d1281 100644
+index 6ebbc04b..17874777 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -27,6 +27,11 @@ public abstract class EntityMap
