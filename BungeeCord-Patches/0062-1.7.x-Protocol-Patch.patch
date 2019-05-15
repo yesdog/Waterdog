@@ -1,4 +1,4 @@
-From 165f6834da72db1aaf9fb328b2d7d85f88299649 Mon Sep 17 00:00:00 2001
+From 8debf1ecdaf57f554a0bcd3cc3de11d13a07db59 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] 1.7.x Protocol Patch
@@ -101,10 +101,10 @@ index 00000000..90064112
 +    }
 +}
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index e5797181..85fc8834 100644
+index dc63f0a6..36c5901a 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -297,6 +297,11 @@ public abstract class DefinedPacket
+@@ -274,6 +274,11 @@ public abstract class DefinedPacket
          read( buf );
      }
  
@@ -116,7 +116,7 @@ index e5797181..85fc8834 100644
      public void write(ByteBuf buf)
      {
          throw new UnsupportedOperationException( "Packet must implement write method" );
-@@ -307,6 +312,11 @@ public abstract class DefinedPacket
+@@ -284,6 +289,11 @@ public abstract class DefinedPacket
          write( buf );
      }
  
@@ -450,7 +450,7 @@ index 6acc1f00..7ebac7be 100644
  
              Constructor<? extends DefinedPacket> constructor = protocolData.packetConstructors[id];
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index 6c2e182a..b009f946 100644
+index b563e1e7..1ed4c9c2 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -14,6 +14,8 @@ public class ProtocolConstants
@@ -564,7 +564,7 @@ index 4485e26f..8ec5cdf1 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
-index b70cf14a..44a31f20 100644
+index 49d13a34..f3cd25cc 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
 @@ -1,5 +1,7 @@
@@ -946,7 +946,7 @@ index 92bacc7c..c919f961 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
-index 38a0a488..eb882a80 100644
+index 421fac14..488d6ec5 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 @@ -3,6 +3,8 @@ package net.md_5.bungee.protocol.packet;

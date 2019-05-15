@@ -1,4 +1,4 @@
-From 39c75d3736035fa9ea35c341e511b416aeab091b Mon Sep 17 00:00:00 2001
+From cea153f780d07b021e9d78a7d48689733400dfd4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -235,7 +235,7 @@ index 00000000..3ff55f86
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java
 new file mode 100644
-index 00000000..b5abc3d5
+index 00000000..e0c0b55f
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELocalPlayerInitialized.java
 @@ -0,0 +1,34 @@
@@ -265,7 +265,7 @@ index 00000000..b5abc3d5
 +
 +    @Override
 +    public void write(ByteBuf buf) {
-+        writeVarLong(buf, playerId);
++        writeVarLong(playerId, buf);
 +    }
 +
 +    @Override
@@ -275,7 +275,7 @@ index 00000000..b5abc3d5
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..3132ffc6
+index 00000000..fd4311d3
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 @@ -0,0 +1,63 @@
@@ -326,19 +326,19 @@ index 00000000..3132ffc6
 +
 +    @Override
 +    public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion) {
-+        writeSVarLong(buf, getEntityId());
-+        writeVarLong(buf, getEntityId());
-+        writeSVarInt(buf, getGameMode());
++        writeSVarLong(getEntityId(), buf);
++        writeVarLong(getEntityId(), buf);
++        writeSVarInt(getGameMode(), buf);
 +        buf.writeFloatLE(spawnX); //player x
 +        buf.writeFloatLE(spawnY); //player y
 +        buf.writeFloatLE(spawnZ); //player z
 +        buf.writeFloatLE(0); //player pitch
 +        buf.writeFloatLE(0); //player yaw
-+        writeSVarInt(buf, 0); //seed
-+        writeSVarInt(buf, PEDataValues.getPeDimensionId(getDimension())); //world dimension
-+        writeSVarInt(buf, 1); //world type (1 - infinite)
-+        writeSVarInt(buf, 0); //world gamemode
-+        writeSVarInt(buf, getDifficulty()); //world difficulty
++        writeSVarInt(0, buf); //seed
++        writeSVarInt(PEDataValues.getPeDimensionId(getDimension()), buf); //world dimension
++        writeSVarInt(1, buf); //world type (1 - infinite)
++        writeSVarInt(0, buf); //world gamemode
++        writeSVarInt(getDifficulty(), buf); //world difficulty
 +        buf.writeBytes(tailPayload);
 +    }
 +}
@@ -473,7 +473,7 @@ index 00000000..0948f2c4
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java
 new file mode 100644
-index 00000000..42d63c02
+index 00000000..c94bd6f0
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java
 @@ -0,0 +1,32 @@
@@ -498,10 +498,10 @@ index 00000000..42d63c02
 +    @Override
 +    public void write(ByteBuf buf) {
 +        buf.writeBoolean(false); // required
-+        writeVarInt(buf, 0); //beh packs count
-+        writeVarInt(buf, 0); //res packs count
-+        writeVarInt(buf, 0); //?
-+        writeVarInt(buf, 0); //?
++        writeVarInt(0, buf); //beh packs count
++        writeVarInt(0, buf); //res packs count
++        writeVarInt(0, buf); //?
++        writeVarInt(0, buf); //?
 +    }
 +
 +    @Override
@@ -608,7 +608,7 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..3b922046
+index 00000000..863645af
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 @@ -0,0 +1,126 @@
@@ -725,17 +725,17 @@ index 00000000..3b922046
 +    };
 +
 +    static final Rewrite SK_SVARINT = (from, to, oldId, newId) -> {
-+        DefinedPacket.writeSVarInt(to, DefinedPacket.readSVarInt(from));
++        DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
 +    };
 +
 +    static final Rewrite VARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readVarLong(from);
-+        DefinedPacket.writeVarLong(to, id == oldId ? newId : (id == newId ? oldId : id));
++        DefinedPacket.writeVarLong(id == oldId ? newId : (id == newId ? oldId : id), to);
 +    };
 +
 +    static final Rewrite SVARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readSVarLong(from);
-+        DefinedPacket.writeSVarLong(to, id == oldId ? newId : (id == newId ? oldId : id));
++        DefinedPacket.writeSVarLong(id == oldId ? newId : (id == newId ? oldId : id), to);
 +    };
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
@@ -1643,7 +1643,7 @@ index 00000000..6e6c1750
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..e828986d
+index 00000000..77124183
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 @@ -0,0 +1,111 @@
@@ -1685,11 +1685,11 @@ index 00000000..e828986d
 +
 +    public static void injectChunkPublisherUpdate(Channel channel, int x, int y, int z) {
 +        ByteBuf publisherUpdate = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(publisherUpdate, 0x79); //CHUNK_PUBLISHER_UPDATE_PACKET
-+        DefinedPacket.writeSVarInt(publisherUpdate, x);
-+        DefinedPacket.writeVarInt(publisherUpdate, y);
-+        DefinedPacket.writeSVarInt(publisherUpdate, z);
-+        DefinedPacket.writeVarInt(publisherUpdate, 300);
++        DefinedPacket.writeVarInt(0x79, publisherUpdate); //CHUNK_PUBLISHER_UPDATE_PACKET
++        DefinedPacket.writeSVarInt(x, publisherUpdate);
++        DefinedPacket.writeVarInt(y, publisherUpdate);
++        DefinedPacket.writeSVarInt(z, publisherUpdate);
++        DefinedPacket.writeVarInt(300, publisherUpdate);
 +        channel.write(publisherUpdate);
 +    }
 +
@@ -1698,9 +1698,9 @@ index 00000000..e828986d
 +        for (int x = -2; x <= 2; x++) {
 +            for (int z = -2; z <= 2; z++) {
 +                ByteBuf buffer = Unpooled.buffer();
-+                DefinedPacket.writeVarInt(buffer, 0x3A); //PLAY_CHUNK_DATA
-+                DefinedPacket.writeSVarInt(buffer, x);
-+                DefinedPacket.writeSVarInt(buffer, z);
++                DefinedPacket.writeVarInt(0x3A, buffer); //PLAY_CHUNK_DATA
++                DefinedPacket.writeSVarInt(x, buffer);
++                DefinedPacket.writeSVarInt(z, buffer);
 +                if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
 +                    buffer.writeBytes(fakePEChunkData112);
 +                } else {
@@ -1710,14 +1710,14 @@ index 00000000..e828986d
 +            }
 +        }
 +        ByteBuf lockPacket = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(lockPacket, EXT_PS_AWAIT_DIM_SWITCH_ACK_ID);
++        DefinedPacket.writeVarInt(EXT_PS_AWAIT_DIM_SWITCH_ACK_ID, lockPacket);
 +        channel.writeAndFlush(lockPacket);
 +    }
 +
 +    public static void injectGameMode(Channel channel, int gamemode) {
 +        ByteBuf gameModeSerializer = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(gameModeSerializer, 0x3E); //PLAY_PLAYER_GAME_TYPE
-+        DefinedPacket.writeSVarInt(gameModeSerializer, gamemode);
++        DefinedPacket.writeVarInt(0x3E, gameModeSerializer); //PLAY_PLAYER_GAME_TYPE
++        DefinedPacket.writeSVarInt(gamemode, gameModeSerializer);
 +        channel.writeAndFlush(gameModeSerializer);
 +    }
 +
@@ -1732,14 +1732,14 @@ index 00000000..e828986d
 +        chunkdata.writeByte(1); //Zero blockstorages :O
 +        chunkdata.writeByte((1 << 1) | 1);  //Runtimeflag and palette id.
 +        chunkdata.writeZero(512);
-+        DefinedPacket.writeSVarInt(chunkdata, 1); //Palette size
-+        DefinedPacket.writeSVarInt(chunkdata, 0); //Air
++        DefinedPacket.writeSVarInt(1, chunkdata); //Palette size
++        DefinedPacket.writeSVarInt(0, chunkdata); //Air
 +        chunkdata.writeZero(512); //heightmap.
 +        chunkdata.writeZero(256); //Biomedata.
 +        chunkdata.writeByte(0); //borders
 +
 +        chunkdata.markReaderIndex();
-+        DefinedPacket.writeFixedSizeVarInt(serializer, chunkdata.readableBytes());
++        DefinedPacket.writeVarInt(chunkdata.readableBytes(), serializer);
 +        serializer.writeBytes(chunkdata);
 +        fakePEChunkData = new byte[serializer.readableBytes()];
 +        serializer.readBytes(fakePEChunkData);
@@ -1747,9 +1747,9 @@ index 00000000..e828986d
 +        // 1.12 chunks
 +        chunkdata.resetReaderIndex();
 +        ByteBuf buf112 = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(buf112, chunkdata.readUnsignedByte());
++        DefinedPacket.writeVarInt(chunkdata.readUnsignedByte(), buf112);
 +        buf112.writeByte(0);
-+        DefinedPacket.writeFixedSizeVarInt(buf112, chunkdata.readableBytes());
++        DefinedPacket.writeVarInt(chunkdata.readableBytes(), buf112);
 +        buf112.writeBytes(chunkdata);
 +        fakePEChunkData112 = new byte[buf112.readableBytes()];
 +        buf112.readBytes(fakePEChunkData112);
@@ -1760,7 +1760,7 @@ index 00000000..e828986d
 +}
 diff --git a/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
 new file mode 100644
-index 00000000..331c1b29
+index 00000000..78490b27
 --- /dev/null
 +++ b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
 @@ -0,0 +1,40 @@
@@ -1788,13 +1788,13 @@ index 00000000..331c1b29
 +    public void channelActive(ChannelHandlerContext ctx) throws Exception {
 +        final ByteBuf to = ctx.alloc().heapBuffer();
 +        to.writeByte(HANDSHAKE_ID);
-+        DefinedPacket.writeVarInt(to, CURRENT_VERSION);
++        DefinedPacket.writeVarInt(CURRENT_VERSION, to);
 +        if (address != null) {
 +            final byte[] addr = address.getAddress().getAddress();
 +            to.writeBoolean(true);
-+            DefinedPacket.writeVarInt(to, addr.length);
++            DefinedPacket.writeVarInt(addr.length, to);
 +            to.writeBytes(addr);
-+            DefinedPacket.writeVarInt(to, address.getPort());
++            DefinedPacket.writeVarInt(address.getPort(), to);
 +        } else {
 +            to.writeBoolean(false);
 +        }

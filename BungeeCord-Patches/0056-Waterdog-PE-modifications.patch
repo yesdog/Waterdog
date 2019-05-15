@@ -1,4 +1,4 @@
-From 4aa92a8d167cb45157af743592ae3dea7f299b26 Mon Sep 17 00:00:00 2001
+From c2055e696e2239a2f73f4adbda361113e1ee42fd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -165,29 +165,20 @@ index e4f14974..24c236d6 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index 9951c1f9..e5797181 100644
+index 9951c1f9..dc63f0a6 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -10,6 +10,70 @@ import lombok.RequiredArgsConstructor;
+@@ -10,6 +10,47 @@ import lombok.RequiredArgsConstructor;
  @RequiredArgsConstructor
  public abstract class DefinedPacket
  {
 +    // Waterdog start
-+    public static void writeVarLong(ByteBuf to, long varlong) {
++    public static void writeVarLong(long varlong, ByteBuf to) {
 +        while ((varlong & 0xFFFFFFFFFFFFFF80L) != 0x0L) {
 +            to.writeByte((int) (varlong & 0x7FL) | 0x80);
 +            varlong >>>= 7;
 +        }
 +        to.writeByte((int) varlong);
-+    }
-+
-+    public static long readSVarLong(ByteBuf from) {
-+        long varlong = readVarLong(from);
-+        return (varlong >> 1) ^ -(varlong & 1);
-+    }
-+
-+    public static void writeSVarLong(ByteBuf to, long varlong) {
-+        writeVarLong(to, (varlong << 1) ^ (varlong >> 63));
 +    }
 +
 +    public static long readVarLong(ByteBuf from) {
@@ -204,36 +195,22 @@ index 9951c1f9..e5797181 100644
 +        return varlong;
 +    }
 +
++    public static long readSVarLong(ByteBuf from) {
++        long varlong = readVarLong(from);
++        return (varlong >> 1) ^ -(varlong & 1);
++    }
++
++    public static void writeSVarLong(long varlong, ByteBuf to) {
++        writeVarLong((varlong << 1) ^ (varlong >> 63), to);
++    }
++
 +    public static int readSVarInt(ByteBuf from) {
 +        int varint = readVarInt(from);
 +        return (varint >> 1) ^ -(varint & 1);
 +    }
 +
-+    public static void writeVarInt(ByteBuf to, int i) {
-+        //TODO: ffs.... fix this later
-+        writeVarInt(i, to);
-+    }
-+
-+    public static void writeSVarInt(ByteBuf to, int varint) {
-+        writeVarInt(to, (varint << 1) ^ (varint >> 31));
-+    }
-+
-+    public static void writeFixedSizeVarInt(ByteBuf to, int i) {
-+        int writerIndex = to.writerIndex();
-+        while ((i & 0xFFFFFF80) != 0x0) {
-+            to.writeByte(i | 0x80);
-+            i >>>= 7;
-+        }
-+        int paddingBytes = 5 - (to.writerIndex() - writerIndex) - 1;
-+        if (paddingBytes == 0) {
-+            to.writeByte(i);
-+        } else {
-+            to.writeByte(i | 0x80);
-+            while (--paddingBytes > 0) {
-+                to.writeByte(0x80);
-+            }
-+            to.writeByte(0);
-+        }
++    public static void writeSVarInt(int varint, ByteBuf to) {
++        writeVarInt((varint << 1) ^ (varint >> 31), to);
 +    }
 +    // Waterdog end
  
@@ -563,7 +540,7 @@ index eea7ed98..b563e1e7 100644
      {
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
-index a26fba6e..d73b9883 100644
+index a26fba6e..fec892ec 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/BossBar.java
 @@ -32,6 +32,64 @@ public class BossBar extends DefinedPacket
@@ -637,7 +614,7 @@ index a26fba6e..d73b9883 100644
      {
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(protocolVersion)) {
-+            writeSVarLong(buf, uuid.getLeastSignificantBits());
++            writeSVarLong(uuid.getLeastSignificantBits(), buf);
 +            switch (action) {
 +                // Add
 +                case 0:
@@ -747,7 +724,7 @@ index 0ded6739..4485e26f 100644
          if (direction == ProtocolConstants.Direction.TO_CLIENT) {
              writeString(this.message, Short.MAX_VALUE * 8 + 8, buf);
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
-index 9daf7a73..b70cf14a 100644
+index 9daf7a73..49d13a34 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/ClientSettings.java
 @@ -27,6 +27,13 @@ public class ClientSettings extends DefinedPacket
@@ -770,7 +747,7 @@ index 9daf7a73..b70cf14a 100644
      {
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(protocolVersion)) {
-+            writeSVarInt(buf, viewDistance);
++            writeSVarInt(viewDistance, buf);
 +            return;
 +        }
 +        // Waterdog end
@@ -886,7 +863,7 @@ index 2aa5ad58..fac91c32 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
-index 17e12655..38a0a488 100644
+index 17e12655..421fac14 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/PluginMessage.java
 @@ -82,7 +82,8 @@ public class PluginMessage extends DefinedPacket
@@ -905,12 +882,12 @@ index 17e12655..38a0a488 100644
      {
 -        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( tag ) : tag, buf );
 +        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 || ProtocolConstants.isPE(protocolVersion) ) ? MODERNISE.apply( tag ) : tag, buf ); // Waterdog
-+        if (ProtocolConstants.isPE(protocolVersion)) writeVarInt(buf, data.length); // Waterdog - varint lengths
++        if (ProtocolConstants.isPE(protocolVersion)) writeVarInt(data.length, buf); // Waterdog - varint lengths
          buf.writeBytes( data );
      }
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
-index dbb24e22..25d6110b 100644
+index dbb24e22..112c7229 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Respawn.java
 @@ -24,6 +24,16 @@ public class Respawn extends DefinedPacket
@@ -936,7 +913,7 @@ index dbb24e22..25d6110b 100644
      {
 +        // Waterdog start
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(protocolVersion)) {
-+            writeSVarInt(buf, network.ycc.waterdog.pe.PEDataValues.getPeDimensionId(dimension));
++            writeSVarInt(network.ycc.waterdog.pe.PEDataValues.getPeDimensionId(dimension), buf);
 +            buf.writeFloatLE(0); //x
 +            buf.writeFloatLE(300); //y
 +            buf.writeFloatLE(0); //z
