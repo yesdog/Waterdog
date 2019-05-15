@@ -1,7 +1,7 @@
-From 8debf1ecdaf57f554a0bcd3cc3de11d13a07db59 Mon Sep 17 00:00:00 2001
+From 879680d03f2fc124a419e29d460b88af693150e7 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
-Subject: [PATCH] 1.7.x Protocol Patch
+Subject: [PATCH] Travertine 1.7.x Protocol Patch
 
 
 diff --git a/protocol/src/main/java/io/github/waterfallmc/travertine/protocol/MultiVersionPacketV17.java b/protocol/src/main/java/io/github/waterfallmc/travertine/protocol/MultiVersionPacketV17.java
