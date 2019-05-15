@@ -1,4 +1,4 @@
-From 853febbfc052e425318c22506cff4a1e494b8c10 Mon Sep 17 00:00:00 2001
+From 4aa92a8d167cb45157af743592ae3dea7f299b26 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -493,7 +493,7 @@ index 87093807..6acc1f00 100644
                      {
                          // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index eea7ed98..6c2e182a 100644
+index eea7ed98..b563e1e7 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -6,6 +6,14 @@ import java.util.List;
@@ -543,13 +543,13 @@ index eea7ed98..6c2e182a 100644
  
      public static final boolean isBeforeOrEq(int before, int other)
      {
-+            if (!(isPE(before) && isPE(other))) return false; // Waterdog - no compare PE
++            if (isPE(before) != isPE(other)) return false; // Waterdog - no compare PE
              return before <= other;
      }
  
      public static final boolean isAfterOrEq(int after, int other)
      {
-+            if (!(isPE(after) && isPE(other))) return false; // Waterdog - no compare PE
++            if (isPE(after) != isPE(other)) return false; // Waterdog - no compare PE
              return after >= other;
      }
  
