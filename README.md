@@ -11,7 +11,7 @@ Waterdog provides native support for the Minecraft Bedrock protocols along with 
 It is capable of using the ProtocolSupport PE encapsulation protocol over TCP, or it can use the native RakNet 
 Bedrock protocol for traditional downstream Bedrock servers such as Nukkit, Pocketmine, 
 Bedrock Alpha Server, MiNET, and others. Waterdog also includes the [Travertine](https://github.com/papermc/travertine)
-patche for java 1.7.x support. 
+patch for Java 1.7.x support. 
 
 Waterdog supports online and offline authorization for Bedrock clients. Downstream servers are generally
 required to run in offline mode, having authorization secured through Waterdog. 
@@ -36,7 +36,7 @@ Waterfall will still track upstream BungeeCord and merge changes as needed.
 
 *Why fork Waterfall?*
 
-PE support is a pretty crazy addition to Waterfall.
+PE support is a pretty crazy addition to Waterfall, and it's best to still have all the amazing features of Waterfall. 
 
 ## How To and Downloads (Server Admins)
 Build history can be found at [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/).
