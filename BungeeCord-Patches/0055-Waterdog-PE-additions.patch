@@ -1,4 +1,4 @@
-From cea153f780d07b021e9d78a7d48689733400dfd4 Mon Sep 17 00:00:00 2001
+From dcdcdc4cceae7c197e426e74ff4c3123e535bae2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -608,10 +608,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..863645af
+index 00000000..ac2fd752
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,126 @@
+@@ -0,0 +1,124 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -661,13 +661,13 @@ index 00000000..863645af
 +            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
 +                act.accept(VARLONG);
 +                break;
-+            case 0x21: //PLAY_INTERACT
-+                to.writeBytes(from, 1);
-+                act.accept(VARLONG);
-+                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
 +            case 0x4A: //PLAY_BOSS_EVENT
 +                act.accept(SVARLONG);
++                break;
++            case 0x21: //PLAY_INTERACT
++                to.writeBytes(from, 1);
++                act.accept(VARLONG);
 +                break;
 +            case 0x11: //PLAY_ENTITY_COLLECT_EFFECT
 +                act.accept(VARLONG);
@@ -720,13 +720,11 @@ index 00000000..863645af
 +        void rewrite(ByteBuf from, ByteBuf to, int oldId, int newId);
 +    }
 +
-+    static final Rewrite SK_STRING = (from, to, oldId, newId) -> {
-+        DefinedPacket.writeString(DefinedPacket.readString(from), to);
-+    };
++    static final Rewrite SK_STRING = (from, to, oldId, newId) ->
++        DefinedPacket.writeString(DefinedPacket.readString(from), to); //TODO: optimize
 +
-+    static final Rewrite SK_SVARINT = (from, to, oldId, newId) -> {
++    static final Rewrite SK_SVARINT = (from, to, oldId, newId) ->
 +        DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
-+    };
 +
 +    static final Rewrite VARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readVarLong(from);
@@ -880,10 +878,10 @@ index 00000000..5d785901
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 new file mode 100644
-index 00000000..02baea14
+index 00000000..6a4c492b
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,103 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -892,22 +890,27 @@ index 00000000..02baea14
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelPromise;
 +import io.netty.util.ReferenceCountUtil;
++import io.netty.util.concurrent.ScheduledFuture;
 +
 +import net.md_5.bungee.BungeeCord;
-+import network.ycc.raknet.RakNet;
 +
 +import java.util.ArrayDeque;
 +import java.util.Queue;
++import java.util.concurrent.TimeUnit;
 +
-+//lock outbound packet stream until we get a dim switch ack
++/**
++ * Lock outbound packet stream until we get a dim switch ack.
++ */
 +public class PEDimSwitchLock extends ChannelDuplexHandler {
 +
 +    public static final String NAME = "peproxy-dimlock";
 +
 +    protected static int MAX_QUEUE_SIZE = 4096;
++    protected static int DIM_ACK_TIMEOUT_MILLIS = 5000;
 +
 +    protected final Queue<ByteBuf> queue = new ArrayDeque<>(32);
 +    protected boolean isLocked = false;
++    protected ScheduledFuture<?> timeoutTimer = null;
 +
 +    public static boolean isChannelLocked(Channel channel) {
 +        final PEDimSwitchLock thiz = (PEDimSwitchLock) channel.pipeline().get(NAME);
@@ -919,25 +922,21 @@ index 00000000..02baea14
 +        super.channelUnregistered(ctx);
 +        queue.forEach(ReferenceCountUtil::safeRelease);
 +        queue.clear();
++        stopTimeout();
 +    }
 +
 +    @Override
-+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
++    public void channelRead(ChannelHandlerContext ctx, Object msg) {
 +        if (msg instanceof ByteBuf) {
 +            if(isLocked && PERawPacketData.isDimSwitchAck((ByteBuf) msg)) {
-+                isLocked = false;
-+                ctx.fireChannelWritabilityChanged(); //alert UpstreamBridge
-+                while (!queue.isEmpty() && !isLocked) {
-+                    write(ctx, queue.remove(), ctx.voidPromise());
-+                }
-+                ctx.flush();
++                doUnlock(ctx);
 +            }
 +        }
-+        super.channelRead(ctx, msg);
++        ctx.fireChannelRead(msg);
 +    }
 +
 +    @Override
-+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
++    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
 +        if (msg instanceof ByteBuf) {
 +            if (isLocked) {
 +                queue.add((ByteBuf) msg);
@@ -951,11 +950,38 @@ index 00000000..02baea14
 +            } else if (PERawPacketData.peekPacketId((ByteBuf) msg)
 +                    == PERawPacketData.EXT_PS_AWAIT_DIM_SWITCH_ACK_ID) {
 +                isLocked = true;
++                startTimeout(ctx);
 +                ctx.fireChannelWritabilityChanged(); //alert UpstreamBridge
 +                return;
 +            }
 +        }
-+        super.write(ctx, msg, promise);
++        ctx.write(msg, promise);
++    }
++
++    protected void startTimeout(ChannelHandlerContext ctx) {
++        stopTimeout();
++        timeoutTimer = ctx.channel().eventLoop().schedule(() -> {
++            BungeeCord.getInstance().getLogger().warning(
++                    "PEDimSwitchLock: Dim switch ack timeout. Resuming...");
++            doUnlock(ctx);
++        }, DIM_ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
++    }
++
++    protected void stopTimeout() {
++        if (timeoutTimer != null) {
++            timeoutTimer.cancel(false);
++            timeoutTimer = null;
++        }
++    }
++
++    protected void doUnlock(ChannelHandlerContext ctx) {
++        isLocked = false;
++        stopTimeout();
++        ctx.fireChannelWritabilityChanged(); //alert UpstreamBridge
++        while (!queue.isEmpty() && !isLocked) {
++            write(ctx, queue.remove(), ctx.voidPromise());
++        }
++        ctx.flush();
 +    }
 +
 +}
@@ -1491,7 +1517,7 @@ index 00000000..59a9c22a
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 new file mode 100644
-index 00000000..6e6c1750
+index 00000000..f6cac478
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 @@ -0,0 +1,146 @@
@@ -1538,7 +1564,7 @@ index 00000000..6e6c1750
 +        final long clientTime = ping.getClientTime(); //must ditch references to ping
 +        final ServerPing.Protocol protocol = new ServerPing.Protocol(
 +                "", //leave version blank, we do multi-version.
-+                ProtocolConstants.MINECRAFT_PE_1_10
++                ProtocolConstants.MINECRAFT_PE_1_11 + ProtocolConstants.PE_PROTOCOL_OFFSET
 +        );
 +        final ServerPing.Players players = new ServerPing.Players(
 +                listenerInfo.getMaxPlayers(), bungee.getOnlineCount(), new ServerPing.PlayerInfo[0]
