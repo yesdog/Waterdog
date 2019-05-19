@@ -75,6 +75,9 @@ Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/b
 * PocketMine will randomize palette IDs on start, making server transfer break. 
 You can get around this by using 
 [this plugin](https://github.com/TobiasG-DE/RuntimeID-Fixer) for PocketMine to disable the randomization.
+* *Why are my UUIDs different?* - Waterdog unifies UUIDs for online mode by using the user's XUID. They will
+be consistent for all downstream servers, and they should always be the same for each XUID. Offline mode authorization
+will produce a UUID based on the username, just like normal BungeeCord. 
 
 ## Join us
 
