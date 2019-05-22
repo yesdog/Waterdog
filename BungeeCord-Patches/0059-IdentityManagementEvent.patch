@@ -1,4 +1,4 @@
-From 1e227657b1f6a4d75bb2823b2945d6e4c3b115b1 Mon Sep 17 00:00:00 2001
+From 65257d2aa0c238b1fed728c57e6a7793e0161a5f Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Sat, 27 Apr 2019 17:43:44 -0600
 Subject: [PATCH] IdentityManagementEvent
@@ -35,7 +35,7 @@ index 00000000..b351d38f
 +    }
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 5393455b..e1b3932d 100644
+index 5393455b..4f4eb5c5 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -475,7 +475,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -67,19 +67,20 @@ index 5393455b..e1b3932d 100644
      {
          if ( isOnlineMode() )
          {
-@@ -507,12 +527,6 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -507,11 +527,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
  
          }
  
--        offlineId = UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + getName() ).getBytes( Charsets.UTF_8 ) );
--        if ( uniqueId == null )
--        {
--            uniqueId = offlineId;
--        }
--
++        /* Waterdog start - move this up to before IdentityManagementEvent
+         offlineId = UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + getName() ).getBytes( Charsets.UTF_8 ) );
+         if ( uniqueId == null )
+         {
+             uniqueId = offlineId;
+         }
++        */ // Waterdog end
+ 
          Callback<LoginEvent> complete = new Callback<LoginEvent>()
          {
-             @Override
 -- 
-2.17.1
+2.17.2 (Apple Git-113)
 
