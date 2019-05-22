@@ -1,4 +1,4 @@
-From 17561e31f7838919b17d976d7c83678122cf1f9b Mon Sep 17 00:00:00 2001
+From 1e227657b1f6a4d75bb2823b2945d6e4c3b115b1 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Sat, 27 Apr 2019 17:43:44 -0600
 Subject: [PATCH] IdentityManagementEvent
@@ -35,10 +35,10 @@ index 00000000..b351d38f
 +    }
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 5393455b..ef85867b 100644
+index 5393455b..e1b3932d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -475,7 +475,21 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -475,7 +475,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          HttpClient.get( authURL, ch.getHandle().eventLoop(), handler );
      }
  
@@ -53,6 +53,12 @@ index 5393455b..ef85867b 100644
 +            });
 +        };
 +
++        offlineId = UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + getName() ).getBytes( Charsets.UTF_8 ) );
++        if ( uniqueId == null )
++        {
++            uniqueId = offlineId;
++        }
++
 +        bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.IdentityManagementEvent(uniqueId, getName(), complete));
 +    }
 +    // Waterdog end
@@ -61,6 +67,19 @@ index 5393455b..ef85867b 100644
      {
          if ( isOnlineMode() )
          {
+@@ -507,12 +527,6 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+ 
+         }
+ 
+-        offlineId = UUID.nameUUIDFromBytes( ( "OfflinePlayer:" + getName() ).getBytes( Charsets.UTF_8 ) );
+-        if ( uniqueId == null )
+-        {
+-            uniqueId = offlineId;
+-        }
+-
+         Callback<LoginEvent> complete = new Callback<LoginEvent>()
+         {
+             @Override
 -- 
-2.17.2 (Apple Git-113)
+2.17.1
 
