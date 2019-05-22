@@ -1,4 +1,4 @@
-From dcdcdc4cceae7c197e426e74ff4c3123e535bae2 Mon Sep 17 00:00:00 2001
+From 1d5e8c2b4c09071d313a9f2250db1ac0189c4cdb Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -738,24 +738,27 @@ index 00000000..ac2fd752
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..c1c50a17
+index 00000000..e3851071
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,94 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
++
 +import io.netty.buffer.ByteBuf;
 +import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelOutboundHandlerAdapter;
 +import io.netty.channel.ChannelPromise;
-+
 +import io.netty.util.ReferenceCountUtil;
++
 +import net.md_5.bungee.compress.CompressFactory;
 +import net.md_5.bungee.jni.zlib.BungeeZlib;
 +import net.md_5.bungee.protocol.DefinedPacket;
++
 +import network.ycc.raknet.RakNet;
++import network.ycc.raknet.pipeline.FlushTickHandler;
 +import network.ycc.waterdog.api.metrics.RakNetMetrics;
 +
 +import java.util.function.BiConsumer;
@@ -802,6 +805,7 @@ index 00000000..c1c50a17
 +            }
 +            metricsIncrement(ctx, 1, RakNetMetrics::preCompressionPacket);
 +            promise.trySuccess();
++            FlushTickHandler.checkFlushTick(ctx.channel());
 +            return;
 +        }
 +        super.write(ctx, msg, promise);
