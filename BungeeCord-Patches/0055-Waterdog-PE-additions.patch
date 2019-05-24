@@ -1,4 +1,4 @@
-From 1d5e8c2b4c09071d313a9f2250db1ac0189c4cdb Mon Sep 17 00:00:00 2001
+From a2d88d086e3e9b452bd07278db371ee0a7f70f67 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -16,6 +16,84 @@ index 00000000..73495872
 +    void preCompressionBytes(int i);
 +    void postCompressionBytes(int i);
 +    void preCompressionPacket(int i);
++}
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
+new file mode 100644
+index 00000000..a10ca62b
+--- /dev/null
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
+@@ -0,0 +1,72 @@
++package network.ycc.waterdog.pe;
++
++import io.netty.buffer.ByteBuf;
++
++import net.md_5.bungee.protocol.DefinedPacket;
++
++public interface PEBlockRewrite {
++
++    int map(int id);
++
++    default void rewriteClientbound(ByteBuf packet, int version) {
++        final int readerIndex = packet.readerIndex();
++        final int packetId = DefinedPacket.readVarInt(packet);
++        final int writerIndex = packet.readerIndex();
++
++        switch (packetId) { //same-size rewrites
++            case 0x3a: //FULL_CHUNK_DATA_PACKET
++                DefinedPacket.readVarInt(packet); //chunk X
++                DefinedPacket.readVarInt(packet); //chunk Z
++                final int sections = DefinedPacket.readVarInt(packet);
++                rewriteChunk(packet, sections);
++                packet.readerIndex(readerIndex);
++                return;
++            default: // NOOP
++        }
++
++        switch (packetId) { //varint rewrites
++            case 0x15: //UPDATE_BLOCK_PACKET
++                final int x = DefinedPacket.readSVarInt(packet);
++                final int y = DefinedPacket.readVarInt(packet);
++                final int z = DefinedPacket.readSVarInt(packet);
++                final int id = DefinedPacket.readVarInt(packet);
++                final int flags = DefinedPacket.readVarInt(packet);
++                final int layer = DefinedPacket.readVarInt(packet);
++
++                packet.readerIndex(readerIndex);
++                packet.writerIndex(writerIndex);
++
++                DefinedPacket.writeSVarInt(x, packet);
++                DefinedPacket.writeVarInt(y, packet);
++                DefinedPacket.writeSVarInt(z, packet);
++                DefinedPacket.writeVarInt(map(id), packet);
++                DefinedPacket.writeVarInt(flags, packet);
++                DefinedPacket.writeVarInt(layer, packet);
++                return;
++            default: // NOOP
++        }
++
++        packet.readerIndex(readerIndex);
++    }
++
++    default void rewriteChunk(ByteBuf in, int sections) {
++        for (int section = 0 ; section < sections ; section++) {
++            switch (in.readUnsignedByte()) { //subchunk version
++                case 0:
++                    rewriteSectionShortIDs(in);
++                    in.skipBytes(256 * 8 * 3); //blockdata, skylight, blocklight
++                    break;
++                default: //unsupported
++                    return;
++            }
++        }
++    }
++
++    default void rewriteSectionShortIDs(ByteBuf ids) {
++        final int endIndex = ids.readerIndex() + 256 * 8 * 2;
++        for (int idx = ids.readerIndex() ; idx < endIndex ; idx += 2) {
++            ids.setShort(idx, map(ids.getUnsignedShort(idx)));
++        }
++    }
++
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java
 new file mode 100644
@@ -275,10 +353,10 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..fd4311d3
+index 00000000..d2373c7c
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,160 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import io.netty.buffer.ByteBuf;
@@ -287,6 +365,7 @@ index 00000000..fd4311d3
 +import lombok.EqualsAndHashCode;
 +import lombok.NoArgsConstructor;
 +
++import net.md_5.bungee.protocol.DefinedPacket;
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +import net.md_5.bungee.protocol.packet.Login;
 +import network.ycc.waterdog.pe.PEDataValues;
@@ -299,6 +378,8 @@ index 00000000..fd4311d3
 +    private float spawnY;
 +    private float spawnZ;
 +    private byte[] tailPayload;
++    private int payloadPaletteOffset; //offset of tailPayload for the palette
++    private int payloadPaletteLength;
 +
 +    public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, int viewDistance, boolean reducedDebugInfo, byte[] tailPayload) {
 +        super(entityId, gameMode, dimension, difficulty, maxPlayers, levelType, viewDistance, reducedDebugInfo);
@@ -320,8 +401,102 @@ index 00000000..fd4311d3
 +        readSVarInt(buf); //world type (1 - infinite)
 +        readSVarInt(buf); // world gamemode (SURVIVAL)
 +        setDifficulty((short) readSVarInt(buf));
++
++        final int payloadStartIndex = buf.readerIndex();
 +        tailPayload = new byte[buf.readableBytes()];
 +        buf.readBytes(tailPayload);
++        buf.readerIndex(payloadStartIndex);
++
++        DefinedPacket.readSVarInt(buf);//spawn position
++        DefinedPacket.readVarInt(buf);
++        DefinedPacket.readSVarInt(buf);
++        buf.readBoolean(); //disable achievements
++        DefinedPacket.readSVarInt(buf); //time
++        buf.readBoolean(); //edu mode
++        buf.readBoolean(); //edu features
++        buf.readFloatLE(); //rain level
++        buf.readFloatLE(); //lighting level
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_9) {
++            buf.readBoolean(); //???
++        }
++        buf.readBoolean(); //is multiplayer
++        buf.readBoolean(); //broadcast to lan
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_9) {
++            DefinedPacket.readSVarInt(buf); //xbox live broadcast, 3 = friends of friends
++            DefinedPacket.readSVarInt(buf); //platform broadcast
++        } else {
++            buf.readBoolean(); //broadcast to xbl
++        }
++        buf.readBoolean(); //commands enabled
++        buf.readBoolean(); //needs texture pack
++        
++        final int nGameRules = DefinedPacket.readVarInt(buf); //game rules
++        for (int i = 0 ; i < nGameRules ; i++) {
++            DefinedPacket.readString(buf);
++            final int grType = DefinedPacket.readVarInt(buf);
++            switch (grType) {
++                case 1: {
++                    buf.readByte();
++                    break;
++                }
++                case 2: {
++                    DefinedPacket.readSVarInt(buf);
++                    break;
++                }
++                case 3: {
++                    buf.readFloatLE();
++                    break;
++                }
++                default:
++                    throw new IllegalArgumentException("Unknown game rule type " + grType);
++            }
++        }
++
++        buf.readBoolean(); //bonus chest
++        buf.readBoolean(); //player map enabled
++        if (protocolVersion < ProtocolConstants.MINECRAFT_PE_1_9) {
++            buf.readBoolean(); //trust players
++        }
++        DefinedPacket.readSVarInt(buf); //permission level
++        if (protocolVersion < ProtocolConstants.MINECRAFT_PE_1_9) {
++            DefinedPacket.readSVarInt(buf); //game publish setting
++        }
++        buf.readIntLE(); //Server chunk tick radius..
++        if (protocolVersion < ProtocolConstants.MINECRAFT_PE_1_9) {
++            buf.readBoolean(); //Platformbroadcast
++            DefinedPacket.readSVarInt(buf); //Broadcast mode
++            buf.readBoolean(); //Broadcast intent
++        }
++        buf.readBoolean(); //hasLockedRes pack
++        buf.readBoolean(); //hasLockedBeh pack
++        buf.readBoolean(); //hasLocked world template.
++        buf.readBoolean(); //Microsoft GamerTags only. Hell no!
++        buf.readBoolean(); //is from world template
++        buf.readBoolean(); //is world template option locked
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_12) {
++            buf.readByte(); //only spawn v1 villagers
++        }
++        DefinedPacket.readString(buf); //level ID (empty string)
++        DefinedPacket.readString(buf); //world name (empty string)
++        DefinedPacket.readString(buf); //premium world template id (empty string)
++        buf.readBoolean(); //is trial
++        buf.readLongLE(); //world ticks
++        DefinedPacket.readSVarInt(buf); //enchantment seed FFS MOJANG
++
++        final int paletteItems = DefinedPacket.readVarInt(buf);
++        final int paletteStart = buf.readerIndex();
++        for (int i = 0 ; i < paletteItems ; i++) {
++            final int strLength = DefinedPacket.readVarInt(buf);
++            if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_12) {
++                buf.skipBytes(strLength + 4);
++            } else {
++                buf.skipBytes(strLength + 2);
++            }
++        }
++        payloadPaletteOffset = paletteStart - payloadStartIndex;
++        payloadPaletteLength = buf.readerIndex() - paletteStart;
++
++        buf.skipBytes(buf.readableBytes()); //skip the rest
 +    }
 +
 +    @Override
@@ -736,9 +911,172 @@ index 00000000..ac2fd752
 +        DefinedPacket.writeSVarLong(id == oldId ? newId : (id == newId ? oldId : id), to);
 +    };
 +}
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
+new file mode 100644
+index 00000000..e1a61146
+--- /dev/null
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
+@@ -0,0 +1,157 @@
++package network.ycc.waterdog.pe;
++
++import com.google.common.collect.MapMaker;
++
++import io.netty.buffer.ByteBuf;
++
++import it.unimi.dsi.fastutil.objects.Object2ShortLinkedOpenHashMap;
++import it.unimi.dsi.fastutil.objects.Object2ShortMap;
++import it.unimi.dsi.fastutil.shorts.Short2ObjectLinkedOpenHashMap;
++import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
++
++import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
++
++import org.apache.commons.lang3.tuple.Pair;
++
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.UUID;
++import java.util.concurrent.ConcurrentMap;
++
++public final class PEBlockPalette {
++    static ConcurrentMap<UUID, PEBlockPalette> paletteCache =
++            new MapMaker().weakValues().concurrencyLevel(8).makeMap();
++
++    public static PEBlockPalette get(ByteBuf paletteData, int version) {
++        final UUID uuid = nameUUIDFromBytes(paletteData);
++        PEBlockPalette cached = paletteCache.get(uuid);
++        if (cached == null) {
++            cached = new PEBlockPalette(paletteData, version, uuid);
++            // lazy thread safe. idempotent, but might be set multiple times
++            paletteCache.put(uuid, cached);
++        }
++        return cached;
++    }
++
++    static UUID nameUUIDFromBytes(ByteBuf buf) {
++        final MessageDigest md;
++        try {
++            md = MessageDigest.getInstance("MD5");
++        } catch (NoSuchAlgorithmException nsae) {
++            throw new InternalError("MD5 not supported", nsae);
++        }
++
++        buf.markReaderIndex();
++        while (buf.isReadable()) {
++            md.update(buf.readByte());
++        }
++        buf.resetReaderIndex();
++
++        final byte[] md5Bytes = md.digest();
++        md5Bytes[6]  &= 0x0f;  /* clear version        */
++        md5Bytes[6]  |= 0x30;  /* set to version 3     */
++        md5Bytes[8]  &= 0x3f;  /* clear variant        */
++        md5Bytes[8]  |= 0x80;  /* set to IETF variant  */
++
++        long msb = 0;
++        long lsb = 0;
++        assert md5Bytes.length == 16 : "data must be 16 bytes in length";
++        for (int i = 0 ; i < 8 ; i++) {
++            msb = (msb << 8) | (md5Bytes[i] & 0xff);
++        }
++        for (int i = 8 ; i < 16 ; i++) {
++            lsb = (lsb << 8) | (md5Bytes[i] & 0xff);
++        }
++
++        return new UUID(msb, lsb);
++    }
++
++    final UUID uuid;
++
++    Object2ShortMap<BlockPair> entryToId = new Object2ShortLinkedOpenHashMap<>();
++    Short2ObjectMap<BlockPair> idToEntry = new Short2ObjectLinkedOpenHashMap<>();
++
++    public PEBlockRewrite createRewrite(PEBlockPalette to) {
++        return id -> to.getId(getEntry(id));
++    }
++
++    PEBlockPalette(ByteBuf buf, int version, UUID uuid) {
++        this.uuid = uuid;
++
++        if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++            while (buf.isReadable()) {
++                final String name = DefinedPacket.readString(buf);
++                final short data = buf.readShortLE();
++                final short id = buf.readShortLE();
++
++                addEntry(id, name, data);
++            }
++        } else {
++            int id = 0;
++            while (buf.isReadable()) {
++                final String name = DefinedPacket.readString(buf);
++                final short data = buf.readShortLE();
++
++                addEntry((short) id++, name, data);
++            }
++        }
++    }
++
++    void addEntry(short id, String name, short data) {
++        final BlockPair pair = new BlockPair(name, data);
++        entryToId.put(pair, id);
++        idToEntry.put(id, pair);
++    }
++
++    int getId(BlockPair entry) {
++        return entryToId.getShort(entry);
++    }
++
++    public UUID getUUID() {
++        return uuid;
++    }
++
++    BlockPair getEntry(int id) {
++        return idToEntry.get((short) id);
++    }
++
++    public static final class BlockPair extends Pair<String, Short> {
++        final String key;
++        final short data;
++        final int hash;
++
++        public BlockPair(String name, short data) {
++            this.key = name;
++            this.data = data;
++            hash = super.hashCode();
++        }
++
++        public String getLeft() {
++            return key;
++        }
++
++        public Short getRight() {
++            return data;
++        }
++
++        public Short setValue(Short value) {
++            throw new UnsupportedOperationException();
++        }
++
++        @Override
++        public int hashCode() {
++            return hash;
++        }
++
++        @Override
++        public boolean equals(Object obj) {
++            if (obj instanceof BlockPair) {
++                final BlockPair other = (BlockPair) obj;
++                return data == other.data && key.equals(other.key);
++            }
++            return false;
++        }
++    }
++}
++
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..e3851071
+index 00000000..86034cb3
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 @@ -0,0 +1,94 @@
@@ -768,7 +1106,7 @@ index 00000000..e3851071
 +public class PECompressor extends ChannelOutboundHandlerAdapter {
 +
 +    public static final String NAME = "compress";
-+    protected static final int MAX_POOL_BYTES = 4096;
++    protected static final int MAX_POOL_BYTES = 16 * 1024;
 +
 +    protected final BungeeZlib zlib = CompressFactory.zlib.newInstance();
 +    protected ByteBuf stashBuffer;
@@ -882,7 +1220,7 @@ index 00000000..5d785901
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 new file mode 100644
-index 00000000..6a4c492b
+index 00000000..4f0057ee
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDimSwitchLock.java
 @@ -0,0 +1,103 @@
@@ -910,7 +1248,7 @@ index 00000000..6a4c492b
 +    public static final String NAME = "peproxy-dimlock";
 +
 +    protected static int MAX_QUEUE_SIZE = 4096;
-+    protected static int DIM_ACK_TIMEOUT_MILLIS = 5000;
++    protected static int DIM_ACK_TIMEOUT_MILLIS = 15000;
 +
 +    protected final Queue<ByteBuf> queue = new ArrayDeque<>(32);
 +    protected boolean isLocked = false;

@@ -1,4 +1,4 @@
-From c2055e696e2239a2f73f4adbda361113e1ee42fd Mon Sep 17 00:00:00 2001
+From 537acdf4edcd6ea25076b08a0eec0f1b4038a6d1 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1009,7 +1009,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..3d4432da 100644
+index 1375d1e2..22eeeb39 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1103,27 +1103,40 @@ index 1375d1e2..3d4432da 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -246,6 +290,19 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +290,32 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
++                network.ycc.waterdog.pe.packet.PELogin peLogin = (network.ycc.waterdog.pe.packet.PELogin) login;
++
 +                user.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PEResourcePack());
 +                user.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PEResourceStack());
++
 +                modLogin = new network.ycc.waterdog.pe.packet.PELogin( login.getEntityId(),
 +                        login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
 +                        (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(),
-+                        login.getViewDistance(), login.isReducedDebugInfo(),
-+                        ((network.ycc.waterdog.pe.packet.PELogin) login).getTailPayload() );
-+                ((network.ycc.waterdog.pe.packet.PELogin) login).setTailPayload(null);
++                        login.getViewDistance(), login.isReducedDebugInfo(), peLogin.getTailPayload() );
++
++                ByteBuf paletteData = io.netty.buffer.Unpooled.wrappedBuffer(peLogin.getTailPayload())
++                        .skipBytes(peLogin.getPayloadPaletteOffset())
++                        .readSlice(peLogin.getPayloadPaletteLength());
++
++                network.ycc.waterdog.pe.PEBlockPalette palette = network.ycc.waterdog.pe.PEBlockPalette.get(
++                        paletteData, user.getPendingConnection().getVersion());
++
++                user.setClientBlockPalette(palette);
++                user.setBlockRewrite(palette.createRewrite(palette));
++
++                peLogin.setTailPayload(null); //save heap space
 +            }
 +            // Waterdog end
 +
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -260,6 +317,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +330,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1137,17 +1150,28 @@ index 1375d1e2..3d4432da 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -315,6 +379,16 @@ public class ServerConnector extends PacketHandler
+@@ -315,6 +392,27 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
 +                final network.ycc.waterdog.pe.packet.PELogin peLogin = (network.ycc.waterdog.pe.packet.PELogin) login;
++
 +                network.ycc.waterdog.pe.PERawPacketData.injectChunkPublisherUpdate(user.getCh().getHandle(),
 +                        (int) peLogin.getSpawnX(), (int) peLogin.getSpawnY(), (int) peLogin.getSpawnZ());
 +                network.ycc.waterdog.pe.PERawPacketData.injectGameMode(user.getCh().getHandle(), login.getGameMode());
++
 +                server.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PELocalPlayerInitialized(login.getEntityId()));
++
++                ByteBuf paletteData = io.netty.buffer.Unpooled.wrappedBuffer(peLogin.getTailPayload())
++                        .skipBytes(peLogin.getPayloadPaletteOffset())
++                        .readSlice(peLogin.getPayloadPaletteLength());
++
++                network.ycc.waterdog.pe.PEBlockPalette palette = network.ycc.waterdog.pe.PEBlockPalette.get(
++                        paletteData, user.getPendingConnection().getVersion());
++
++                user.setBlockRewrite(palette.createRewrite(user.getClientBlockPalette()));
 +            }
 +            // Waterdog end
 +
@@ -1155,10 +1179,25 @@ index 1375d1e2..3d4432da 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..7e571ebc 100644
+index 15f7c5b5..5d295d8f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -152,6 +152,13 @@ public final class UserConnection implements ProxiedPlayer
+@@ -131,6 +131,14 @@ public final class UserConnection implements ProxiedPlayer
+     @Getter
+     private final Multimap<Integer, Integer> potions = HashMultimap.create();
+     // Waterfall end
++    // Waterdog start
++    @Getter
++    @Setter
++    network.ycc.waterdog.pe.PEBlockPalette clientBlockPalette;
++    @Getter
++    @Setter
++    network.ycc.waterdog.pe.PEBlockRewrite blockRewrite;
++    // Waterdog end
+     /*========================================================================*/
+     @Getter
+     private String displayName;
+@@ -152,6 +160,13 @@ public final class UserConnection implements ProxiedPlayer
          public void sendPacket(DefinedPacket packet)
          {
              ch.write( packet );
@@ -1172,7 +1211,7 @@ index 15f7c5b5..7e571ebc 100644
          }
      };
  
-@@ -343,6 +350,17 @@ public final class UserConnection implements ProxiedPlayer
+@@ -343,6 +358,17 @@ public final class UserConnection implements ProxiedPlayer
              return;
          }
  
@@ -1190,7 +1229,7 @@ index 15f7c5b5..7e571ebc 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -350,10 +368,28 @@ public final class UserConnection implements ProxiedPlayer
+@@ -350,10 +376,28 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1219,7 +1258,7 @@ index 15f7c5b5..7e571ebc 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +423,23 @@ public final class UserConnection implements ProxiedPlayer
+@@ -387,12 +431,23 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1244,7 +1283,7 @@ index 15f7c5b5..7e571ebc 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,6 +651,10 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,6 +659,10 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1255,7 +1294,7 @@ index 15f7c5b5..7e571ebc 100644
      }
  
      @Override
-@@ -719,6 +770,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -719,6 +778,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
@@ -1311,10 +1350,22 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..2e379e55 100644
+index 1f8a2439..b8dd54bf 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -154,6 +154,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -136,6 +136,11 @@ public class DownstreamBridge extends PacketHandler
+     @Override
+     public void handle(PacketWrapper packet) throws Exception
+     {
++        // Waterdog start
++        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) {
++            con.getBlockRewrite().rewriteClientbound(packet.buf, con.getPendingConnection().getVersion());
++        }
++        // Waterdog end
+         con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
+         con.sendPacket( packet );
+     }
+@@ -154,6 +159,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  

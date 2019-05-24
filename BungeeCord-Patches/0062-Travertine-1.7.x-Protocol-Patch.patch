@@ -1,4 +1,4 @@
-From e996cc86226c0dff0d10ab536da609cdc918d37e Mon Sep 17 00:00:00 2001
+From fd68e3d04c9b850e37c02ef7629cb16b5efe5a24 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 3d4432da..65b187f6 100644
+index 22eeeb39..eb80d1a9 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1353,7 +1353,7 @@ index 3d4432da..65b187f6 100644
  import java.util.Queue;
  import java.util.Set;
  import java.util.UUID;
-@@ -305,10 +306,20 @@ public class ServerConnector extends PacketHandler
+@@ -318,10 +319,20 @@ public class ServerConnector extends PacketHandler
  
              user.unsafe().sendPacket( modLogin );
  
@@ -1378,7 +1378,7 @@ index 3d4432da..65b187f6 100644
  
              user.setDimension( login.getDimension() );
          } else
-@@ -327,7 +338,7 @@ public class ServerConnector extends PacketHandler
+@@ -340,7 +351,7 @@ public class ServerConnector extends PacketHandler
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
@@ -1387,7 +1387,7 @@ index 3d4432da..65b187f6 100644
              }
              for ( Score score : serverScoreboard.getScores() )
              {
-@@ -493,6 +504,14 @@ public class ServerConnector extends PacketHandler
+@@ -517,6 +528,14 @@ public class ServerConnector extends PacketHandler
              {
                  this.handshakeHandler.handle( pluginMessage );
  
@@ -1403,7 +1403,7 @@ index 3d4432da..65b187f6 100644
                  throw CancelSendSignal.INSTANCE;
              }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index ee7f4aa9..c1c670fc 100644
+index d3e0e129..7696b595 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
@@ -1414,7 +1414,7 @@ index ee7f4aa9..c1c670fc 100644
  import net.md_5.bungee.protocol.packet.Chat;
  import net.md_5.bungee.protocol.packet.ClientSettings;
  import net.md_5.bungee.protocol.packet.Kick;
-@@ -209,6 +210,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -217,6 +218,7 @@ public final class UserConnection implements ProxiedPlayer
      public void setDisplayName(String name)
      {
          Preconditions.checkNotNull( name, "displayName" );
@@ -1422,7 +1422,7 @@ index ee7f4aa9..c1c670fc 100644
          displayName = name;
      }
  
-@@ -532,7 +534,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -540,7 +542,7 @@ public final class UserConnection implements ProxiedPlayer
          message = ChatComponentTransformer.getInstance().transform( this, message );
  
          // Action bar doesn't display the new JSON formattings, legacy works - send it using this for now
@@ -1431,7 +1431,7 @@ index ee7f4aa9..c1c670fc 100644
          {
              sendMessage( position, ComponentSerializer.toString( new TextComponent( BaseComponent.toLegacyText( message ) ) ) );
          } else
-@@ -547,7 +549,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -555,7 +557,7 @@ public final class UserConnection implements ProxiedPlayer
          message = ChatComponentTransformer.getInstance().transform( this, message )[0];
  
          // Action bar doesn't display the new JSON formattings, legacy works - send it using this for now
@@ -1440,7 +1440,7 @@ index ee7f4aa9..c1c670fc 100644
          {
              sendMessage( position, ComponentSerializer.toString( new TextComponent( BaseComponent.toLegacyText( message ) ) ) );
          } else
-@@ -730,6 +732,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -738,6 +740,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent header, BaseComponent footer)
      {
@@ -1448,7 +1448,7 @@ index ee7f4aa9..c1c670fc 100644
          header = ChatComponentTransformer.getInstance().transform( this, header )[0];
          footer = ChatComponentTransformer.getInstance().transform( this, footer )[0];
  
-@@ -742,6 +745,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -750,6 +753,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent[] header, BaseComponent[] footer)
      {
@@ -1456,7 +1456,7 @@ index ee7f4aa9..c1c670fc 100644
          header = ChatComponentTransformer.getInstance().transform( this, header );
          footer = ChatComponentTransformer.getInstance().transform( this, footer );
  
-@@ -772,6 +776,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -780,6 +784,7 @@ public final class UserConnection implements ProxiedPlayer
      public void setCompressionThreshold(int compressionThreshold)
      {
          if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())) return; // Waterdog
@@ -1465,10 +1465,10 @@ index ee7f4aa9..c1c670fc 100644
          {
              this.compressionThreshold = compressionThreshold;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 2e379e55..030136b3 100644
+index b8dd54bf..49204c08 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -176,7 +176,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -181,7 +181,7 @@ public class DownstreamBridge extends PacketHandler
          switch ( objective.getAction() )
          {
              case 0:
@@ -1477,7 +1477,7 @@ index 2e379e55..030136b3 100644
                  break;
              case 1:
                  serverScoreboard.removeObjective( objective.getName() );
-@@ -186,7 +186,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -191,7 +191,7 @@ public class DownstreamBridge extends PacketHandler
                  if ( oldObjective != null )
                  {
                      oldObjective.setValue( objective.getValue() );
@@ -1486,7 +1486,7 @@ index 2e379e55..030136b3 100644
                  }
                  break;
              default:
-@@ -283,16 +283,28 @@ public class DownstreamBridge extends PacketHandler
+@@ -288,16 +288,28 @@ public class DownstreamBridge extends PacketHandler
  
          if ( pluginMessage.getTag().equals( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ? "minecraft:brand" : "MC|Brand" ) )
          {
