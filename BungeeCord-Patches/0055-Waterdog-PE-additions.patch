@@ -1,4 +1,4 @@
-From a2d88d086e3e9b452bd07278db371ee0a7f70f67 Mon Sep 17 00:00:00 2001
+From 6fba0e5b320c1cbe3c79feac890e852feb6b5a76 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..a10ca62b
+index 00000000..13f56a16
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,78 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -40,8 +40,9 @@ index 00000000..a10ca62b
 +
 +        switch (packetId) { //same-size rewrites
 +            case 0x3a: //FULL_CHUNK_DATA_PACKET
-+                DefinedPacket.readVarInt(packet); //chunk X
-+                DefinedPacket.readVarInt(packet); //chunk Z
++                DefinedPacket.readSVarInt(packet); //chunk X
++                DefinedPacket.readSVarInt(packet); //chunk Z
++                DefinedPacket.readVarInt(packet); //payload length for v < 1.12
 +                final int sections = DefinedPacket.readVarInt(packet);
 +                rewriteChunk(packet, sections);
 +                packet.readerIndex(readerIndex);
@@ -76,12 +77,15 @@ index 00000000..a10ca62b
 +
 +    default void rewriteChunk(ByteBuf in, int sections) {
 +        for (int section = 0 ; section < sections ; section++) {
-+            switch (in.readUnsignedByte()) { //subchunk version
++            final int subchunkVersion = in.readUnsignedByte();
++            switch (subchunkVersion) {
 +                case 0:
 +                    rewriteSectionShortIDs(in);
 +                    in.skipBytes(256 * 8 * 3); //blockdata, skylight, blocklight
 +                    break;
++                case 8: //TODO: used by PSPE
 +                default: //unsupported
++                    //if(section == 0) System.out.println("subsection id: " + subchunkVersion);
 +                    return;
 +            }
 +        }
@@ -90,8 +94,10 @@ index 00000000..a10ca62b
 +    default void rewriteSectionShortIDs(ByteBuf ids) {
 +        final int endIndex = ids.readerIndex() + 256 * 8 * 2;
 +        for (int idx = ids.readerIndex() ; idx < endIndex ; idx += 2) {
-+            ids.setShort(idx, map(ids.getUnsignedShort(idx)));
++            //TODO: get this working again
++            //ids.setShortLE(idx, map(ids.getUnsignedShortLE(idx)));
 +        }
++        ids.readerIndex(endIndex);
 +    }
 +
 +}
@@ -913,7 +919,7 @@ index 00000000..ac2fd752
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..e1a61146
+index 00000000..d3d9dffe
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 @@ -0,0 +1,157 @@
@@ -1024,7 +1030,7 @@ index 00000000..e1a61146
 +    }
 +
 +    int getId(BlockPair entry) {
-+        return entryToId.getShort(entry);
++        return entryToId.getShort(entry) & 0xFFFF;
 +    }
 +
 +    public UUID getUUID() {

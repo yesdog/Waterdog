@@ -1,4 +1,4 @@
-From 537acdf4edcd6ea25076b08a0eec0f1b4038a6d1 Mon Sep 17 00:00:00 2001
+From 452a52c409ebb4f3c40a48909f760acdbe0e8cd6 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1559,6 +1559,22 @@ index 4882b8ed..3cf45753 100644
                  ch.writeAndFlush( ( (PacketWrapper) packet ).buf, ch.voidPromise() );
              } else
              {
+diff --git a/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java b/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
+index a66099fc..7287197c 100644
+--- a/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
++++ b/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
+@@ -154,6 +154,11 @@ public class HandlerBoss extends ChannelInboundHandlerAdapter
+                     {
+                         handler, cause
+                     } );
++                // Waterdog start
++                } else if (cause instanceof io.netty.handler.codec.CorruptedFrameException) {
++                    ProxyServer.getInstance().getLogger().log( Level.WARNING, handler + " - corrupt frame", cause );
++                    return; //log, but dont close
++                // Waterdog end
+                 } else
+                 {
+                     ProxyServer.getInstance().getLogger().log( Level.SEVERE, handler + " - encountered exception", cause );
 diff --git a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
 index ac99d02c..96dc06c9 100644
 --- a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
