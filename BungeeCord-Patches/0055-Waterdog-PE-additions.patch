@@ -1,4 +1,4 @@
-From e1749873b4540deff851466bb309633d17d97b58 Mon Sep 17 00:00:00 2001
+From 6973264f6fcb6b67654cd273a54e7ec71d7dca37 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..cdd3da7f
+index 00000000..9404b501
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,115 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -32,7 +32,6 @@ index 00000000..cdd3da7f
 +
 +public abstract class PEBlockRewrite {
 +
-+    protected static final int nV0Blocks = 16 * 16 * 8;
 +    protected static final int nV8Blocks = 16 * 16 * 16;
 +
 +    public abstract int map(int id);
@@ -191,6 +190,126 @@ index 00000000..fa848edc
 +            default: throw new IllegalArgumentException("Unknown dim id " + dimId);
 +        }
 +    }
++}
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
+new file mode 100644
+index 00000000..3dce1dae
+--- /dev/null
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
+@@ -0,0 +1,114 @@
++package network.ycc.waterdog.pe;
++
++import com.google.common.base.Preconditions;
++
++import io.netty.buffer.ByteBuf;
++import io.netty.buffer.Unpooled;
++import io.netty.channel.Channel;
++
++import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
++
++public class PERawPacketData {
++    protected static final int PLAYER_ACTION_ID = 36;
++    protected static final int EXT_PS_AWAIT_DIM_SWITCH_ACK_ID = -100;
++    protected static int DIMENSION_CHANGE_ACK = 14;
++
++    private static final byte[] fakePEChunkData;
++    private static final byte[] fakePEChunkData112;
++
++    static {
++        ByteBuf serializer = Unpooled.buffer();
++        ByteBuf chunkdata = Unpooled.buffer();
++
++        chunkdata.writeByte(1); //1 section
++        chunkdata.writeByte(8); //New subchunk version!
++        chunkdata.writeByte(1); //Zero blockstorages :O
++        chunkdata.writeByte((1 << 1) | 1);  //Runtimeflag and palette id.
++        chunkdata.writeZero(512);
++        DefinedPacket.writeSVarInt(1, chunkdata); //Palette size
++        DefinedPacket.writeSVarInt(0, chunkdata); //Air
++        chunkdata.writeZero(512); //heightmap.
++        chunkdata.writeZero(256); //Biomedata.
++        chunkdata.writeByte(0); //borders
++
++        chunkdata.markReaderIndex();
++        DefinedPacket.writeVarInt(chunkdata.readableBytes(), serializer);
++        serializer.writeBytes(chunkdata);
++        fakePEChunkData = new byte[serializer.readableBytes()];
++        serializer.readBytes(fakePEChunkData);
++
++        // 1.12 chunks
++        chunkdata.resetReaderIndex();
++        ByteBuf buf112 = Unpooled.buffer();
++        DefinedPacket.writeVarInt(chunkdata.readUnsignedByte(), buf112);
++        buf112.writeByte(0);
++        DefinedPacket.writeVarInt(chunkdata.readableBytes(), buf112);
++        buf112.writeBytes(chunkdata);
++        fakePEChunkData112 = new byte[buf112.readableBytes()];
++        buf112.readBytes(fakePEChunkData112);
++
++        Preconditions.checkArgument(fakePEChunkData.length > 0);
++        Preconditions.checkArgument(fakePEChunkData112.length > 0);
++    }
++
++    public static int peekPacketId(ByteBuf from) {
++        if (!from.isReadable()) {
++            return -1;
++        }
++        try {
++            return DefinedPacket.readVarInt(from.markReaderIndex());
++        } finally {
++            from.resetReaderIndex();
++        }
++    }
++
++    public static boolean isDimSwitchAck(ByteBuf data) {
++        if (peekPacketId(data) == PLAYER_ACTION_ID) {
++            final ByteBuf copy = data.duplicate();
++            DefinedPacket.readVarInt(copy);
++            DefinedPacket.readVarLong(copy); // entity id
++            return DefinedPacket.readSVarInt(copy) == DIMENSION_CHANGE_ACK;
++        }
++        return false;
++    }
++
++    public static void injectChunkPublisherUpdate(Channel channel, int x, int y, int z) {
++        ByteBuf publisherUpdate = Unpooled.buffer();
++        DefinedPacket.writeVarInt(0x79, publisherUpdate); //CHUNK_PUBLISHER_UPDATE_PACKET
++        DefinedPacket.writeSVarInt(x, publisherUpdate);
++        DefinedPacket.writeVarInt(y, publisherUpdate);
++        DefinedPacket.writeSVarInt(z, publisherUpdate);
++        DefinedPacket.writeVarInt(300, publisherUpdate);
++        channel.write(publisherUpdate);
++    }
++
++    public static void injectForcedDimChange(Channel channel, int version) {
++        injectChunkPublisherUpdate(channel, 0, 0, 0);
++        for (int x = -2; x <= 2; x++) {
++            for (int z = -2; z <= 2; z++) {
++                ByteBuf buffer = Unpooled.buffer();
++                DefinedPacket.writeVarInt(0x3A, buffer); //PLAY_CHUNK_DATA
++                DefinedPacket.writeSVarInt(x, buffer);
++                DefinedPacket.writeSVarInt(z, buffer);
++                if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++                    buffer.writeBytes(fakePEChunkData112);
++                } else {
++                    buffer.writeBytes(fakePEChunkData);
++                }
++                channel.write(buffer);
++            }
++        }
++        ByteBuf lockPacket = Unpooled.buffer();
++        DefinedPacket.writeVarInt(EXT_PS_AWAIT_DIM_SWITCH_ACK_ID, lockPacket);
++        channel.writeAndFlush(lockPacket);
++    }
++
++    public static void injectGameMode(Channel channel, int gamemode) {
++        ByteBuf gameModeSerializer = Unpooled.buffer();
++        DefinedPacket.writeVarInt(0x3E, gameModeSerializer); //PLAY_PLAYER_GAME_TYPE
++        DefinedPacket.writeSVarInt(gamemode, gameModeSerializer);
++        channel.writeAndFlush(gameModeSerializer);
++    }
++
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PECommand.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PECommand.java
 new file mode 100644
@@ -2056,123 +2175,6 @@ index 00000000..f6cac478
 +
 +    }
 +
-+}
-diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-new file mode 100644
-index 00000000..77124183
---- /dev/null
-+++ b/proxy/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,111 @@
-+package network.ycc.waterdog.pe;
-+
-+import com.google.common.base.Preconditions;
-+import io.netty.buffer.ByteBuf;
-+import io.netty.buffer.Unpooled;
-+import io.netty.channel.Channel;
-+
-+import net.md_5.bungee.protocol.DefinedPacket;
-+import net.md_5.bungee.protocol.ProtocolConstants;
-+
-+public class PERawPacketData {
-+    protected static final int PLAYER_ACTION_ID = 36;
-+    protected static final int EXT_PS_AWAIT_DIM_SWITCH_ACK_ID = -100;
-+    protected static int DIMENSION_CHANGE_ACK = 14;
-+
-+    public static int peekPacketId(ByteBuf from) {
-+        if (!from.isReadable()) {
-+            return -1;
-+        }
-+        try {
-+            return DefinedPacket.readVarInt(from.markReaderIndex());
-+        } finally {
-+            from.resetReaderIndex();
-+        }
-+    }
-+
-+    public static boolean isDimSwitchAck(ByteBuf data) {
-+        if (peekPacketId(data) == PLAYER_ACTION_ID) {
-+            final ByteBuf copy = data.duplicate();
-+            DefinedPacket.readVarInt(copy);
-+            DefinedPacket.readVarLong(copy); // entity id
-+            return DefinedPacket.readSVarInt(copy) == DIMENSION_CHANGE_ACK;
-+        }
-+        return false;
-+    }
-+
-+    public static void injectChunkPublisherUpdate(Channel channel, int x, int y, int z) {
-+        ByteBuf publisherUpdate = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(0x79, publisherUpdate); //CHUNK_PUBLISHER_UPDATE_PACKET
-+        DefinedPacket.writeSVarInt(x, publisherUpdate);
-+        DefinedPacket.writeVarInt(y, publisherUpdate);
-+        DefinedPacket.writeSVarInt(z, publisherUpdate);
-+        DefinedPacket.writeVarInt(300, publisherUpdate);
-+        channel.write(publisherUpdate);
-+    }
-+
-+    public static void injectForcedDimChange(Channel channel, int version) {
-+        injectChunkPublisherUpdate(channel, 0, 0, 0);
-+        for (int x = -2; x <= 2; x++) {
-+            for (int z = -2; z <= 2; z++) {
-+                ByteBuf buffer = Unpooled.buffer();
-+                DefinedPacket.writeVarInt(0x3A, buffer); //PLAY_CHUNK_DATA
-+                DefinedPacket.writeSVarInt(x, buffer);
-+                DefinedPacket.writeSVarInt(z, buffer);
-+                if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
-+                    buffer.writeBytes(fakePEChunkData112);
-+                } else {
-+                    buffer.writeBytes(fakePEChunkData);
-+                }
-+                channel.write(buffer);
-+            }
-+        }
-+        ByteBuf lockPacket = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(EXT_PS_AWAIT_DIM_SWITCH_ACK_ID, lockPacket);
-+        channel.writeAndFlush(lockPacket);
-+    }
-+
-+    public static void injectGameMode(Channel channel, int gamemode) {
-+        ByteBuf gameModeSerializer = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(0x3E, gameModeSerializer); //PLAY_PLAYER_GAME_TYPE
-+        DefinedPacket.writeSVarInt(gamemode, gameModeSerializer);
-+        channel.writeAndFlush(gameModeSerializer);
-+    }
-+
-+    private static byte[] fakePEChunkData;
-+    private static byte[] fakePEChunkData112;
-+    static {
-+        ByteBuf serializer = Unpooled.buffer();
-+        ByteBuf chunkdata = Unpooled.buffer();
-+
-+        chunkdata.writeByte(1); //1 section
-+        chunkdata.writeByte(8); //New subchunk version!
-+        chunkdata.writeByte(1); //Zero blockstorages :O
-+        chunkdata.writeByte((1 << 1) | 1);  //Runtimeflag and palette id.
-+        chunkdata.writeZero(512);
-+        DefinedPacket.writeSVarInt(1, chunkdata); //Palette size
-+        DefinedPacket.writeSVarInt(0, chunkdata); //Air
-+        chunkdata.writeZero(512); //heightmap.
-+        chunkdata.writeZero(256); //Biomedata.
-+        chunkdata.writeByte(0); //borders
-+
-+        chunkdata.markReaderIndex();
-+        DefinedPacket.writeVarInt(chunkdata.readableBytes(), serializer);
-+        serializer.writeBytes(chunkdata);
-+        fakePEChunkData = new byte[serializer.readableBytes()];
-+        serializer.readBytes(fakePEChunkData);
-+
-+        // 1.12 chunks
-+        chunkdata.resetReaderIndex();
-+        ByteBuf buf112 = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(chunkdata.readUnsignedByte(), buf112);
-+        buf112.writeByte(0);
-+        DefinedPacket.writeVarInt(chunkdata.readableBytes(), buf112);
-+        buf112.writeBytes(chunkdata);
-+        fakePEChunkData112 = new byte[buf112.readableBytes()];
-+        buf112.readBytes(fakePEChunkData112);
-+
-+        Preconditions.checkArgument(fakePEChunkData.length > 0);
-+        Preconditions.checkArgument(fakePEChunkData112.length > 0);
-+    }
 +}
 diff --git a/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
 new file mode 100644
