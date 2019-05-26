@@ -53,9 +53,11 @@ the ProtocolSupport [encapsulation protocol](https://github.com/ProtocolSupport/
 The servers also have a new *transfer_group* config option. This option is used to determine if 
 the server mechanic will use the Bedrock 'Server Transfer' packet, or if it will use
 the traditional dimension switch and entity rewriting mechanics of BungeeCord. 
-This can be useful if you have servers that use different resouce packs or may
-operate with a different block ID palette. If a user transfers from a server of one
-group to a server of a different group, it will use the Server Transfer method. 
+This can be useful if you have servers that use different resouce packs. 
+If a user transfers from a server of one group to a server of a different group, 
+it will use the Server Transfer method. Waterdog includes palette rewriting, so
+you should be able to use the traditional transfer mechanics even if the backend
+servers have different block ID palettes. 
 
 *Does Waterdog support synapse protocol?*
 
@@ -72,9 +74,6 @@ Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/b
 
 ## Gotchas
 * Synapse support will not be included.
-* PocketMine will randomize palette IDs on start, making server transfer break. 
-You can get around this by using 
-[this plugin](https://github.com/TobiasG-DE/RuntimeID-Fixer) for PocketMine to disable the randomization.
 * *Why are my UUIDs different?* - Waterdog unifies UUIDs for online mode by using the user's XUID. They will
 be consistent for all downstream servers, and they should always be the same for each XUID. Offline mode authorization
 will produce a UUID based on the username, just like normal BungeeCord. 
