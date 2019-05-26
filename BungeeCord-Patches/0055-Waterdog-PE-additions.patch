@@ -1,4 +1,4 @@
-From 6fba0e5b320c1cbe3c79feac890e852feb6b5a76 Mon Sep 17 00:00:00 2001
+From e1749873b4540deff851466bb309633d17d97b58 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,21 +19,29 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..13f56a16
+index 00000000..cdd3da7f
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,116 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
 +
-+public interface PEBlockRewrite {
++public abstract class PEBlockRewrite {
 +
-+    int map(int id);
++    protected static final int nV0Blocks = 16 * 16 * 8;
++    protected static final int nV8Blocks = 16 * 16 * 16;
 +
-+    default void rewriteClientbound(ByteBuf packet, int version) {
++    public abstract int map(int id);
++
++    public void rewriteClientbound(ByteBuf packet, int version) {
++        if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++            return; //TODO: finish 1.12 format
++        }
++
 +        final int readerIndex = packet.readerIndex();
 +        final int packetId = DefinedPacket.readVarInt(packet);
 +        final int writerIndex = packet.readerIndex();
@@ -42,10 +50,21 @@ index 00000000..13f56a16
 +            case 0x3a: //FULL_CHUNK_DATA_PACKET
 +                DefinedPacket.readSVarInt(packet); //chunk X
 +                DefinedPacket.readSVarInt(packet); //chunk Z
-+                DefinedPacket.readVarInt(packet); //payload length for v < 1.12
-+                final int sections = DefinedPacket.readVarInt(packet);
-+                rewriteChunk(packet, sections);
-+                packet.readerIndex(readerIndex);
++                final ByteBuf out = packet.alloc().ioBuffer(packet.readableBytes() + 128);
++                try {
++                    final int rwStart = packet.readerIndex();
++                    DefinedPacket.readVarInt(packet); //payload length
++                    final int sections = DefinedPacket.readVarInt(packet);
++                    out.writeByte(sections);
++                    rewriteChunkSections(packet, out, sections);
++
++                    packet.readerIndex(readerIndex);
++                    packet.writerIndex(rwStart);
++                    DefinedPacket.writeVarInt(out.readableBytes(), packet); //payload length
++                    packet.writeBytes(out);
++                } finally {
++                    out.release();
++                }
 +                return;
 +            default: // NOOP
 +        }
@@ -69,35 +88,54 @@ index 00000000..13f56a16
 +                DefinedPacket.writeVarInt(flags, packet);
 +                DefinedPacket.writeVarInt(layer, packet);
 +                return;
++            //TODO: entity spawn, DATA_VARIANT
++            case 0x19: //TODO: LEVEL_EVENT_PACKET for particles
 +            default: // NOOP
 +        }
 +
 +        packet.readerIndex(readerIndex);
 +    }
 +
-+    default void rewriteChunk(ByteBuf in, int sections) {
-+        for (int section = 0 ; section < sections ; section++) {
-+            final int subchunkVersion = in.readUnsignedByte();
-+            switch (subchunkVersion) {
-+                case 0:
-+                    rewriteSectionShortIDs(in);
-+                    in.skipBytes(256 * 8 * 3); //blockdata, skylight, blocklight
-+                    break;
-+                case 8: //TODO: used by PSPE
-+                default: //unsupported
-+                    //if(section == 0) System.out.println("subsection id: " + subchunkVersion);
-+                    return;
++    protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
++        final int storageCount = in.readUnsignedByte();
++        out.writeByte(storageCount);
++
++        for (int storage = 0 ; storage < storageCount ; storage++) {
++            final int flags = in.readUnsignedByte();
++            //isRuntime = (flags & 0x1) != 0
++            final int bitsPerBlock = flags >> 1;
++            final int blocksPerWord = Integer.SIZE / bitsPerBlock;
++            final int nWords = (nV8Blocks + blocksPerWord - 1) / blocksPerWord;
++
++            out.writeByte(flags);
++            out.writeBytes(in, nWords * Integer.BYTES);
++
++            final int nPaletteEntries = DefinedPacket.readSVarInt(in);
++            DefinedPacket.writeSVarInt(nPaletteEntries, out);
++
++            for (int i = 0 ; i < nPaletteEntries ; i++) {
++                DefinedPacket.writeSVarInt(map(DefinedPacket.readSVarInt(in)), out);
 +            }
 +        }
 +    }
 +
-+    default void rewriteSectionShortIDs(ByteBuf ids) {
-+        final int endIndex = ids.readerIndex() + 256 * 8 * 2;
-+        for (int idx = ids.readerIndex() ; idx < endIndex ; idx += 2) {
-+            //TODO: get this working again
-+            //ids.setShortLE(idx, map(ids.getUnsignedShortLE(idx)));
++    protected void rewriteChunkSections(ByteBuf in, ByteBuf out, int sections) {
++        for (int section = 0 ; section < sections ; section++) {
++            final int subchunkVersion = in.readUnsignedByte();
++            out.writeByte(subchunkVersion);
++            switch (subchunkVersion) {
++                case 0: //legacy block ids, no remap needed
++                    out.writeBytes(in);
++                    return;
++                case 8: //new form chunk, baked-in palette and bitpacking
++                    rewriteV8ChunkSection(in, out);
++                    break;
++                default: //unsupported
++                    throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
++            }
 +        }
-+        ids.readerIndex(endIndex);
++        out.writeBytes(in, 512); //heightmap
++        out.writeBytes(in, 256); //biomedata
 +    }
 +
 +}
@@ -919,10 +957,10 @@ index 00000000..ac2fd752
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..d3d9dffe
+index 00000000..8059e00d
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,161 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -998,7 +1036,11 @@ index 00000000..d3d9dffe
 +    Short2ObjectMap<BlockPair> idToEntry = new Short2ObjectLinkedOpenHashMap<>();
 +
 +    public PEBlockRewrite createRewrite(PEBlockPalette to) {
-+        return id -> to.getId(getEntry(id));
++        return new PEBlockRewrite() {
++            public int map(int id) {
++                return to.getId(getEntry(id));
++            }
++        };
 +    }
 +
 +    PEBlockPalette(ByteBuf buf, int version, UUID uuid) {
