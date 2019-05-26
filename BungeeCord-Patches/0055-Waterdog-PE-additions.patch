@@ -1,4 +1,4 @@
-From 6973264f6fcb6b67654cd273a54e7ec71d7dca37 Mon Sep 17 00:00:00 2001
+From c81fd11bf98e0c3b49b42de237e5a77c58eb308b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -193,10 +193,10 @@ index 00000000..fa848edc
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..3dce1dae
+index 00000000..c0552094
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,121 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -304,10 +304,17 @@ index 00000000..3dce1dae
 +    }
 +
 +    public static void injectGameMode(Channel channel, int gamemode) {
-+        ByteBuf gameModeSerializer = Unpooled.buffer();
-+        DefinedPacket.writeVarInt(0x3E, gameModeSerializer); //PLAY_PLAYER_GAME_TYPE
-+        DefinedPacket.writeSVarInt(gamemode, gameModeSerializer);
-+        channel.writeAndFlush(gameModeSerializer);
++        ByteBuf gameMode = Unpooled.buffer();
++        DefinedPacket.writeVarInt(0x3E, gameMode); //PLAY_PLAYER_GAME_TYPE
++        DefinedPacket.writeSVarInt(gamemode, gameMode);
++        channel.writeAndFlush(gameMode);
++    }
++
++    public static void injectRemoveEntity(Channel channel, long entityId) {
++        ByteBuf removeEntity = Unpooled.buffer();
++        DefinedPacket.writeVarInt(0x0E, removeEntity); //PLAY_ENTITY_DESTROY
++        DefinedPacket.writeSVarLong(entityId, removeEntity);
++        channel.write(removeEntity);
 +    }
 +
 +}
@@ -946,17 +953,19 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..ac2fd752
+index 00000000..03ea2b01
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,149 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
++import network.ycc.waterdog.pe.PERawPacketData;
 +
 +import java.util.function.Consumer;
++import java.util.function.LongConsumer;
 +
 +public class EntityMap_PE extends EntityMap {
 +
@@ -972,8 +981,7 @@ index 00000000..ac2fd752
 +        doRewrite(from, oldId, newId);
 +    }
 +
-+    public void doRewrite(ByteBuf from, int oldId, int newId)
-+    {
++    public void doRewrite(ByteBuf from, int oldId, int newId) {
 +        if (!from.isReadable()) {
 +            return;
 +        }
@@ -1052,6 +1060,30 @@ index 00000000..ac2fd752
 +
 +        from.readerIndex(to.readerIndex());
 +        from.writerIndex(to.writerIndex());
++    }
++
++    public void entityTrack(ByteBuf packet, LongConsumer add, LongConsumer remove) {
++        if (!packet.isReadable()) {
++            return;
++        }
++        final int readerIndex = packet.readerIndex();
++        switch (DefinedPacket.readVarInt(packet)) {
++            case 0x0D: //PLAY_ENTITY_SPAWN
++                DefinedPacket.readSVarLong(packet);
++                add.accept(DefinedPacket.readVarLong(packet));
++                break;
++            case 0x0C: //PLAY_SPAWN_PLAYER
++                packet.skipBytes(Long.BYTES * 2);
++                DefinedPacket.readString(packet);
++                DefinedPacket.readSVarLong(packet);
++                add.accept(DefinedPacket.readVarLong(packet));
++                break;
++            case 0x0E: //PLAY_ENTITY_DESTROY
++                remove.accept(DefinedPacket.readSVarLong(packet));
++                break;
++        }
++
++        packet.readerIndex(readerIndex);
 +    }
 +
 +    interface Rewrite {
