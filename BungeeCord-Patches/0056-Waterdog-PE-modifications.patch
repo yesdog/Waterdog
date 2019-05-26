@@ -1,4 +1,4 @@
-From 977b4feed70547e7b3b75009e298a7951bf8908c Mon Sep 17 00:00:00 2001
+From 7c6dfb6b22db432b56406c01cecd3db5327f6a2a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1009,7 +1009,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..eb33cd88 100644
+index 1375d1e2..9d75e301 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1170,10 +1170,10 @@ index 1375d1e2..eb33cd88 100644
 +
 +                network.ycc.waterdog.pe.PEBlockPalette palette = network.ycc.waterdog.pe.PEBlockPalette.get(
 +                        paletteData, user.getPendingConnection().getVersion());
-+
 +                user.setBlockRewrite(palette.createRewrite(user.getClientBlockPalette()));
 +
 +                it.unimi.dsi.fastutil.longs.LongSet entityIDs = user.getEntityIDs();
++                entityIDs.remove(user.getClientEntityId());
 +                entityIDs.forEach((java.util.function.LongConsumer) id ->
 +                        network.ycc.waterdog.pe.PERawPacketData.injectRemoveEntity(user.getCh().getHandle(), id));
 +                entityIDs.clear();
@@ -1357,13 +1357,13 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..da182044 100644
+index 1f8a2439..18255eef 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -136,6 +136,15 @@ public class DownstreamBridge extends PacketHandler
-     @Override
+@@ -137,6 +137,15 @@ public class DownstreamBridge extends PacketHandler
      public void handle(PacketWrapper packet) throws Exception
      {
+         con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) {
 +            net.md_5.bungee.entitymap.EntityMap_PE entityMap = (net.md_5.bungee.entitymap.EntityMap_PE) con.getEntityRewrite();
@@ -1373,9 +1373,9 @@ index 1f8a2439..da182044 100644
 +            entityMap.entityTrack(packet.buf, entityIDs::add, entityIDs::remove);
 +        }
 +        // Waterdog end
-         con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
          con.sendPacket( packet );
      }
+ 
 @@ -154,6 +163,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
