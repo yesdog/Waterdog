@@ -1,4 +1,4 @@
-From c81fd11bf98e0c3b49b42de237e5a77c58eb308b Mon Sep 17 00:00:00 2001
+From 0c64f12271d7fb4b3bccc5e94c7d73d1adbd40ea Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..9404b501
+index 00000000..778b7388
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,143 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -69,7 +69,7 @@ index 00000000..9404b501
 +        }
 +
 +        switch (packetId) { //varint rewrites
-+            case 0x15: //UPDATE_BLOCK_PACKET
++            case 0x15: { //UPDATE_BLOCK_PACKET
 +                final int x = DefinedPacket.readSVarInt(packet);
 +                final int y = DefinedPacket.readVarInt(packet);
 +                final int z = DefinedPacket.readSVarInt(packet);
@@ -87,35 +87,41 @@ index 00000000..9404b501
 +                DefinedPacket.writeVarInt(flags, packet);
 +                DefinedPacket.writeVarInt(layer, packet);
 +                return;
-+            //TODO: entity spawn, DATA_VARIANT
-+            case 0x19: //TODO: LEVEL_EVENT_PACKET for particles
++            }
++            case 0x19: { //LEVEL_EVENT_PACKET
++                final int evID = DefinedPacket.readSVarInt(packet);
++                final float x = packet.readFloatLE();
++                final float y = packet.readFloatLE();
++                final float z = packet.readFloatLE();
++                int data = DefinedPacket.readSVarInt(packet);
++
++                switch (evID) {
++                    case PEDataValues.LEVEL_EVENT_EVENT_TERRAIN_PARTICLE:
++                    case PEDataValues.LEVEL_EVENT_EVENT_PARTICLE_PUNCH_BLOCK:
++                    case PEDataValues.LEVEL_EVENT_EVENT_PARTICLE_DESTROY:
++                        //only rewrite lower 16 bits
++                        final int high = data & 0xFFFF0000;
++                        final int blockID = map(data & 0xFFFF) & 0xFFFF;
++                        data = high | blockID;
++                        break;
++                    default: // NOOP
++                }
++
++                packet.readerIndex(readerIndex);
++                packet.writerIndex(writerIndex);
++
++                DefinedPacket.writeSVarInt(evID, packet);
++                packet.writeFloatLE(x);
++                packet.writeFloatLE(y);
++                packet.writeFloatLE(z);
++                DefinedPacket.writeSVarInt(data, packet);
++                return;
++            }
++            case 0x0D: //PLAY_ENTITY_SPAWN TODO: entity spawn for fall blocks, DATA_VARIANT
 +            default: // NOOP
 +        }
 +
 +        packet.readerIndex(readerIndex);
-+    }
-+
-+    protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
-+        final int storageCount = in.readUnsignedByte();
-+        out.writeByte(storageCount);
-+
-+        for (int storage = 0 ; storage < storageCount ; storage++) {
-+            final int flags = in.readUnsignedByte();
-+            //isRuntime = (flags & 0x1) != 0
-+            final int bitsPerBlock = flags >> 1;
-+            final int blocksPerWord = Integer.SIZE / bitsPerBlock;
-+            final int nWords = (nV8Blocks + blocksPerWord - 1) / blocksPerWord;
-+
-+            out.writeByte(flags);
-+            out.writeBytes(in, nWords * Integer.BYTES);
-+
-+            final int nPaletteEntries = DefinedPacket.readSVarInt(in);
-+            DefinedPacket.writeSVarInt(nPaletteEntries, out);
-+
-+            for (int i = 0 ; i < nPaletteEntries ; i++) {
-+                DefinedPacket.writeSVarInt(map(DefinedPacket.readSVarInt(in)), out);
-+            }
-+        }
 +    }
 +
 +    protected void rewriteChunkSections(ByteBuf in, ByteBuf out, int sections) {
@@ -137,13 +143,35 @@ index 00000000..9404b501
 +        out.writeBytes(in, 256); //biomedata
 +    }
 +
++    protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
++        final int storageCount = in.readUnsignedByte();
++        out.writeByte(storageCount);
++
++        for (int storage = 0 ; storage < storageCount ; storage++) {
++            final int flags = in.readUnsignedByte();
++            final int bitsPerBlock = flags >> 1; //isRuntime = (flags & 0x1) != 0
++            final int blocksPerWord = Integer.SIZE / bitsPerBlock;
++            final int nWords = (nV8Blocks + blocksPerWord - 1) / blocksPerWord;
++
++            out.writeByte(flags);
++            out.writeBytes(in, nWords * Integer.BYTES);
++
++            final int nPaletteEntries = DefinedPacket.readSVarInt(in);
++            DefinedPacket.writeSVarInt(nPaletteEntries, out);
++
++            for (int i = 0 ; i < nPaletteEntries ; i++) {
++                DefinedPacket.writeSVarInt(map(DefinedPacket.readSVarInt(in)), out);
++            }
++        }
++    }
++
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java
 new file mode 100644
-index 00000000..fa848edc
+index 00000000..9d983810
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEDataValues.java
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,54 @@
 +package network.ycc.waterdog.pe;
 +
 +import net.md_5.bungee.api.ChatMessageType;
@@ -154,6 +182,13 @@ index 00000000..fa848edc
 +    public static final int CHAT_CLIENT_CHAT_TYPE = 1;
 +    public static final int CHAT_CLIENT_TIP_TYPE = 5;
 +    public static final int CHAT_CLIENT_SYSTEM_TYPE = 6;
++
++    public static final int PARTICLE_TYPE_TERRAIN = 18;
++
++    public static final int LEVEL_EVENT_EVENT_ADD_PARTICLE_MASK = 0x4000;
++    public static final int LEVEL_EVENT_EVENT_TERRAIN_PARTICLE = LEVEL_EVENT_EVENT_ADD_PARTICLE_MASK | PARTICLE_TYPE_TERRAIN;
++    public static final int LEVEL_EVENT_EVENT_PARTICLE_PUNCH_BLOCK = 2014;
++    public static final int LEVEL_EVENT_EVENT_PARTICLE_DESTROY = 2001;
 +
 +    public static int getPcChatType(int peId) {
 +        switch (peId) {
@@ -193,7 +228,7 @@ index 00000000..fa848edc
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..c0552094
+index 00000000..8152df4e
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 @@ -0,0 +1,121 @@
@@ -211,7 +246,7 @@ index 00000000..c0552094
 +public class PERawPacketData {
 +    protected static final int PLAYER_ACTION_ID = 36;
 +    protected static final int EXT_PS_AWAIT_DIM_SWITCH_ACK_ID = -100;
-+    protected static int DIMENSION_CHANGE_ACK = 14;
++    protected static final int DIMENSION_CHANGE_ACK = 14;
 +
 +    private static final byte[] fakePEChunkData;
 +    private static final byte[] fakePEChunkData112;
@@ -1108,10 +1143,10 @@ index 00000000..03ea2b01
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..8059e00d
+index 00000000..1ae4a6de
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,161 @@
+@@ -0,0 +1,165 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -1134,6 +1169,7 @@ index 00000000..8059e00d
 +import java.util.concurrent.ConcurrentMap;
 +
 +public final class PEBlockPalette {
++
 +    static ConcurrentMap<UUID, PEBlockPalette> paletteCache =
 +            new MapMaker().weakValues().concurrencyLevel(8).makeMap();
 +
@@ -1264,13 +1300,16 @@ index 00000000..8059e00d
 +
 +        @Override
 +        public boolean equals(Object obj) {
-+            if (obj instanceof BlockPair) {
++            if (this == obj) {
++                return true;
++            } else if (obj instanceof BlockPair) {
 +                final BlockPair other = (BlockPair) obj;
 +                return data == other.data && key.equals(other.key);
 +            }
 +            return false;
 +        }
 +    }
++
 +}
 +
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
