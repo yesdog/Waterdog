@@ -1,4 +1,4 @@
-From 76d483816b3be8e5a0e04ce94d010083608b0ff1 Mon Sep 17 00:00:00 2001
+From c3233fd261acb6251c34882ee20387cb5b1c96a5 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -924,6 +924,20 @@ index dbb24e22..112c7229 100644
          buf.writeInt( dimension );
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
+index 778b7388..1221697d 100644
+--- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
+@@ -114,8 +114,7 @@ public abstract class PEBlockRewrite {
+                     throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
+             }
+         }
+-        out.writeBytes(in, 512); //heightmap
+-        out.writeBytes(in, 256); //biomedata
++        out.writeBytes(in); //copy the rest
+     }
+ 
+     protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 index 615c7247..69232e7d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
@@ -1009,7 +1023,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..9d75e301 100644
+index 1375d1e2..81391b11 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1020,7 +1034,7 @@ index 1375d1e2..9d75e301 100644
  
  @RequiredArgsConstructor
  public class ServerConnector extends PacketHandler
-@@ -99,7 +100,14 @@ public class ServerConnector extends PacketHandler
+@@ -99,7 +100,15 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -1028,15 +1042,16 @@ index 1375d1e2..9d75e301 100644
 +        // Waterdog start - PE handshake
 +        if (originalHandshake instanceof network.ycc.waterdog.pe.packet.PEHandshake) {
 +            network.ycc.waterdog.pe.packet.PEHandshake oPEHandshake = (network.ycc.waterdog.pe.packet.PEHandshake) originalHandshake;
-+            copiedHandshake = new network.ycc.waterdog.pe.packet.PEHandshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2,
-+                    oPEHandshake.getUsername(), oPEHandshake.getUuid(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
++            copiedHandshake = new network.ycc.waterdog.pe.packet.PEHandshake( originalHandshake.getProtocolVersion(),
++                    originalHandshake.getHost(), originalHandshake.getPort(), 2,
++                    user.getName(), user.getUniqueId(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
 +        }
 +        // Waterdog end
 +        if ( BungeeCord.getInstance().config.isIpForward() && !target.isRakNet()) // Waterdog
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -140,9 +148,16 @@ public class ServerConnector extends PacketHandler
+@@ -140,9 +149,16 @@ public class ServerConnector extends PacketHandler
              copiedHandshake.setHost( copiedHandshake.getHost() + user.getExtraDataInHandshake() );
          }
  
@@ -1053,7 +1068,7 @@ index 1375d1e2..9d75e301 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -157,6 +172,12 @@ public class ServerConnector extends PacketHandler
+@@ -157,6 +173,12 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -1066,7 +1081,7 @@ index 1375d1e2..9d75e301 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -187,6 +208,7 @@ public class ServerConnector extends PacketHandler
+@@ -187,6 +209,7 @@ public class ServerConnector extends PacketHandler
              user.getForgeClientHandler().resetHandshake();
          }
  
@@ -1074,7 +1089,7 @@ index 1375d1e2..9d75e301 100644
          throw CancelSendSignal.INSTANCE;
      }
  
-@@ -196,6 +218,28 @@ public class ServerConnector extends PacketHandler
+@@ -196,6 +219,28 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1103,7 +1118,7 @@ index 1375d1e2..9d75e301 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -246,6 +290,32 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +291,32 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
@@ -1136,7 +1151,7 @@ index 1375d1e2..9d75e301 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -260,6 +330,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +331,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1150,7 +1165,7 @@ index 1375d1e2..9d75e301 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -315,6 +392,32 @@ public class ServerConnector extends PacketHandler
+@@ -315,6 +393,32 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
