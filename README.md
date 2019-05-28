@@ -2,6 +2,8 @@ Waterdog
 [![Build Status](https://ci.codemc.org/job/yesdog/job/Waterdog/badge/icon)](https://ci.codemc.org/job/yesdog/job/Waterdog/) 
 [![Known Vulnerabilities](https://snyk.io/test/github/yesdog/Waterdog/badge.svg?targetFile=pom.xml)](https://snyk.io/test/github/yesdog/Waterdog?targetFile=pom.xml)
 [![Discord Chat](https://img.shields.io/discord/574240965351571477.svg)](https://discord.gg/MhhWfSW)
+![MC Bedrock](https://gist.githubusercontent.com/colinrgodsey/ec4c8ad11c08d8e63bf8cd75679eed9f/raw/de75a755e847c310f1204cfd234baf0aee173243/mcbe.svg?sanitize=true)
+![MC Java](https://gist.githubusercontent.com/colinrgodsey/1e18f62beaec3bb595ef1ed381152ad4/raw/0632b6776c2cacacb37960bcf06d231a1356ce9d/mcje.svg?sanitize=true)
 =========
 
 Waterdog is fork of the well-known [Waterfall](https://github.com/papermc/waterfall), 
