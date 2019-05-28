@@ -1,4 +1,4 @@
-From 7687716d6732e6c3ec349d6cba65be6bb7bc1006 Mon Sep 17 00:00:00 2001
+From b293d5cd39e9b7198990581a03c9382fcef1bc52 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -584,7 +584,7 @@ index 2493fc17..2ed54c98 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f15927ec..0b4fc522 100644
+index f15927ec..c742d865 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -4,24 +4,33 @@
@@ -669,6 +669,15 @@ index f15927ec..0b4fc522 100644
              <version>${project.version}</version>
              <scope>compile</scope>
          </dependency>
+@@ -101,7 +110,7 @@
+         <dependency>
+             <groupId>mysql</groupId>
+             <artifactId>mysql-connector-java</artifactId>
+-            <version>5.1.47</version>
++            <version>8.0.16</version>
+             <scope>runtime</scope>
+         </dependency>
+ 
 @@ -118,6 +127,29 @@
              <scope>runtime</scope>
          </dependency>

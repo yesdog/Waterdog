@@ -1,4 +1,4 @@
-From 0c64f12271d7fb4b3bccc5e94c7d73d1adbd40ea Mon Sep 17 00:00:00 2001
+From c1324543e853940f4ae50b407087b42811ea8097 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -228,7 +228,7 @@ index 00000000..9d983810
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..8152df4e
+index 00000000..971e2857
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 @@ -0,0 +1,121 @@
@@ -319,8 +319,8 @@ index 00000000..8152df4e
 +
 +    public static void injectForcedDimChange(Channel channel, int version) {
 +        injectChunkPublisherUpdate(channel, 0, 0, 0);
-+        for (int x = -2; x <= 2; x++) {
-+            for (int z = -2; z <= 2; z++) {
++        for (int x = -4; x <= 4; x++) {
++            for (int z = -4; z <= 4; z++) {
 +                ByteBuf buffer = Unpooled.buffer();
 +                DefinedPacket.writeVarInt(0x3A, buffer); //PLAY_CHUNK_DATA
 +                DefinedPacket.writeSVarInt(x, buffer);
