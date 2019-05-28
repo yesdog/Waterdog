@@ -1,4 +1,4 @@
-From 5a53bf4e35b8f058c650e0f25b6357a7ccee98ba Mon Sep 17 00:00:00 2001
+From 81e2dcf8ebe870cbe7833265071f50e7ea578fa8 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -450,7 +450,7 @@ index 6acc1f00..7ebac7be 100644
  
              Constructor<? extends DefinedPacket> constructor = protocolData.packetConstructors[id];
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index b563e1e7..1ed4c9c2 100644
+index 2ac37a25..d588c770 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -14,6 +14,8 @@ public class ProtocolConstants
@@ -462,7 +462,7 @@ index b563e1e7..1ed4c9c2 100644
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -38,6 +40,7 @@ public class ProtocolConstants
+@@ -39,6 +41,7 @@ public class ProtocolConstants
              "PE-1.11.x",
              "PE-1.12.x",
              // Waterdog end
@@ -470,7 +470,7 @@ index b563e1e7..1ed4c9c2 100644
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -54,6 +57,8 @@ public class ProtocolConstants
+@@ -55,6 +58,8 @@ public class ProtocolConstants
              ProtocolConstants.MINECRAFT_PE_1_11,
              ProtocolConstants.MINECRAFT_PE_1_12,
              // Waterdog end
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index eb33cd88..47278ecb 100644
+index 9d75e301..3c6d28a1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1465,7 +1465,7 @@ index d18fb93a..c94f779b 100644
          {
              this.compressionThreshold = compressionThreshold;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index da182044..039a709d 100644
+index 18255eef..4b9bdc64 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 @@ -185,7 +185,7 @@ public class DownstreamBridge extends PacketHandler
@@ -1631,7 +1631,7 @@ index 24cb79d3..8a7497b6 100644
              con.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index 17874777..d0ae05ed 100644
+index ba034fca..da61b687 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -34,6 +34,10 @@ public abstract class EntityMap
