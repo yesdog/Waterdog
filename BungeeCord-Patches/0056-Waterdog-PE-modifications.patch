@@ -1,4 +1,4 @@
-From 6e739301e36810da59a03427337bac33a7208980 Mon Sep 17 00:00:00 2001
+From 76d483816b3be8e5a0e04ce94d010083608b0ff1 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1357,26 +1357,29 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..18255eef 100644
+index 1f8a2439..db1ac973 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -137,6 +137,15 @@ public class DownstreamBridge extends PacketHandler
+@@ -137,6 +137,18 @@ public class DownstreamBridge extends PacketHandler
      public void handle(PacketWrapper packet) throws Exception
      {
          con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) {
-+            net.md_5.bungee.entitymap.EntityMap_PE entityMap = (net.md_5.bungee.entitymap.EntityMap_PE) con.getEntityRewrite();
-+            it.unimi.dsi.fastutil.longs.LongSet entityIDs = con.getEntityIDs();
++            if (con.getEntityRewrite() instanceof net.md_5.bungee.entitymap.EntityMap_PE) {
++                net.md_5.bungee.entitymap.EntityMap_PE entityMap = (net.md_5.bungee.entitymap.EntityMap_PE) con.getEntityRewrite();
++                it.unimi.dsi.fastutil.longs.LongSet entityIDs = con.getEntityIDs();
++
++                entityMap.entityTrack(packet.buf, entityIDs::add, entityIDs::remove);
++            }
 +
 +            con.getBlockRewrite().rewriteClientbound(packet.buf, con.getPendingConnection().getVersion());
-+            entityMap.entityTrack(packet.buf, entityIDs::add, entityIDs::remove);
 +        }
 +        // Waterdog end
          con.sendPacket( packet );
      }
  
-@@ -154,6 +163,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -154,6 +166,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
