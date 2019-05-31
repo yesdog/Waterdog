@@ -1,4 +1,4 @@
-From c1324543e853940f4ae50b407087b42811ea8097 Mon Sep 17 00:00:00 2001
+From 1ae0a99db11fe2c57eae7632416bd2ef5c785371 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,7 +19,7 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..778b7388
+index 00000000..8ac16ad0
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 @@ -0,0 +1,143 @@
@@ -132,7 +132,7 @@ index 00000000..778b7388
 +                case 0: //legacy block ids, no remap needed
 +                    out.writeBytes(in);
 +                    return;
-+                case 8: //new form chunk, baked-in palette and bitpacking
++                case 8: //new form chunk, baked-in palette
 +                    rewriteV8ChunkSection(in, out);
 +                    break;
 +                default: //unsupported
@@ -228,10 +228,10 @@ index 00000000..9d983810
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
 new file mode 100644
-index 00000000..971e2857
+index 00000000..1b637023
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,133 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -242,6 +242,8 @@ index 00000000..971e2857
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
 +import net.md_5.bungee.protocol.ProtocolConstants;
++
++import java.util.UUID;
 +
 +public class PERawPacketData {
 +    protected static final int PLAYER_ACTION_ID = 36;
@@ -350,6 +352,16 @@ index 00000000..971e2857
 +        DefinedPacket.writeVarInt(0x0E, removeEntity); //PLAY_ENTITY_DESTROY
 +        DefinedPacket.writeSVarLong(entityId, removeEntity);
 +        channel.write(removeEntity);
++    }
++
++    public static void injectRemovePlayerList(Channel channel, UUID uuid) {
++        ByteBuf removePlayerList = Unpooled.buffer();
++        DefinedPacket.writeVarInt(0x3F, removePlayerList); //PLAY_PLAYER_INFO
++        DefinedPacket.writeVarInt(1, removePlayerList); //remove
++        DefinedPacket.writeVarInt(1, removePlayerList); //1 item
++        removePlayerList.writeLongLE(uuid.getMostSignificantBits());
++        removePlayerList.writeLongLE(uuid.getLeastSignificantBits());
++        channel.write(removePlayerList);
 +    }
 +
 +}
@@ -468,10 +480,10 @@ index 00000000..bfd8b92b
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..3ff55f86
+index 00000000..d3e8e2d8
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,48 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import com.google.gson.JsonObject;
@@ -487,17 +499,21 @@ index 00000000..3ff55f86
 +import java.util.UUID;
 +
 +@Data
-+@NoArgsConstructor
 +@EqualsAndHashCode(callSuper = false)
 +public class PEHandshake extends Handshake {
 +    private String username;
 +    private UUID uuid;
++    private UUID deviceUUID;
 +    private boolean authorized;
 +    private JsonObject clientInfo;
 +    private byte[] handshakeData;
 +
-+    public PEHandshake(int protocolVersion, String host, int port, int requestedProtocol, String username, UUID uuid, boolean authorized, JsonObject clientInfo) {
-+        super(protocolVersion, host, port, requestedProtocol);
++    public PEHandshake() {
++        setProtocolVersion(2);
++    }
++
++    public PEHandshake(int protocolVersion, String host, int port, String username, UUID uuid, boolean authorized, JsonObject clientInfo) {
++        super(protocolVersion, host, port, 2);
 +        this.username = username;
 +        this.uuid = uuid;
 +        this.authorized = authorized;
@@ -988,17 +1004,17 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..03ea2b01
+index 00000000..3b75e37a
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,149 @@
+@@ -0,0 +1,220 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
-+import network.ycc.waterdog.pe.PERawPacketData;
 +
++import java.util.UUID;
 +import java.util.function.Consumer;
 +import java.util.function.LongConsumer;
 +
@@ -1042,16 +1058,25 @@ index 00000000..03ea2b01
 +            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
 +                act.accept(VARLONG);
 +                break;
++            case 0x0D: //PLAY_ENTITY_SPAWN
++                act.accept(SVARLONG);
++                act.accept(VARLONG);
++                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
 +            case 0x4A: //PLAY_BOSS_EVENT
 +                act.accept(SVARLONG);
 +                break;
-+            case 0x21: //PLAY_INTERACT
-+                to.writeBytes(from, 1);
-+                act.accept(VARLONG);
-+                break;
 +            case 0x11: //PLAY_ENTITY_COLLECT_EFFECT
 +                act.accept(VARLONG);
++                act.accept(VARLONG);
++                break;
++            case 0x13: //PLAY_PLAYER_MOVE_LOOK
++                act.accept(VARLONG);
++                to.writeBytes(from, Float.BYTES * 6 + Byte.BYTES * 2);
++                act.accept(VARLONG);
++                break;
++            case 0x21: //PLAY_INTERACT
++                to.writeBytes(from, 1);
 +                act.accept(VARLONG);
 +                break;
 +            case 0x29: //PLAY_ENTITY_PASSENGER
@@ -1062,21 +1087,33 @@ index 00000000..03ea2b01
 +                act.accept(SK_SVARINT);
 +                act.accept(VARLONG);
 +                break;
-+            case 0x13: //PLAY_PLAYER_MOVE_LOOK
-+                act.accept(VARLONG);
-+                to.writeBytes(from, Float.BYTES * 6 + Byte.BYTES * 2);
-+                act.accept(VARLONG);
-+                break;
-+            case 0x0D: //PLAY_ENTITY_SPAWN
-+                act.accept(SVARLONG);
-+                act.accept(VARLONG);
-+                break;
 +            case 0x0C: //PLAY_SPAWN_PLAYER
 +                to.writeBytes(from, Long.BYTES * 2);
-+                act.accept(SK_STRING);
++                act.accept(SK_VI_DATA);
 +                act.accept(SVARLONG);
 +                act.accept(VARLONG);
 +                break;
++            case 0x3F: { //PLAY_PLAYER_INFO
++                final int type = from.readUnsignedByte();
++                final int num = DefinedPacket.readVarInt(from);
++                to.writeByte(type);
++                DefinedPacket.writeVarInt(num, to);
++                if (type == 0) { //ADD
++                    for (int i = 0; i < num; i++) {
++                        to.writeBytes(from, Long.BYTES * 2);
++                        act.accept(SVARLONG);
++                        act.accept(SK_VI_DATA); //username
++                        act.accept(SK_VI_DATA); //skin name
++                        act.accept(SK_VI_DATA); //skin data
++                        act.accept(SK_VI_DATA); //cape data
++                        act.accept(SK_VI_DATA); //geom name
++                        act.accept(SK_VI_DATA); //geom data
++                        act.accept(SK_VI_DATA); //xuid
++                        act.accept(SK_VI_DATA); //channel
++                    }
++                }
++                break;
++            }
 +            case 0x50: //PLAY_TRADE_UPDATE
 +                to.writeBytes(from, 2);
 +                act.accept(SK_SVARINT);
@@ -1103,43 +1140,93 @@ index 00000000..03ea2b01
 +        }
 +        final int readerIndex = packet.readerIndex();
 +        switch (DefinedPacket.readVarInt(packet)) {
-+            case 0x0D: //PLAY_ENTITY_SPAWN
-+                DefinedPacket.readSVarLong(packet);
-+                add.accept(DefinedPacket.readVarLong(packet));
-+                break;
 +            case 0x0C: //PLAY_SPAWN_PLAYER
 +                packet.skipBytes(Long.BYTES * 2);
 +                DefinedPacket.readString(packet);
 +                DefinedPacket.readSVarLong(packet);
 +                add.accept(DefinedPacket.readVarLong(packet));
 +                break;
++            case 0x0D: //PLAY_ENTITY_SPAWN
++                DefinedPacket.readSVarLong(packet);
++                add.accept(DefinedPacket.readVarLong(packet));
++                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
 +                remove.accept(DefinedPacket.readSVarLong(packet));
 +                break;
++            default: // NOOP
 +        }
 +
 +        packet.readerIndex(readerIndex);
 +    }
 +
-+    interface Rewrite {
++    public void playerListTrackRewrite(ByteBuf packet, Consumer<UUID> add, Consumer<UUID> remove, UUID playerUUID, UUID deviceUUID) {
++        if (!packet.isReadable()) {
++            return;
++        }
++        final int readerIndex = packet.readerIndex();
++        switch (DefinedPacket.readVarInt(packet)) {
++            case 0x3F: { //PLAY_PLAYER_INFO
++                final int type = packet.readUnsignedByte();
++                final int num = DefinedPacket.readVarInt(packet);
++                if (type == 0) { //ADD
++                    for (int i = 0; i < num; i++) {
++                        final int preUUIDReaderIndex = packet.readerIndex();
++                        final long msb = packet.readLongLE();
++                        final long lsb = packet.readLongLE();
++                        if (deviceUUID != null && msb == playerUUID.getMostSignificantBits()
++                                && lsb == playerUUID.getLeastSignificantBits()) {
++                            packet.setLongLE(preUUIDReaderIndex, deviceUUID.getMostSignificantBits());
++                            packet.setLongLE(preUUIDReaderIndex + Long.BYTES, deviceUUID.getLeastSignificantBits());
++                        }
++                        DefinedPacket.readSVarLong(packet); //entity id
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom name
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom data
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //xuid
++                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //channel
++                        add.accept(new UUID(msb, lsb));
++                    }
++                } else if (type == 1) { //REMOVE
++                    for (int i = 0; i < num; i++) {
++                        final long msb = packet.readLongLE();
++                        final long lsb = packet.readLongLE();
++                        remove.accept(new UUID(msb, lsb));
++                    }
++                }
++                break;
++            }
++            default: // NOOP
++        }
++
++        packet.readerIndex(readerIndex);
++    }
++
++    public interface Rewrite {
 +        void rewrite(ByteBuf from, ByteBuf to, int oldId, int newId);
 +    }
 +
-+    static final Rewrite SK_STRING = (from, to, oldId, newId) ->
-+        DefinedPacket.writeString(DefinedPacket.readString(from), to); //TODO: optimize
++    static public final Rewrite SK_VI_DATA = (from, to, oldId, newId) -> {
++        final int length = DefinedPacket.readVarInt(from);
++        DefinedPacket.writeVarInt(length, to);
++        to.writeBytes(from, length);
++    };
 +
-+    static final Rewrite SK_SVARINT = (from, to, oldId, newId) ->
++    static public final Rewrite SK_SVARINT = (from, to, oldId, newId) ->
 +        DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
 +
-+    static final Rewrite VARLONG = (from, to, oldId, newId) -> {
++    static public final Rewrite VARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readVarLong(from);
 +        DefinedPacket.writeVarLong(id == oldId ? newId : (id == newId ? oldId : id), to);
 +    };
 +
-+    static final Rewrite SVARLONG = (from, to, oldId, newId) -> {
++    static public final Rewrite SVARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readSVarLong(from);
 +        DefinedPacket.writeSVarLong(id == oldId ? newId : (id == newId ? oldId : id), to);
 +    };
++
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
@@ -1683,10 +1770,10 @@ index 00000000..0b21c9f1
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..e954144f
+index 00000000..369f5aeb
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,290 @@
+@@ -0,0 +1,291 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
@@ -1793,8 +1880,9 @@ index 00000000..e954144f
 +        final String[] serverAddrSplit = serverAddr.split("[:]");
 +
 +        handshake.setClientInfo(clientInfo);
-+        handshake.setUsername(getString(identityData, "displayName").replaceAll(" ", "_"));
++        handshake.setUsername(getString(identityData, "displayName").replaceAll(" ", "_")); //TODO: make configurable
 +        handshake.setUuid(UUID.fromString(getString(identityData, "identity")));
++        handshake.setDeviceUUID(handshake.getUuid());
 +        handshake.setAuthorized(key != null);
 +        if (handshake.isAuthorized()) {
 +            handshake.setUuid(new UUID(0, new BigInteger(getString(identityData, "XUID")).longValue()));
@@ -1934,17 +2022,17 @@ index 00000000..e954144f
 +    @SuppressWarnings("serial")
 +    static String createIdentityData(String username, UUID uuid) {
 +        final Map<String, List<String>> chainmap = new HashMap<>();
-+        final long nbf = System.currentTimeMillis() / 1000;
-+        final long exp = nbf + 24 * 3600;
++        final long iat = System.currentTimeMillis() / 1000;
++        final long exp = iat + 24 * 3600;
 +        JsonObject dataChain = new JsonObject();
 +        JsonObject extraData = new JsonObject();
 +        extraData.addProperty("identity", uuid.toString());
 +        extraData.addProperty("displayName", username);
 +        extraData.addProperty("XUID", String.valueOf(uuid.getLeastSignificantBits()));
 +        //chain
-+        dataChain.addProperty("nbf", nbf - 1);
++        dataChain.addProperty("nbf", iat - 10);
 +        dataChain.addProperty("exp", exp);
-+        dataChain.addProperty("iat", nbf);
++        dataChain.addProperty("iat", iat);
 +        dataChain.addProperty("iss", "self");
 +        dataChain.addProperty("certificateAuthority", true);
 +        dataChain.add("extraData", extraData);

@@ -77,7 +77,7 @@ Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/b
 ## Gotchas
 * Synapse support will not be included.
 * The vanilla Bedrock Dedicated Server is a bit weird after transfer. It's low priority, but will have better support over time. 
-* *Why are my UUIDs different?* - Waterdog unifies UUIDs for online mode by using the user's XUID. They will
+* *Why are my Bedrock UUIDs different?* - Waterdog unifies Bedrock UUIDs for online mode by using the user's XUID. They will
 be consistent for all downstream servers, and they should always be the same for each XUID. Offline mode authorization
 will produce a UUID based on the username, just like normal BungeeCord. 
 
