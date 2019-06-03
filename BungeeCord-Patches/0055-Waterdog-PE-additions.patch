@@ -1,4 +1,4 @@
-From 1ae0a99db11fe2c57eae7632416bd2ef5c785371 Mon Sep 17 00:00:00 2001
+From b05e541e9781f31db57d011be244cc9171873c0c Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1004,10 +1004,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..3b75e37a
+index 00000000..504bc266
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,225 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1101,7 +1101,12 @@ index 00000000..3b75e37a
 +                if (type == 0) { //ADD
 +                    for (int i = 0; i < num; i++) {
 +                        to.writeBytes(from, Long.BYTES * 2);
-+                        act.accept(SVARLONG);
++                        {
++                            //the player list entity IDs cause some issues. set all of them to 0
++                            //act.accept(SVARLONG);
++                            DefinedPacket.readSVarLong(from);
++                            DefinedPacket.writeSVarLong(0, to);
++                        }
 +                        act.accept(SK_VI_DATA); //username
 +                        act.accept(SK_VI_DATA); //skin name
 +                        act.accept(SK_VI_DATA); //skin data
@@ -1143,7 +1148,7 @@ index 00000000..3b75e37a
 +            case 0x0C: //PLAY_SPAWN_PLAYER
 +                packet.skipBytes(Long.BYTES * 2);
 +                DefinedPacket.readString(packet);
-+                DefinedPacket.readSVarLong(packet);
++                DefinedPacket.readSVarLong(packet); //unique ID
 +                add.accept(DefinedPacket.readVarLong(packet));
 +                break;
 +            case 0x0D: //PLAY_ENTITY_SPAWN

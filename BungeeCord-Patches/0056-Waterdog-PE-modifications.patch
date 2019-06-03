@@ -1,4 +1,4 @@
-From e31837af2d356632c1ea871774779452062e62b2 Mon Sep 17 00:00:00 2001
+From 53834974a0233921e91045dc1dcbfdef07a07c64 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1023,7 +1023,7 @@ index 4c0637b9..d8163ecf 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..504c4af2 100644
+index 1375d1e2..d9da58d4 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1165,7 +1165,7 @@ index 1375d1e2..504c4af2 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -315,6 +393,36 @@ public class ServerConnector extends PacketHandler
+@@ -315,6 +393,35 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1187,15 +1187,14 @@ index 1375d1e2..504c4af2 100644
 +                        paletteData, user.getPendingConnection().getVersion());
 +                user.setBlockRewrite(palette.createRewrite(user.getClientBlockPalette()));
 +
-+                it.unimi.dsi.fastutil.longs.LongSet entityIDs = user.getEntityIDs();
-+                entityIDs.remove(user.getClientEntityId());
-+                entityIDs.forEach((java.util.function.LongConsumer) id ->
-+                        network.ycc.waterdog.pe.PERawPacketData.injectRemoveEntity(user.getCh().getHandle(), id));
-+                entityIDs.clear();
-+
 +                java.util.Collection<java.util.UUID> playerList = user.getPePlayerList();
 +                playerList.forEach(uuid ->
 +                        network.ycc.waterdog.pe.PERawPacketData.injectRemovePlayerList(user.getCh().getHandle(), uuid));
++
++                it.unimi.dsi.fastutil.longs.LongSet entityIDs = user.getEntityIDs();
++                entityIDs.forEach((java.util.function.LongConsumer) id ->
++                        network.ycc.waterdog.pe.PERawPacketData.injectRemoveEntity(user.getCh().getHandle(), id));
++                entityIDs.clear();
 +            }
 +            // Waterdog end
 +
