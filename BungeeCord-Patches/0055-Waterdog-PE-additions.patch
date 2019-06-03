@@ -1,4 +1,4 @@
-From b05e541e9781f31db57d011be244cc9171873c0c Mon Sep 17 00:00:00 2001
+From 80b11dee751c58c704fc5acadec1eac758de3ca4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1004,10 +1004,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..504bc266
+index 00000000..305ce734
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,225 @@
+@@ -0,0 +1,227 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1059,8 +1059,10 @@ index 00000000..504bc266
 +                act.accept(VARLONG);
 +                break;
 +            case 0x0D: //PLAY_ENTITY_SPAWN
-+                act.accept(SVARLONG);
-+                act.accept(VARLONG);
++            case 0x0F: //PLAY_ADD_ITEM_ENTITY
++            case 0x16: //PLAY_ADD_PAINTING_PACKET
++                act.accept(SVARLONG); //unique id
++                act.accept(VARLONG); //runtime id
 +                break;
 +            case 0x0E: //PLAY_ENTITY_DESTROY
 +            case 0x4A: //PLAY_BOSS_EVENT
