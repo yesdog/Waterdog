@@ -1,4 +1,4 @@
-From 80b11dee751c58c704fc5acadec1eac758de3ca4 Mon Sep 17 00:00:00 2001
+From f03d3a2b6eb767ee3c04f2f02a1bf66efa5c3852 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1004,10 +1004,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..305ce734
+index 00000000..c439ecbb
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,227 @@
+@@ -0,0 +1,234 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1058,6 +1058,12 @@ index 00000000..305ce734
 +            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
 +                act.accept(VARLONG);
 +                break;
++            case 0x0C: //PLAY_SPAWN_PLAYER
++                to.writeBytes(from, Long.BYTES * 2);
++                act.accept(SK_VI_DATA);
++                act.accept(SVARLONG);
++                act.accept(VARLONG);
++                break;
 +            case 0x0D: //PLAY_ENTITY_SPAWN
 +            case 0x0F: //PLAY_ADD_ITEM_ENTITY
 +            case 0x16: //PLAY_ADD_PAINTING_PACKET
@@ -1089,12 +1095,13 @@ index 00000000..305ce734
 +                act.accept(SK_SVARINT);
 +                act.accept(VARLONG);
 +                break;
-+            case 0x0C: //PLAY_SPAWN_PLAYER
-+                to.writeBytes(from, Long.BYTES * 2);
-+                act.accept(SK_VI_DATA);
-+                act.accept(SVARLONG);
-+                act.accept(VARLONG);
-+                break;
++            case 0x37: { //PLAY_ADVENTURE_SETTINGS
++                final int idIndex = from.writerIndex() - Long.BYTES;
++                final long id = from.getLongLE(idIndex);
++                from.setLongLE(idIndex, id == oldId ? newId : (id == newId ? oldId : id));
++                from.readerIndex(originalReader);
++                return;
++            }
 +            case 0x3F: { //PLAY_PLAYER_INFO
 +                final int type = from.readUnsignedByte();
 +                final int num = DefinedPacket.readVarInt(from);
@@ -1103,12 +1110,7 @@ index 00000000..305ce734
 +                if (type == 0) { //ADD
 +                    for (int i = 0; i < num; i++) {
 +                        to.writeBytes(from, Long.BYTES * 2);
-+                        {
-+                            //the player list entity IDs cause some issues. set all of them to 0
-+                            //act.accept(SVARLONG);
-+                            DefinedPacket.readSVarLong(from);
-+                            DefinedPacket.writeSVarLong(0, to);
-+                        }
++                        act.accept(SVARLONG);
 +                        act.accept(SK_VI_DATA); //username
 +                        act.accept(SK_VI_DATA); //skin name
 +                        act.accept(SK_VI_DATA); //skin data
@@ -1154,6 +1156,8 @@ index 00000000..305ce734
 +                add.accept(DefinedPacket.readVarLong(packet));
 +                break;
 +            case 0x0D: //PLAY_ENTITY_SPAWN
++            case 0x0F: //PLAY_ADD_ITEM_ENTITY
++            case 0x16: //PLAY_ADD_PAINTING_PACKET
 +                DefinedPacket.readSVarLong(packet);
 +                add.accept(DefinedPacket.readVarLong(packet));
 +                break;
@@ -1223,6 +1227,9 @@ index 00000000..305ce734
 +
 +    static public final Rewrite SK_SVARINT = (from, to, oldId, newId) ->
 +        DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
++
++    static public final Rewrite SK_VARINT = (from, to, oldId, newId) ->
++            DefinedPacket.writeVarInt(DefinedPacket.readVarInt(from), to);
 +
 +    static public final Rewrite VARLONG = (from, to, oldId, newId) -> {
 +        final long id = DefinedPacket.readVarLong(from);
