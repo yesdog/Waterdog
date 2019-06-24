@@ -1,4 +1,4 @@
-From 0ba46dcf012864df45ed88ee362d022e2b992d27 Mon Sep 17 00:00:00 2001
+From 83ebbe30ad89d5d2eb65fe177791b116931e3e4d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1522,7 +1522,7 @@ index 3a9dab68..8ab48357 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..24cb79d3 100644
+index 51d0c6cf..6420987c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
@@ -1552,7 +1552,7 @@ index 51d0c6cf..24cb79d3 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,6 +148,35 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,10 +148,40 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  
@@ -1588,6 +1588,11 @@ index 51d0c6cf..24cb79d3 100644
      @Override
      public void handle(Chat chat) throws Exception
      {
+         int maxLength = ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_11 ) ? 256 : 100;
++        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) maxLength = 1024; // Waterdog
+         Preconditions.checkArgument( chat.getMessage().length() <= maxLength, "Chat message too long" ); // Mojang limit, check on updates
+         Preconditions.checkArgument(!StringUtil.isBlank(chat.getMessage()), "Chat message is empty");
+ 
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 index 3855c0b9..e658a10e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
