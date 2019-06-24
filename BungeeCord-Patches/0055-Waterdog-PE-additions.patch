@@ -1,4 +1,4 @@
-From f03d3a2b6eb767ee3c04f2f02a1bf66efa5c3852 Mon Sep 17 00:00:00 2001
+From 32b8019413acfe42a819aa94e560fa8a87b5f821 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2199,10 +2199,10 @@ index 00000000..59a9c22a
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 new file mode 100644
-index 00000000..f6cac478
+index 00000000..66563ead
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,148 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -2274,8 +2274,10 @@ index 00000000..f6cac478
 +            final ByteBuf tmpBuf = ctx.alloc().ioBuffer(pong.sizeHint());
 +            try {
 +                config.getCodec().encode(pong, tmpBuf);
-+                ctx.writeAndFlush(new DatagramPacket(tmpBuf.retain(), sender))
-+                        .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
++                for (int i = 0 ; i < 3; i++) { //send multiple responses for bad connections
++                    ctx.writeAndFlush(new DatagramPacket(tmpBuf.retainedSlice(), sender))
++                            .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
++                }
 +            } finally {
 +                ReferenceCountUtil.safeRelease(pong);
 +                tmpBuf.release();

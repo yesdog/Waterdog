@@ -1,4 +1,4 @@
-From 53834974a0233921e91045dc1dcbfdef07a07c64 Mon Sep 17 00:00:00 2001
+From c651b89bc14b4a1a1feeeca19b887712c2465083 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -996,10 +996,18 @@ index 615c7247..69232e7d 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-index 4c0637b9..d8163ecf 100644
+index 4c0637b9..f2898669 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-@@ -50,6 +50,22 @@ public class BungeeServerInfo implements ServerInfo
+@@ -34,6 +34,7 @@ import net.md_5.bungee.protocol.packet.PluginMessage;
+ @ToString(of =
+ {
+     "name", "address", "restricted"
++    , "raknet" // Waterdog
+ })
+ public class BungeeServerInfo implements ServerInfo
+ {
+@@ -50,6 +51,22 @@ public class BungeeServerInfo implements ServerInfo
      @Getter
      private final Queue<DefinedPacket> packetQueue = new LinkedList<>();
  

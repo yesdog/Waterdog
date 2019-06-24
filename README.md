@@ -75,6 +75,7 @@ To compile Waterfall, you need JDK8, git, bash, maven, and an internet connectio
 Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/bootstrap/target/
 
 ## Gotchas
+
 * Synapse support will not be included.
 * The vanilla Bedrock Dedicated Server is a bit weird after transfer. It's low priority, but will have better support over time. 
 * *Why are my Bedrock UUIDs different?* - Waterdog unifies Bedrock UUIDs for online mode by using the user's XUID. They will
@@ -84,8 +85,7 @@ will produce a UUID based on the username, just like normal BungeeCord.
 ## Join us
 
 * Feel free to open a PR! We accept contributions.
-* Join us on IRC (irc.spi.gt #paper, [webchat](http://irc.spi.gt/iris/?nick=&channels=paper)).
-* Visit our forums (https://papermc.io/forums).
+* Join us on our [discord](https://discord.gg/MhhWfSW) for any questions.
 
 ## Special Thanks To
 
