@@ -1,4 +1,4 @@
-From 83ebbe30ad89d5d2eb65fe177791b116931e3e4d Mon Sep 17 00:00:00 2001
+From ecadfb20b7242c8bfb143ff25bfa9f3cfcee758d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -925,10 +925,10 @@ index dbb24e22..112c7229 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-index 8ac16ad0..a26febcd 100644
+index f0b65065..ce67c5b5 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -114,8 +114,7 @@ public abstract class PEBlockRewrite {
+@@ -141,8 +141,7 @@ public abstract class PEBlockRewrite {
                      throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
              }
          }
@@ -1522,7 +1522,7 @@ index 3a9dab68..8ab48357 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..6420987c 100644
+index 51d0c6cf..75eed6c6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
@@ -1552,7 +1552,7 @@ index 51d0c6cf..6420987c 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,10 +148,40 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,11 +148,42 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  
@@ -1591,8 +1591,10 @@ index 51d0c6cf..6420987c 100644
          int maxLength = ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_11 ) ? 256 : 100;
 +        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) maxLength = 1024; // Waterdog
          Preconditions.checkArgument( chat.getMessage().length() <= maxLength, "Chat message too long" ); // Mojang limit, check on updates
++        if (!ProtocolConstants.isPE(con.getPendingConnection().getVersion())) // Waterdog
          Preconditions.checkArgument(!StringUtil.isBlank(chat.getMessage()), "Chat message is empty");
  
+         ChatEvent chatEvent = new ChatEvent( con, con.getServer(), chat.getMessage() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 index 3855c0b9..e658a10e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java

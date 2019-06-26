@@ -1,4 +1,4 @@
-From 32b8019413acfe42a819aa94e560fa8a87b5f821 Mon Sep 17 00:00:00 2001
+From 1385785ea7da8f23e8d9e0cacd5cf1f1b333090b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..8ac16ad0
+index 00000000..f0b65065
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,143 @@
+@@ -0,0 +1,170 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -115,6 +115,33 @@ index 00000000..8ac16ad0
 +                packet.writeFloatLE(y);
 +                packet.writeFloatLE(z);
 +                DefinedPacket.writeSVarInt(data, packet);
++                return;
++            }
++            case 0x7b: { //PLAY_LEVEL_SOUND_EVENT_PACKET
++                final int sound = DefinedPacket.readVarInt(packet);
++                final float x = packet.readFloatLE();
++                final float y = packet.readFloatLE();
++                final float z = packet.readFloatLE();
++                int data = DefinedPacket.readSVarInt(packet);
++                final byte[] remaining = new byte[packet.readableBytes()];
++                packet.readBytes(remaining);
++
++                switch (sound) {
++                    case 6: // SOUND_PLACE
++                        data = map(data);
++                        break;
++                    default: // NOOP
++                }
++
++                packet.readerIndex(readerIndex);
++                packet.writerIndex(writerIndex);
++
++                DefinedPacket.writeVarInt(sound, packet);
++                packet.writeFloatLE(x);
++                packet.writeFloatLE(y);
++                packet.writeFloatLE(z);
++                DefinedPacket.writeSVarInt(data, packet);
++                packet.writeBytes(remaining);
 +                return;
 +            }
 +            case 0x0D: //PLAY_ENTITY_SPAWN TODO: entity spawn for fall blocks, DATA_VARIANT
@@ -574,7 +601,7 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..d2373c7c
+index 00000000..a675241f
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 @@ -0,0 +1,160 @@
@@ -620,7 +647,7 @@ index 00000000..d2373c7c
 +        readSVarInt(buf); //seed
 +        setDimension(PEDataValues.getPcDimensionId(readSVarInt(buf)));
 +        readSVarInt(buf); //world type (1 - infinite)
-+        readSVarInt(buf); // world gamemode (SURVIVAL)
++        readSVarInt(buf); //world gamemode (SURVIVAL)
 +        setDifficulty((short) readSVarInt(buf));
 +
 +        final int payloadStartIndex = buf.readerIndex();
