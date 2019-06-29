@@ -37,7 +37,7 @@ index 00000000..f0b65065
 +    public abstract int map(int id);
 +
 +    public void rewriteClientbound(ByteBuf packet, int version) {
-+        if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
 +            return; //TODO: finish 1.12 format
 +        }
 +
