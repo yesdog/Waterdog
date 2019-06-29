@@ -484,6 +484,7 @@ index a2bc6a0d..dd61fb23 100644
 +    public static final int MINECRAFT_PE_1_10 = 340 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_12 = 361 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_13 = 370 - PE_PROTOCOL_OFFSET;
 +    // Waterdog end
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
@@ -498,6 +499,7 @@ index a2bc6a0d..dd61fb23 100644
 +            "PE-1.10.x",
 +            "PE-1.11.x",
 +            "PE-1.12.x",
++            "PE-1.13.x
 +            // Waterdog end
              "1.8.x",
              "1.9.x",
@@ -512,6 +514,7 @@ index a2bc6a0d..dd61fb23 100644
 +            ProtocolConstants.MINECRAFT_PE_1_10,
 +            ProtocolConstants.MINECRAFT_PE_1_11,
 +            ProtocolConstants.MINECRAFT_PE_1_12,
++            ProtocolConstants.MINECRAFT_PE_1_13
 +            // Waterdog end
              ProtocolConstants.MINECRAFT_1_8,
              ProtocolConstants.MINECRAFT_1_9,
