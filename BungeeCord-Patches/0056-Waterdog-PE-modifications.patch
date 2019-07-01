@@ -1,4 +1,4 @@
-From d3c4ca34ad16d06473e5496549bdf47af118aa95 Mon Sep 17 00:00:00 2001
+From 5eb0bfb41bf72a7b4038a862d433d8675efb3369 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1414,10 +1414,10 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..8b971b6a 100644
+index 1f8a2439..338a64d6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -137,6 +136,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -137,6 +137,21 @@ public class DownstreamBridge extends PacketHandler
      public void handle(PacketWrapper packet) throws Exception
      {
          con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
@@ -1439,7 +1439,7 @@ index 1f8a2439..8b971b6a 100644
          con.sendPacket( packet );
      }
  
-@@ -154,6 +168,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -154,6 +169,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
@@ -1550,7 +1550,7 @@ index 3a9dab68..2539971f 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..75eed6c6 100644
+index 51d0c6cf..4f79b839 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
@@ -1565,7 +1565,26 @@ index 51d0c6cf..75eed6c6 100644
              if ( channel.getHandle().isWritable() )
              {
                  server.config().setAutoRead( true );
-@@ -124,6 +129,14 @@ public class UpstreamBridge extends PacketHandler
+@@ -117,6 +122,18 @@ public class UpstreamBridge extends PacketHandler
+         if ( con.getServer() != null )
+         {
+             con.getEntityRewrite().rewriteServerbound( packet.buf, con.getClientEntityId(), con.getServerEntityId(), con.getPendingConnection().getVersion() );
++            // Waterdog start
++            if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) {
++                if (con.getEntityRewrite() instanceof net.md_5.bungee.entitymap.EntityMap_PE) {
++                    net.md_5.bungee.entitymap.EntityMap_PE entityMap = (net.md_5.bungee.entitymap.EntityMap_PE) con.getEntityRewrite();
++                    java.util.Collection<java.util.UUID> playerList = con.getPePlayerList();
++
++                    entityMap.playerListTrackRewrite(packet.buf, playerList::add, playerList::remove,
++                            con.getUniqueId(), con.getPendingConnection().getLoginId());
++                }
++                //TODO: block rewrite?
++            }
++            // Waterdog end
+             con.getServer().getCh().write( packet );
+         }
+     }
+@@ -124,6 +141,14 @@ public class UpstreamBridge extends PacketHandler
      @Override
      public void handle(KeepAlive alive) throws Exception
      {
@@ -1580,7 +1599,7 @@ index 51d0c6cf..75eed6c6 100644
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,11 +148,42 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,11 +160,42 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  

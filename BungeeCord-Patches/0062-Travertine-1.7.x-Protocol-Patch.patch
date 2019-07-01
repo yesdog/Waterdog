@@ -1,4 +1,4 @@
-From 7c1f2815268b99c53e4c8431411431f774fdfa20 Mon Sep 17 00:00:00 2001
+From d49e84b5517d7a40ae9aacd930087f0d92ad6278 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1465,10 +1465,10 @@ index 3e4db048..70e6d419 100644
          {
              this.compressionThreshold = compressionThreshold;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 8b971b6a..6b4a9a02 100644
+index 338a64d6..7ee15121 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -190,7 +190,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -191,7 +191,7 @@ public class DownstreamBridge extends PacketHandler
          switch ( objective.getAction() )
          {
              case 0:
@@ -1477,7 +1477,7 @@ index 8b971b6a..6b4a9a02 100644
                  break;
              case 1:
                  serverScoreboard.removeObjective( objective.getName() );
-@@ -200,7 +200,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -201,7 +201,7 @@ public class DownstreamBridge extends PacketHandler
                  if ( oldObjective != null )
                  {
                      oldObjective.setValue( objective.getValue() );
@@ -1486,7 +1486,7 @@ index 8b971b6a..6b4a9a02 100644
                  }
                  break;
              default:
-@@ -297,16 +297,28 @@ public class DownstreamBridge extends PacketHandler
+@@ -298,16 +298,28 @@ public class DownstreamBridge extends PacketHandler
  
          if ( pluginMessage.getTag().equals( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ? "minecraft:brand" : "MC|Brand" ) )
          {
@@ -1613,7 +1613,7 @@ index 6bc14d67..2b3bc361 100644
          channel.close();
      }
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 75eed6c6..3e3b6c0f 100644
+index 4f79b839..88c88cd1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -83,7 +83,12 @@ public class UpstreamBridge extends PacketHandler

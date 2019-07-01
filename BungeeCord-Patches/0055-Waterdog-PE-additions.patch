@@ -1,4 +1,4 @@
-From 9dea7fb7a2a00de1a211819dc1f800ef7031554d Mon Sep 17 00:00:00 2001
+From 363f2075d0b0a0ba17f114a2002b82503d61f78a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1035,10 +1035,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..e48bfbd8
+index 00000000..1efdc62c
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,234 @@
+@@ -0,0 +1,247 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1206,20 +1206,30 @@ index 00000000..e48bfbd8
 +            return;
 +        }
 +        final int readerIndex = packet.readerIndex();
++        final Runnable rewrite = () -> {
++            final int preUUIDReaderIndex = packet.readerIndex();
++            final long msb = packet.readLongLE();
++            final long lsb = packet.readLongLE();
++            if (msb == playerUUID.getMostSignificantBits()
++                    && lsb == playerUUID.getLeastSignificantBits()) {
++                packet.setLongLE(preUUIDReaderIndex, loginUUID.getMostSignificantBits());
++                packet.setLongLE(preUUIDReaderIndex + Long.BYTES, loginUUID.getLeastSignificantBits());
++            } else if (msb == loginUUID.getMostSignificantBits()
++                    && lsb == loginUUID.getLeastSignificantBits()) {
++                packet.setLongLE(preUUIDReaderIndex, playerUUID.getMostSignificantBits());
++                packet.setLongLE(preUUIDReaderIndex + Long.BYTES, playerUUID.getLeastSignificantBits());
++            }
++        };
 +        switch (DefinedPacket.readVarInt(packet)) {
 +            case 0x3F: { //PLAY_PLAYER_INFO
 +                final int type = packet.readUnsignedByte();
 +                final int num = DefinedPacket.readVarInt(packet);
 +                if (type == 0) { //ADD
 +                    for (int i = 0; i < num; i++) {
++                        rewrite.run();
 +                        final int preUUIDReaderIndex = packet.readerIndex();
-+                        final long msb = packet.readLongLE();
-+                        final long lsb = packet.readLongLE();
-+                        if (loginUUID != null && msb == playerUUID.getMostSignificantBits()
-+                                && lsb == playerUUID.getLeastSignificantBits()) {
-+                            packet.setLongLE(preUUIDReaderIndex, loginUUID.getMostSignificantBits());
-+                            packet.setLongLE(preUUIDReaderIndex + Long.BYTES, loginUUID.getLeastSignificantBits());
-+                        }
++                        add.accept(new UUID(packet.readLongLE(), packet.readLongLE()));
++                        packet.readerIndex(preUUIDReaderIndex);
 +                        DefinedPacket.readSVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
@@ -1229,7 +1239,6 @@ index 00000000..e48bfbd8
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom data
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //xuid
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //channel
-+                        add.accept(new UUID(msb, lsb));
 +                    }
 +                } else if (type == 1) { //REMOVE
 +                    for (int i = 0; i < num; i++) {
@@ -1238,6 +1247,10 @@ index 00000000..e48bfbd8
 +                        remove.accept(new UUID(msb, lsb));
 +                    }
 +                }
++                break;
++            }
++            case 0x5D: { //PLAY_PLAYER_SKIN_PACKET
++                rewrite.run();
 +                break;
 +            }
 +            default: // NOOP
@@ -1257,7 +1270,7 @@ index 00000000..e48bfbd8
 +    };
 +
 +    static public final Rewrite SK_SVARINT = (from, to, oldId, newId) ->
-+        DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
++            DefinedPacket.writeSVarInt(DefinedPacket.readSVarInt(from), to);
 +
 +    static public final Rewrite SK_VARINT = (from, to, oldId, newId) ->
 +            DefinedPacket.writeVarInt(DefinedPacket.readVarInt(from), to);
