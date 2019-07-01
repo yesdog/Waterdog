@@ -1,4 +1,4 @@
-From 1385785ea7da8f23e8d9e0cacd5cf1f1b333090b Mon Sep 17 00:00:00 2001
+From 9dea7fb7a2a00de1a211819dc1f800ef7031554d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -507,10 +507,10 @@ index 00000000..bfd8b92b
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..d3e8e2d8
+index 00000000..f1f09af7
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,52 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import com.google.gson.JsonObject;
@@ -523,6 +523,7 @@ index 00000000..d3e8e2d8
 +
 +import net.md_5.bungee.protocol.packet.Handshake;
 +
++import java.math.BigInteger;
 +import java.util.UUID;
 +
 +@Data
@@ -530,7 +531,8 @@ index 00000000..d3e8e2d8
 +public class PEHandshake extends Handshake {
 +    private String username;
 +    private UUID uuid;
-+    private UUID deviceUUID;
++    private UUID loginUUID;
++    private BigInteger xuid;
 +    private boolean authorized;
 +    private JsonObject clientInfo;
 +    private byte[] handshakeData;
@@ -539,12 +541,14 @@ index 00000000..d3e8e2d8
 +        setProtocolVersion(2);
 +    }
 +
-+    public PEHandshake(int protocolVersion, String host, int port, String username, UUID uuid, boolean authorized, JsonObject clientInfo) {
++    public PEHandshake(int protocolVersion, String host, int port, String username, UUID uuid,
++            boolean authorized, JsonObject clientInfo, BigInteger xuid) {
 +        super(protocolVersion, host, port, 2);
 +        this.username = username;
 +        this.uuid = uuid;
 +        this.authorized = authorized;
 +        this.clientInfo = clientInfo;
++        this.xuid = xuid;
 +    }
 +
 +    @Override
@@ -1031,7 +1035,7 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..c439ecbb
+index 00000000..e48bfbd8
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 @@ -0,0 +1,234 @@
@@ -1197,7 +1201,7 @@ index 00000000..c439ecbb
 +        packet.readerIndex(readerIndex);
 +    }
 +
-+    public void playerListTrackRewrite(ByteBuf packet, Consumer<UUID> add, Consumer<UUID> remove, UUID playerUUID, UUID deviceUUID) {
++    public void playerListTrackRewrite(ByteBuf packet, Consumer<UUID> add, Consumer<UUID> remove, UUID playerUUID, UUID loginUUID) {
 +        if (!packet.isReadable()) {
 +            return;
 +        }
@@ -1211,10 +1215,10 @@ index 00000000..c439ecbb
 +                        final int preUUIDReaderIndex = packet.readerIndex();
 +                        final long msb = packet.readLongLE();
 +                        final long lsb = packet.readLongLE();
-+                        if (deviceUUID != null && msb == playerUUID.getMostSignificantBits()
++                        if (loginUUID != null && msb == playerUUID.getMostSignificantBits()
 +                                && lsb == playerUUID.getLeastSignificantBits()) {
-+                            packet.setLongLE(preUUIDReaderIndex, deviceUUID.getMostSignificantBits());
-+                            packet.setLongLE(preUUIDReaderIndex + Long.BYTES, deviceUUID.getLeastSignificantBits());
++                            packet.setLongLE(preUUIDReaderIndex, loginUUID.getMostSignificantBits());
++                            packet.setLongLE(preUUIDReaderIndex + Long.BYTES, loginUUID.getLeastSignificantBits());
 +                        }
 +                        DefinedPacket.readSVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
@@ -1811,10 +1815,10 @@ index 00000000..0b21c9f1
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..369f5aeb
+index 00000000..6ff58734
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,291 @@
+@@ -0,0 +1,298 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
@@ -1843,6 +1847,7 @@ index 00000000..369f5aeb
 +import io.netty.handler.codec.DecoderException;
 +import io.netty.handler.codec.EncoderException;
 +
++import net.md_5.bungee.BungeeCord;
 +import net.md_5.bungee.protocol.DefinedPacket;
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +
@@ -1921,12 +1926,19 @@ index 00000000..369f5aeb
 +        final String[] serverAddrSplit = serverAddr.split("[:]");
 +
 +        handshake.setClientInfo(clientInfo);
-+        handshake.setUsername(getString(identityData, "displayName").replaceAll(" ", "_")); //TODO: make configurable
++        handshake.setUsername(getString(identityData, "displayName"));
++        if (BungeeCord.getInstance().config.isReplaceUsernameSpaces()) {
++            handshake.setUsername(handshake.getUsername().replaceAll(" ", "_"));
++        }
 +        handshake.setUuid(UUID.fromString(getString(identityData, "identity")));
-+        handshake.setDeviceUUID(handshake.getUuid());
++        handshake.setLoginUUID(handshake.getUuid());
 +        handshake.setAuthorized(key != null);
 +        if (handshake.isAuthorized()) {
-+            handshake.setUuid(new UUID(0, new BigInteger(getString(identityData, "XUID")).longValue()));
++            handshake.setXuid(new BigInteger(getString(identityData, "XUID")));
++            if (BungeeCord.getInstance().config.isUseXUIDForUUID()) {
++                handshake.setUuid(new UUID(0, handshake.getXuid().longValue()));
++            }
++            Preconditions.checkArgument(handshake.getXuid().signum() == 1, "XUID is negative or zero");
 +        }
 +        handshake.setHost(serverAddrSplit[0]);
 +        if (serverAddrSplit.length > 1) {
@@ -1939,7 +1951,7 @@ index 00000000..369f5aeb
 +    public static void createHandshake(PEHandshake handshake) {
 +        final ByteBuf buf = Unpooled.buffer(512);
 +        final byte[] identityData = createIdentityData(handshake.getUsername(),
-+                handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
++                handshake.getUuid(), handshake.getXuid()).getBytes(StandardCharsets.UTF_8);
 +        final byte[] clientData = createClientData(handshake.getClientInfo(),
 +                handshake.getHost(), handshake.getPort(), handshake.getUuid()).getBytes(StandardCharsets.UTF_8);
 +        buf.writeInt(handshake.getProtocolVersion() + ProtocolConstants.PE_PROTOCOL_OFFSET);
@@ -2061,16 +2073,15 @@ index 00000000..369f5aeb
 +    }
 +
 +    @SuppressWarnings("serial")
-+    static String createIdentityData(String username, UUID uuid) {
++    static String createIdentityData(String username, UUID uuid, BigInteger xuid) {
 +        final Map<String, List<String>> chainmap = new HashMap<>();
 +        final long iat = System.currentTimeMillis() / 1000;
 +        final long exp = iat + 24 * 3600;
-+        JsonObject dataChain = new JsonObject();
 +        JsonObject extraData = new JsonObject();
 +        extraData.addProperty("identity", uuid.toString());
 +        extraData.addProperty("displayName", username);
-+        extraData.addProperty("XUID", String.valueOf(uuid.getLeastSignificantBits()));
-+        //chain
++        extraData.addProperty("XUID", xuid == null ? "" : xuid.toString());
++        JsonObject dataChain = new JsonObject();
 +        dataChain.addProperty("nbf", iat - 10);
 +        dataChain.addProperty("exp", exp);
 +        dataChain.addProperty("iat", iat);

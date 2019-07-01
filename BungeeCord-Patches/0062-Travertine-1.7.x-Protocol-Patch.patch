@@ -1,4 +1,4 @@
-From bb347cff99104005ccb733b64629feb52b7dbe74 Mon Sep 17 00:00:00 2001
+From 7c1f2815268b99c53e4c8431411431f774fdfa20 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index d9da58d4..bee33fef 100644
+index 8568bbdc..346d368c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1465,10 +1465,10 @@ index 3e4db048..70e6d419 100644
          {
              this.compressionThreshold = compressionThreshold;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index cab22103..83ba505f 100644
+index 8b971b6a..6b4a9a02 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -191,7 +191,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -190,7 +190,7 @@ public class DownstreamBridge extends PacketHandler
          switch ( objective.getAction() )
          {
              case 0:
@@ -1477,7 +1477,7 @@ index cab22103..83ba505f 100644
                  break;
              case 1:
                  serverScoreboard.removeObjective( objective.getName() );
-@@ -201,7 +201,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -200,7 +200,7 @@ public class DownstreamBridge extends PacketHandler
                  if ( oldObjective != null )
                  {
                      oldObjective.setValue( objective.getValue() );
@@ -1486,7 +1486,7 @@ index cab22103..83ba505f 100644
                  }
                  break;
              default:
-@@ -298,16 +298,28 @@ public class DownstreamBridge extends PacketHandler
+@@ -297,16 +297,28 @@ public class DownstreamBridge extends PacketHandler
  
          if ( pluginMessage.getTag().equals( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ? "minecraft:brand" : "MC|Brand" ) )
          {
@@ -1526,7 +1526,7 @@ index cab22103..83ba505f 100644
              con.unsafe().sendPacket( pluginMessage );
              throw CancelSendSignal.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index cca5d4d0..698fbce2 100644
+index d7ac6abb..3a700831 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -11,6 +11,13 @@ import java.util.List;
@@ -1574,7 +1574,7 @@ index cca5d4d0..698fbce2 100644
                      }
                  };
  
-@@ -568,7 +591,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -569,7 +592,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                              userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
                              userCon.init();
  
@@ -1613,7 +1613,7 @@ index 6bc14d67..2b3bc361 100644
          channel.close();
      }
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 24cb79d3..8a7497b6 100644
+index 75eed6c6..3e3b6c0f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -83,7 +83,12 @@ public class UpstreamBridge extends PacketHandler

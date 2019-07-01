@@ -1,4 +1,4 @@
-From ecadfb20b7242c8bfb143ff25bfa9f3cfcee758d Mon Sep 17 00:00:00 2001
+From d3c4ca34ad16d06473e5496549bdf47af118aa95 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1031,7 +1031,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..d9da58d4 100644
+index 1375d1e2..8568bbdc 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1051,8 +1051,8 @@ index 1375d1e2..d9da58d4 100644
 +        if (originalHandshake instanceof network.ycc.waterdog.pe.packet.PEHandshake) {
 +            network.ycc.waterdog.pe.packet.PEHandshake oPEHandshake = (network.ycc.waterdog.pe.packet.PEHandshake) originalHandshake;
 +            copiedHandshake = new network.ycc.waterdog.pe.packet.PEHandshake( originalHandshake.getProtocolVersion(),
-+                    originalHandshake.getHost(), originalHandshake.getPort(),
-+                    user.getName(), user.getUniqueId(), oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo() );
++                    originalHandshake.getHost(), originalHandshake.getPort(), user.getName(), user.getUniqueId(),
++                    oPEHandshake.isAuthorized(), oPEHandshake.getClientInfo(), oPEHandshake.getXuid() );
 +        }
 +        // Waterdog end
 +        if ( BungeeCord.getInstance().config.isIpForward() && !target.isRakNet()) // Waterdog
@@ -1351,6 +1351,33 @@ index 37fe6ac7..fdb26501 100644
      private final BungeeZlib zlib = CompressFactory.zlib.newInstance();
  
      @Override
+diff --git a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
+index 5841cf63..15400b4d 100644
+--- a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
++++ b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
+@@ -68,6 +68,11 @@ public abstract class Configuration implements ProxyConfig
+     private boolean preventProxyConnections;
+     private boolean forgeSupport = true; // Waterfall: default to enabled
+ 
++    // Waterdog start
++    private boolean replaceUsernameSpaces = true;
++    private boolean useXUIDForUUID = true;
++    // Waterdog end
++
+     @Synchronized("serversLock") // Waterfall
+     public void load()
+     {
+@@ -99,6 +104,10 @@ public abstract class Configuration implements ProxyConfig
+         compressionThreshold = adapter.getInt( "network_compression_threshold", compressionThreshold );
+         preventProxyConnections = adapter.getBoolean( "prevent_proxy_connections", preventProxyConnections );
+         forgeSupport = adapter.getBoolean( "forge_support", forgeSupport );
++        // Waterdog start
++        replaceUsernameSpaces = adapter.getBoolean( "replace_username_spaces", replaceUsernameSpaces );
++        useXUIDForUUID = adapter.getBoolean( "use_xuid_for_uuid", useXUIDForUUID);
++        // Waterdog end
+ 
+         disabledCommands = new CaseInsensitiveSet( (Collection<String>) adapter.getList( "disabled_commands", Arrays.asList( "disabledcommandhere" ) ) );
+ 
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
 index 44011a96..e0a37fe3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
@@ -1387,10 +1414,10 @@ index 44011a96..e0a37fe3 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..cab22103 100644
+index 1f8a2439..8b971b6a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -137,6 +137,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -137,6 +136,21 @@ public class DownstreamBridge extends PacketHandler
      public void handle(PacketWrapper packet) throws Exception
      {
          con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
@@ -1403,7 +1430,7 @@ index 1f8a2439..cab22103 100644
 +
 +                entityMap.entityTrack(packet.buf, entityIDs::add, entityIDs::remove);
 +                entityMap.playerListTrackRewrite(packet.buf, playerList::add, playerList::remove,
-+                        con.getUniqueId(), con.getPendingConnection().getDeviceId());
++                        con.getUniqueId(), con.getPendingConnection().getLoginId());
 +            }
 +
 +            con.getBlockRewrite().rewriteClientbound(packet.buf, con.getPendingConnection().getVersion());
@@ -1412,7 +1439,7 @@ index 1f8a2439..cab22103 100644
          con.sendPacket( packet );
      }
  
-@@ -154,6 +169,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -154,6 +168,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
@@ -1435,7 +1462,7 @@ index 1f8a2439..cab22103 100644
      public void handle(ScoreboardObjective objective) throws Exception
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 3a9dab68..8ab48357 100644
+index 3a9dab68..2539971f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -98,6 +98,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1444,7 +1471,7 @@ index 3a9dab68..8ab48357 100644
      private UUID offlineId;
 +    // Waterdog start
 +    @Getter
-+    private UUID deviceId;
++    private UUID loginId;
 +    // Waterdog end
      @Getter
      private LoginResult loginProfile;
@@ -1469,7 +1496,7 @@ index 3a9dab68..8ab48357 100644
          this.handshake = handshake;
          ch.setVersion( handshake.getProtocolVersion() );
  
-@@ -332,6 +342,23 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -332,6 +342,24 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                      }
                      return;
                  }
@@ -1478,11 +1505,12 @@ index 3a9dab68..8ab48357 100644
 +                    network.ycc.waterdog.pe.packet.PEHandshake peHandshake = (network.ycc.waterdog.pe.packet.PEHandshake) handshake;
 +
 +                    uniqueId = peHandshake.getUuid();
-+                    deviceId = peHandshake.getDeviceUUID();
-+                    //TODO: loginProfile
++                    loginId = peHandshake.getLoginUUID();
++                    //TODO: loginProfile?
 +                    handle(new LoginRequest(peHandshake.getUsername()));
 +
-+                    peHandshake.getClientInfo().addProperty("WaterDog_RemoteIP", getAddress().getHostString());
++                    peHandshake.getClientInfo().addProperty("WaterDog_RemoteIP", getAddress().getHostString()); //old format, deprecated.
++                    peHandshake.getClientInfo().addProperty("Waterdog_RemoteIP", getAddress().getHostString());
 +
 +                    if (isOnlineMode() && !peHandshake.isAuthorized()) {
 +                        disconnect( bungee.getTranslation( "offline_mode_player" ) );
@@ -1493,7 +1521,7 @@ index 3a9dab68..8ab48357 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -386,7 +413,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -386,7 +414,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
@@ -1502,7 +1530,7 @@ index 3a9dab68..8ab48357 100644
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
                  } else
-@@ -589,10 +616,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -589,10 +617,17 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  
