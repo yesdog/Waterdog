@@ -1,4 +1,4 @@
-From 5eb0bfb41bf72a7b4038a862d433d8675efb3369 Mon Sep 17 00:00:00 2001
+From 283b4aacfa39ef86f1b5f4f8605c716da1f26b24 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1031,7 +1031,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 1375d1e2..8568bbdc 100644
+index 72f487dc..8dbd4cc5 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1173,7 +1173,7 @@ index 1375d1e2..8568bbdc 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -315,6 +393,35 @@ public class ServerConnector extends PacketHandler
+@@ -320,6 +398,35 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
