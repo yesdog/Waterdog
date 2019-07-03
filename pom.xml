@@ -45,34 +45,6 @@
 
     <build>
         <defaultGoal>clean install</defaultGoal>
-        <plugins>
-            <plugin>
-                <groupId>io.snyk</groupId>
-                <artifactId>snyk-maven-plugin</artifactId>
-                <version>1.1.1</version>
-                <executions>
-                    <execution>
-                        <id>snyk-test</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>snyk-monitor</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>monitor</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <apiToken>${SNYK_API_TOKEN}</apiToken>
-                    <failOnSeverity>high</failOnSeverity>
-                    <org>yesdog</org>
-                </configuration>
-            </plugin>
-        </plugins>
     </build>
 
     <properties>
