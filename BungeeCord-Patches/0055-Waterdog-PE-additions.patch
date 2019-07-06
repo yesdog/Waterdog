@@ -1,4 +1,4 @@
-From 363f2075d0b0a0ba17f114a2002b82503d61f78a Mon Sep 17 00:00:00 2001
+From 17ac2475d788c842d1a9c523965375b20576af48 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1035,10 +1035,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..1efdc62c
+index 00000000..fe6344fa
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,248 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1226,10 +1226,11 @@ index 00000000..1efdc62c
 +                final int num = DefinedPacket.readVarInt(packet);
 +                if (type == 0) { //ADD
 +                    for (int i = 0; i < num; i++) {
-+                        rewrite.run();
 +                        final int preUUIDReaderIndex = packet.readerIndex();
 +                        add.accept(new UUID(packet.readLongLE(), packet.readLongLE()));
 +                        packet.readerIndex(preUUIDReaderIndex);
++                        
++                        rewrite.run();
 +                        DefinedPacket.readSVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
