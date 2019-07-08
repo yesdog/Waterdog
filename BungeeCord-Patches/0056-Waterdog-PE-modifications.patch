@@ -1,4 +1,4 @@
-From 283b4aacfa39ef86f1b5f4f8605c716da1f26b24 Mon Sep 17 00:00:00 2001
+From e5d9f10f5c517527d91c843a619880e289945efb Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -82,6 +82,26 @@ index 19773843..30e41bd7 100644
 +    boolean isRakNet();
 +    // Waterdog end
  }
+diff --git a/api/src/main/java/net/md_5/bungee/api/connection/ProxiedPlayer.java b/api/src/main/java/net/md_5/bungee/api/connection/ProxiedPlayer.java
+index f7459860..4f13a7a3 100644
+--- a/api/src/main/java/net/md_5/bungee/api/connection/ProxiedPlayer.java
++++ b/api/src/main/java/net/md_5/bungee/api/connection/ProxiedPlayer.java
+@@ -254,6 +254,15 @@ public interface ProxiedPlayer extends Connection, CommandSender
+      */
+     UUID getUniqueId();
+ 
++    // Waterdog start
++    /**
++     * Get the player's Xbox User ID (XUID) for Bedrock players.
++     *
++     * @return XUID as a BigInteger, or null if not present.
++     */
++    java.math.BigInteger getXUID();
++    // Waterdog end
++
+     /**
+      * Gets this player's locale.
+      *
 diff --git a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java b/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
 index 0d1f801a..831505f0 100644
 --- a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
@@ -1210,7 +1230,7 @@ index 72f487dc..8dbd4cc5 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..3d69cf23 100644
+index 15f7c5b5..6f445074 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1318,7 +1338,7 @@ index 15f7c5b5..3d69cf23 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,6 +663,12 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,7 +663,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1328,10 +1348,20 @@ index 15f7c5b5..3d69cf23 100644
 +            this.locale = Locale.forLanguageTag( localString.replace( '_', '-' ) );
 +        }
 +        // Waterdog end
++    }
++
++    // Waterdog start
++    public java.math.BigInteger getXUID() {
++        if (pendingConnection != null && pendingConnection.getHandshake() instanceof network.ycc.waterdog.pe.packet.PEHandshake) {
++            return ((network.ycc.waterdog.pe.packet.PEHandshake) pendingConnection.getHandshake()).getXuid();
++        }
++        return null;
      }
++    // Waterdog end
  
      @Override
-@@ -719,6 +784,7 @@ public final class UserConnection implements ProxiedPlayer
+     public Locale getLocale()
+@@ -719,6 +793,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {

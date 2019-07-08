@@ -1,4 +1,4 @@
-From 805e3b216c631095fa1b5553fafc3b5afa2a29fb Mon Sep 17 00:00:00 2001
+From c0c68acd6259c3d0dfca006c5eda47112402bf58 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1403,7 +1403,7 @@ index 8dbd4cc5..ef47bded 100644
                  throw CancelSendSignal.INSTANCE;
              }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 3e4db048..70e6d419 100644
+index 4c684e1c..86d38ebf 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
@@ -1440,7 +1440,7 @@ index 3e4db048..70e6d419 100644
          {
              sendMessage( position, ComponentSerializer.toString( new TextComponent( BaseComponent.toLegacyText( message ) ) ) );
          } else
-@@ -744,6 +746,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -753,6 +755,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent header, BaseComponent footer)
      {
@@ -1448,7 +1448,7 @@ index 3e4db048..70e6d419 100644
          header = ChatComponentTransformer.getInstance().transform( this, header )[0];
          footer = ChatComponentTransformer.getInstance().transform( this, footer )[0];
  
-@@ -756,6 +759,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -765,6 +768,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent[] header, BaseComponent[] footer)
      {
@@ -1456,7 +1456,7 @@ index 3e4db048..70e6d419 100644
          header = ChatComponentTransformer.getInstance().transform( this, header );
          footer = ChatComponentTransformer.getInstance().transform( this, footer );
  
-@@ -786,6 +790,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -795,6 +799,7 @@ public final class UserConnection implements ProxiedPlayer
      public void setCompressionThreshold(int compressionThreshold)
      {
          if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())) return; // Waterdog
