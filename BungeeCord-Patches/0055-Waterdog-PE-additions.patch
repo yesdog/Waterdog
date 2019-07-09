@@ -1,4 +1,4 @@
-From 17ac2475d788c842d1a9c523965375b20576af48 Mon Sep 17 00:00:00 2001
+From 85e097031a79675e38416d78a58318dc8edd77fd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2227,21 +2227,27 @@ index 00000000..5ef25093
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java
 new file mode 100644
-index 00000000..59a9c22a
+index 00000000..08d67c4b
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPongHandler.java
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,24 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.Unpooled;
++import io.netty.channel.ChannelHandler;
 +import io.netty.channel.ChannelHandlerContext;
++
 +import net.md_5.bungee.protocol.PacketWrapper;
 +import net.md_5.bungee.protocol.packet.KeepAlive;
++
 +import network.ycc.raknet.RakNet;
 +import network.ycc.raknet.packet.Pong;
 +import network.ycc.raknet.pipeline.PongHandler;
 +
++@ChannelHandler.Sharable
 +public class PEPongHandler extends PongHandler {
++    public static final PEPongHandler INSTANCE = new PEPongHandler();
++
 +    @Override
 +    protected void channelRead0(ChannelHandlerContext ctx, Pong pong) {
 +        super.channelRead0(ctx, pong);
@@ -2405,7 +2411,7 @@ index 00000000..66563ead
 +}
 diff --git a/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
 new file mode 100644
-index 00000000..78490b27
+index 00000000..36072583
 --- /dev/null
 +++ b/proxy/src/main/java/protocolsupport/protocol/connection/PSInitEncapsulation.java
 @@ -0,0 +1,40 @@
@@ -2430,7 +2436,7 @@ index 00000000..78490b27
 +    private final boolean compression;
 +
 +    @Override
-+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
++    public void channelActive(ChannelHandlerContext ctx) {
 +        final ByteBuf to = ctx.alloc().heapBuffer();
 +        to.writeByte(HANDSHAKE_ID);
 +        DefinedPacket.writeVarInt(CURRENT_VERSION, to);
@@ -2445,7 +2451,7 @@ index 00000000..78490b27
 +        }
 +        to.writeBoolean(compression);
 +        ctx.writeAndFlush(to);
-+        super.channelActive(ctx);
++        ctx.fireChannelActive();
 +        ctx.pipeline().remove(this);
 +    }
 +}

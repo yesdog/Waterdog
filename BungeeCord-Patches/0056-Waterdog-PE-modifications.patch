@@ -1,4 +1,4 @@
-From e5d9f10f5c517527d91c843a619880e289945efb Mon Sep 17 00:00:00 2001
+From bd083870751158a7f9da13a0cc7c2d0d130958e2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -959,7 +959,7 @@ index f0b65065..ce67c5b5 100644
  
      protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..69232e7d 100644
+index 615c7247..bc595285 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -970,7 +970,7 @@ index 615c7247..69232e7d 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -338,8 +339,22 @@ public class BungeeCord extends ProxyServer
+@@ -338,8 +339,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -979,6 +979,7 @@ index 615c7247..69232e7d 100644
 +                new ServerBootstrap()
 +                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
++                    .option(network.ycc.raknet.RakNet.MAX_CONNECTIONS, config.getPlayerLimit())
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
 +                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
@@ -994,7 +995,7 @@ index 615c7247..69232e7d 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -635,7 +650,7 @@ public class BungeeCord extends ProxyServer
+@@ -635,7 +651,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1003,7 +1004,7 @@ index 615c7247..69232e7d 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -656,9 +671,9 @@ public class BungeeCord extends ProxyServer
+@@ -656,9 +672,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override
@@ -1580,7 +1581,7 @@ index 3a9dab68..2539971f 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 51d0c6cf..4f79b839 100644
+index 51d0c6cf..8c6ce6e1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -95,6 +95,11 @@ public class UpstreamBridge extends PacketHandler
@@ -1614,7 +1615,7 @@ index 51d0c6cf..4f79b839 100644
              con.getServer().getCh().write( packet );
          }
      }
-@@ -124,6 +141,14 @@ public class UpstreamBridge extends PacketHandler
+@@ -124,6 +141,17 @@ public class UpstreamBridge extends PacketHandler
      @Override
      public void handle(KeepAlive alive) throws Exception
      {
@@ -1623,13 +1624,16 @@ index 51d0c6cf..4f79b839 100644
 +            int newPing = (int) (alive.getRandomId() / 1000000);
 +            con.getTabListHandler().onPingChange( newPing );
 +            con.setPing( newPing );
++            if (con.getServer() != null && con.getServer().getInfo().isRakNet()) {
++                throw CancelSendSignal.INSTANCE; //only forward for TCP servers
++            }
 +            return;
 +        }
 +        // Waterdog end
          if ( alive.getRandomId() == con.getServer().getSentPingId() )
          {
              int newPing = (int) ( System.currentTimeMillis() - con.getSentPingTime() );
-@@ -135,11 +160,42 @@ public class UpstreamBridge extends PacketHandler
+@@ -135,11 +163,42 @@ public class UpstreamBridge extends PacketHandler
          }
      }
  
