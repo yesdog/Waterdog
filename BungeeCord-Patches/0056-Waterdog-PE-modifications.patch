@@ -1,4 +1,4 @@
-From bd083870751158a7f9da13a0cc7c2d0d130958e2 Mon Sep 17 00:00:00 2001
+From d4bf19905a9958ce8a6e6ade142d6757e1bc576d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -959,7 +959,7 @@ index f0b65065..ce67c5b5 100644
  
      protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..bc595285 100644
+index 615c7247..87fc2b9e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
@@ -979,7 +979,7 @@ index 615c7247..bc595285 100644
 +                new ServerBootstrap()
 +                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
-+                    .option(network.ycc.raknet.RakNet.MAX_CONNECTIONS, config.getPlayerLimit())
++                    .option(network.ycc.raknet.RakNet.MAX_CONNECTIONS, info.getMaxPlayers())
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
 +                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
