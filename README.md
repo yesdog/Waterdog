@@ -42,6 +42,9 @@ Bedrock support is a pretty crazy addition to Waterfall, and it's best to still 
 ## How To and Downloads (Server Admins)
 Build history can be found at [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/).
 Latest jar can be downloaded directly from [here](https://ci.codemc.org/job/yesdog/job/Waterdog/lastSuccessfulBuild/artifact/Waterfall-Proxy/bootstrap/target/Waterdog.jar).
+You can install Waterdog exactly like BungeeCord. Additional configuration changes are described below.
+Please consult the support for your panel on how to install Bungeecord. If you do not use 
+a panel, you should be able to find general instructions online for BungeeCord installation. 
 
 Waterfall requires **Java 8** or above.
 
