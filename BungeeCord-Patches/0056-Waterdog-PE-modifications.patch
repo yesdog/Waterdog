@@ -1,4 +1,4 @@
-From 823671b85a75973517a04c04d194df9b97cc3e0b Mon Sep 17 00:00:00 2001
+From 4e93806df4f81dbbaf82c1e956c1f4ce97e6be38 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1238,7 +1238,7 @@ index 72f487dc..2f7cf311 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..6f445074 100644
+index 15f7c5b5..24866594 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1292,7 +1292,7 @@ index 15f7c5b5..6f445074 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -350,10 +380,28 @@ public final class UserConnection implements ProxiedPlayer
+@@ -350,10 +380,29 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1305,6 +1305,7 @@ index 15f7c5b5..6f445074 100644
 +                        .addLast(network.ycc.raknet.pipeline.UserDataCodec.NAME, network.ycc.waterdog.pe.PEPipelineUtils.MC_USER_DATA_CODEC)
 +                        .addLast(network.ycc.waterdog.pe.PECompressor.NAME, new network.ycc.waterdog.pe.PECompressor())
 +                        .addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
++                        network.ycc.waterdog.pe.PEPipelineUtils.moveTimeout(ch);
 +                    }
 +                }
 +                // Waterdog end
@@ -1321,7 +1322,7 @@ index 15f7c5b5..6f445074 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +435,23 @@ public final class UserConnection implements ProxiedPlayer
+@@ -387,12 +436,23 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1346,7 +1347,7 @@ index 15f7c5b5..6f445074 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,7 +663,22 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,7 +664,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1369,7 +1370,7 @@ index 15f7c5b5..6f445074 100644
  
      @Override
      public Locale getLocale()
-@@ -719,6 +793,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -719,6 +794,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {

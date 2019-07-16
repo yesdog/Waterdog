@@ -1,4 +1,4 @@
-From 94601f74d32561d16fe58057c9fa8b80f35fea3c Mon Sep 17 00:00:00 2001
+From d5e580b3b0f0bff65678dc49dacd22e5992e734d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Apr 2019 06:51:16 -0600
 Subject: [PATCH] ServerChannelTapEvent
@@ -33,11 +33,11 @@ index 00000000..a1475d4a
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 3d69cf23..3e4db048 100644
+index 24866594..b90a2861 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -391,6 +391,7 @@ public final class UserConnection implements ProxiedPlayer
-                         .addLast(network.ycc.waterdog.pe.PEDecompressor.NAME, new network.ycc.waterdog.pe.PEDecompressor());
+@@ -392,6 +392,7 @@ public final class UserConnection implements ProxiedPlayer
+                         network.ycc.waterdog.pe.PEPipelineUtils.moveTimeout(ch);
                      }
                  }
 +                bungee.getPluginManager().callEvent(new network.ycc.waterdog.api.event.ServerChannelTapEvent(UserConnection.this, request.getTarget(), ch));
@@ -45,5 +45,5 @@ index 3d69cf23..3e4db048 100644
                  PipelineUtils.BASE.initChannel( ch );
                  ch.pipeline().addAfter( PipelineUtils.FRAME_DECODER, PipelineUtils.PACKET_DECODER, new MinecraftDecoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion(), bungee.getConfig().isAllowEmptyPackets() ) ); // Waterfall
 -- 
-2.17.2 (Apple Git-113)
+2.20.1
 

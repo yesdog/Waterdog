@@ -1,4 +1,4 @@
-From 718c4dfd673ada5cd0b829d663e8adcd5712512e Mon Sep 17 00:00:00 2001
+From a4d353fa3f228e736773c1f1edf594b9837b10c0 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1714,10 +1714,10 @@ index 00000000..4f0057ee
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..46fa865c
+index 00000000..a0f02d71
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,145 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.gson.JsonObject;
@@ -1840,8 +1840,7 @@ index 00000000..46fa865c
 +        protected void encode(ChannelHandlerContext ctx, ByteBuf in, ByteBuf out) throws Exception {
 +            in = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), in, 8);
 +            try {
-+                final byte[] hash = createHash(in, counter++);
-+                in.writeBytes(hash, 0, 8);
++                in.writeBytes(createHash(in, counter++), 0, 8);
 +                super.encode(ctx, in, out);
 +            } finally {
 +                in.release();
@@ -2180,10 +2179,10 @@ index 00000000..0dadfebd
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..5ef25093
+index 00000000..ac33a323
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,92 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.channel.Channel;
@@ -2238,13 +2237,17 @@ index 00000000..5ef25093
 +            pipeline.replace(PipelineUtils.FRAME_DECODER, PipelineUtils.FRAME_DECODER, new ChannelInboundHandlerAdapter());
 +            pipeline.replace(PipelineUtils.FRAME_PREPENDER, PipelineUtils.FRAME_PREPENDER, new ChannelInboundHandlerAdapter());
 +            pipeline.get(MinecraftDecoder.class).setProtocolVersion(ProtocolConstants.MINECRAFT_PE_1_8);
-+            channel.eventLoop().execute(() -> {
-+                //move this to the top of the pipeline
-+                channel.pipeline().remove(PipelineUtils.TIMEOUT_HANDLER);
-+                channel.pipeline().addFirst(PipelineUtils.TIMEOUT_HANDLER, new ReadTimeoutHandler( BungeeCord.getInstance().config.getTimeout(), TimeUnit.MILLISECONDS ));
-+            });
++            moveTimeout(channel);
 +        }
 +    };
++
++    public static void moveTimeout(Channel channel) {
++        channel.eventLoop().execute(() -> {
++            //move timeout to the top of the pipeline
++            channel.pipeline().remove(PipelineUtils.TIMEOUT_HANDLER);
++            channel.pipeline().addFirst(PipelineUtils.TIMEOUT_HANDLER, new ReadTimeoutHandler( BungeeCord.getInstance().config.getTimeout(), TimeUnit.MILLISECONDS ));
++        });
++    }
 +
 +    @RequiredArgsConstructor
 +    public static final class ServerChannel extends ChannelInitializer<Channel> {
