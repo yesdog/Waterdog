@@ -1,4 +1,4 @@
-From c0c68acd6259c3d0dfca006c5eda47112402bf58 Mon Sep 17 00:00:00 2001
+From bf4d699f23bfba9a9459275dd700855e39ae34d5 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -450,29 +450,29 @@ index 6acc1f00..7ebac7be 100644
  
              Constructor<? extends DefinedPacket> constructor = protocolData.packetConstructors[id];
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index dd61fb23..06dfa1b2 100644
+index 0358e9c3..5049049a 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-@@ -14,6 +14,8 @@ public class ProtocolConstants
-     public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
+@@ -15,6 +15,8 @@ public class ProtocolConstants
      public static final int MINECRAFT_PE_1_12 = 361 - PE_PROTOCOL_OFFSET;
+     public static final int MINECRAFT_PE_1_13 = 370 - PE_PROTOCOL_OFFSET;
      // Waterdog end
 +    public static final int MINECRAFT_1_7_2 = 4;
 +    public static final int MINECRAFT_1_7_6 = 5;
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -40,6 +42,7 @@ public class ProtocolConstants
-             "PE-1.11.x",
+@@ -42,6 +44,7 @@ public class ProtocolConstants
              "PE-1.12.x",
+             "PE-1.13.x",
              // Waterdog end
 +            "1.7.x",
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -56,6 +59,8 @@ public class ProtocolConstants
-             ProtocolConstants.MINECRAFT_PE_1_11,
+@@ -59,6 +62,8 @@ public class ProtocolConstants
              ProtocolConstants.MINECRAFT_PE_1_12,
+             ProtocolConstants.MINECRAFT_PE_1_13,
              // Waterdog end
 +            ProtocolConstants.MINECRAFT_1_7_2,
 +            ProtocolConstants.MINECRAFT_1_7_6,
@@ -1248,7 +1248,7 @@ index 85d386c0..7a80acac 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 69232e7d..b5a100a4 100644
+index 87fc2b9e..e535a1df 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -162,6 +162,14 @@ public class BungeeCord extends ProxyServer
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 8dbd4cc5..ef47bded 100644
+index 2f7cf311..6735e6f8 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1526,7 +1526,7 @@ index 338a64d6..7ee15121 100644
              con.unsafe().sendPacket( pluginMessage );
              throw CancelSendSignal.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index d7ac6abb..3a700831 100644
+index 35de2dda..87f8c696 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -11,6 +11,13 @@ import java.util.List;
@@ -1574,7 +1574,7 @@ index d7ac6abb..3a700831 100644
                      }
                  };
  
-@@ -569,7 +592,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -588,7 +611,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                              userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
                              userCon.init();
  
@@ -1613,7 +1613,7 @@ index 6bc14d67..2b3bc361 100644
          channel.close();
      }
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index 4f79b839..88c88cd1 100644
+index 8c6ce6e1..619428a3 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 @@ -83,7 +83,12 @@ public class UpstreamBridge extends PacketHandler
@@ -2000,5 +2000,5 @@ index daf12f74..e33861ab 100644
  
      @Override
 -- 
-2.17.2 (Apple Git-113)
+2.20.1
 

@@ -35,9 +35,9 @@ the ecosystem by allowing changes to be exposed to a wider audience more quickly
 
 Waterfall will still track upstream BungeeCord and merge changes as needed.
 
-*Why fork Waterfall?*
+## Why fork Waterfall?
 
-PE support is a pretty crazy addition to Waterfall, and it's best to still have all the amazing features of Waterfall. 
+Bedrock support is a pretty crazy addition to Waterfall, and it's best to still have all the amazing features of Waterfall. 
 
 ## How To and Downloads (Server Admins)
 Build history can be found at [CodeMC](https://ci.codemc.org/job/yesdog/job/Waterdog/).
@@ -72,6 +72,26 @@ by setting the servers to offline (non-xbox) and configuring firewall access as 
 To compile Waterfall, you need JDK8, git, bash, maven, and an internet connection.
 
 Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/bootstrap/target/
+
+## Maven Usage
+
+```xml
+    <repositories>
+        <repository>
+            <id>codemc-repo</id>
+            <url>https://repo.codemc.org/repository/maven-public</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>network.ycc.waterdog</groupId>
+            <artifactId>waterdog-api</artifactId>
+            <version>1.14-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+```
 
 ## Gotchas
 

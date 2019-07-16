@@ -1,4 +1,4 @@
-From 85e097031a79675e38416d78a58318dc8edd77fd Mon Sep 17 00:00:00 2001
+From 718c4dfd673ada5cd0b829d663e8adcd5712512e Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..f0b65065
+index 00000000..3e39f0db
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,174 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -37,10 +37,6 @@ index 00000000..f0b65065
 +    public abstract int map(int id);
 +
 +    public void rewriteClientbound(ByteBuf packet, int version) {
-+        if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
-+            return; //TODO: finish 1.12 format
-+        }
-+
 +        final int readerIndex = packet.readerIndex();
 +        final int packetId = DefinedPacket.readVarInt(packet);
 +        final int writerIndex = packet.readerIndex();
@@ -50,17 +46,25 @@ index 00000000..f0b65065
 +                DefinedPacket.readSVarInt(packet); //chunk X
 +                DefinedPacket.readSVarInt(packet); //chunk Z
 +                final ByteBuf out = packet.alloc().ioBuffer(packet.readableBytes() + 128);
++                int sections, rwStart;
 +                try {
-+                    final int rwStart = packet.readerIndex();
-+                    DefinedPacket.readVarInt(packet); //payload length
-+                    final int sections = DefinedPacket.readVarInt(packet);
-+                    out.writeByte(sections);
++                    if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++                        sections = packet.readShortLE();
++                        rwStart = packet.readerIndex();
++                        DefinedPacket.readVarInt(packet); //payload length
++                    } else {
++                        rwStart = packet.readerIndex();
++                        DefinedPacket.readVarInt(packet); //payload length
++                        sections = DefinedPacket.readVarInt(packet);
++                        out.writeByte(sections);
++                    }
 +                    rewriteChunkSections(packet, out, sections);
 +
 +                    packet.readerIndex(readerIndex);
 +                    packet.writerIndex(rwStart);
 +                    DefinedPacket.writeVarInt(out.readableBytes(), packet); //payload length
 +                    packet.writeBytes(out);
++
 +                } finally {
 +                    out.release();
 +                }
@@ -474,7 +478,7 @@ index 00000000..75784080
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEEncryptionResponse.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEEncryptionResponse.java
 new file mode 100644
-index 00000000..bfd8b92b
+index 00000000..b0529006
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEEncryptionResponse.java
 @@ -0,0 +1,27 @@
@@ -502,15 +506,15 @@ index 00000000..bfd8b92b
 +    }
 +
 +    public void handle(AbstractPacketHandler handler) throws Exception {
-+
++        handler.handle(this);
 +    }
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
 new file mode 100644
-index 00000000..f1f09af7
+index 00000000..9aa4df45
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEHandshake.java
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,53 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import com.google.gson.JsonObject;
@@ -519,11 +523,11 @@ index 00000000..f1f09af7
 +
 +import lombok.Data;
 +import lombok.EqualsAndHashCode;
-+import lombok.NoArgsConstructor;
 +
 +import net.md_5.bungee.protocol.packet.Handshake;
 +
 +import java.math.BigInteger;
++import java.security.PublicKey;
 +import java.util.UUID;
 +
 +@Data
@@ -536,6 +540,7 @@ index 00000000..f1f09af7
 +    private boolean authorized;
 +    private JsonObject clientInfo;
 +    private byte[] handshakeData;
++    private PublicKey publicKey;
 +
 +    public PEHandshake() {
 +        setProtocolVersion(2);
@@ -605,10 +610,10 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..a675241f
+index 00000000..79550ed2
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,160 @@
+@@ -0,0 +1,163 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import io.netty.buffer.ByteBuf;
@@ -727,6 +732,9 @@ index 00000000..a675241f
 +        buf.readBoolean(); //is world template option locked
 +        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_12) {
 +            buf.readByte(); //only spawn v1 villagers
++        }
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_13) {
++            DefinedPacket.readString(buf); //vanilla version
 +        }
 +        DefinedPacket.readString(buf); //level ID (empty string)
 +        DefinedPacket.readString(buf); //world name (empty string)
@@ -1289,10 +1297,10 @@ index 00000000..fe6344fa
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..1ae4a6de
+index 00000000..98347825
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,158 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -1379,22 +1387,15 @@ index 00000000..1ae4a6de
 +    PEBlockPalette(ByteBuf buf, int version, UUID uuid) {
 +        this.uuid = uuid;
 +
-+        if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
-+            while (buf.isReadable()) {
-+                final String name = DefinedPacket.readString(buf);
-+                final short data = buf.readShortLE();
-+                final short id = buf.readShortLE();
-+
-+                addEntry(id, name, data);
++        int id = 0;
++        while (buf.isReadable()) {
++            final String name = DefinedPacket.readString(buf);
++            final short data = buf.readShortLE();
++            if (version >= ProtocolConstants.MINECRAFT_PE_1_12) {
++                buf.readShortLE(); //what does this id do?
 +            }
-+        } else {
-+            int id = 0;
-+            while (buf.isReadable()) {
-+                final String name = DefinedPacket.readString(buf);
-+                final short data = buf.readShortLE();
 +
-+                addEntry((short) id++, name, data);
-+            }
++            addEntry((short) id++, name, data);
 +        }
 +    }
 +
@@ -1713,11 +1714,13 @@ index 00000000..4f0057ee
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..0b21c9f1
+index 00000000..46fa865c
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,110 @@
+@@ -0,0 +1,146 @@
 +package network.ycc.waterdog.pe;
++
++import com.google.gson.JsonObject;
 +
 +import com.nimbusds.jose.JWSObject;
 +
@@ -1726,9 +1729,9 @@ index 00000000..0b21c9f1
 +import io.netty.channel.Channel;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelInitializer;
++import io.netty.handler.codec.DecoderException;
 +
-+import io.netty.util.ReferenceCountUtil;
-+import lombok.RequiredArgsConstructor;
++import lombok.Getter;
 +
 +import net.md_5.bungee.EncryptionUtil;
 +import net.md_5.bungee.jni.cipher.BungeeCipher;
@@ -1736,24 +1739,41 @@ index 00000000..0b21c9f1
 +import net.md_5.bungee.netty.cipher.CipherDecoder;
 +import net.md_5.bungee.netty.cipher.CipherEncoder;
 +
-+import network.ycc.waterdog.pe.packet.PEHandshake;
 +import network.ycc.waterdog.pe.packet.PEEncryptionRequest;
 +
 +import javax.crypto.KeyAgreement;
 +import javax.crypto.spec.SecretKeySpec;
 +
-+import java.security.MessageDigest;
-+import java.security.NoSuchAlgorithmException;
-+import java.security.PublicKey;
++import java.security.*;
++import java.security.spec.InvalidKeySpecException;
++import java.text.ParseException;
 +import java.util.Base64;
 +import java.util.List;
 +
-+@RequiredArgsConstructor
 +public class PEEncryptionInitializer extends ChannelInitializer<Channel> {
-+    private final PEEncryptionRequest request;
++    private static final SecureRandom numberGenerator = new SecureRandom();
 +
-+    protected void initChannel(Channel ch) throws Exception {
-+        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
++    private final MessageDigest digest = MessageDigest.getInstance("SHA-256");
++
++    @Getter
++    private final PEEncryptionRequest request;
++    private final byte[] keyBytes;
++
++    public PEEncryptionInitializer(PublicKey publicKey) throws NoSuchAlgorithmException, InvalidKeyException {
++        final String saltString = createSalt();
++        JsonObject additionalData = new JsonObject();
++        additionalData.addProperty("salt", saltString);
++        final KeyAgreement ka = KeyAgreement.getInstance("ECDH");
++        ka.init(PEEncryptionUtils.getKeyPair().getPrivate());
++        ka.doPhase(publicKey, true);
++        digest.update(Base64.getDecoder().decode(saltString));
++        digest.update(ka.generateSecret());
++        keyBytes = digest.digest();
++        request = new PEEncryptionRequest(PEEncryptionUtils.encodeJWT(additionalData));
++    }
++
++    public PEEncryptionInitializer(PEEncryptionRequest request) throws NoSuchAlgorithmException, ParseException,
++            InvalidKeySpecException, InvalidKeyException {
 +        final JWSObject additionalData = JWSObject.parse(request.getJwtData());
 +        final PublicKey publicKey = PEEncryptionUtils.parseKey(additionalData.getHeader().getX509CertURL().toString());
 +        final String saltString = additionalData.getPayload().toJSONObject().getAsString("salt");
@@ -1762,15 +1782,27 @@ index 00000000..0b21c9f1
 +        ka.doPhase(publicKey, true);
 +        digest.update(Base64.getDecoder().decode(saltString));
 +        digest.update(ka.generateSecret());
-+        final byte[] keyBytes = digest.digest();
++        keyBytes = digest.digest();
++        this.request = request;
++    }
++
++    protected void initChannel(Channel ch) throws Exception {
 +        final SecretKeySpec serverKey = new SecretKeySpec(keyBytes, "AES");
 +        ch.pipeline().addBefore(PEDecompressor.NAME, PipelineUtils.DECRYPT_HANDLER,
 +                new PECipherDecoder(EncryptionUtil.getCipher(false, serverKey)));
 +        ch.pipeline().addBefore(PECompressor.NAME, PipelineUtils.ENCRYPT_HANDLER,
-+                new PECipherEncoder(EncryptionUtil.getCipher(true, serverKey), keyBytes));
++                new PECipherEncoder(EncryptionUtil.getCipher(true, serverKey)));
 +    }
 +
-+    static class PECipherDecoder extends CipherDecoder {
++    protected static String createSalt() {
++        final byte[] out = new byte[32];
++        numberGenerator.nextBytes(out);
++        return Base64.getEncoder().encodeToString(out);
++    }
++
++    class PECipherDecoder extends CipherDecoder {
++        private long counter = 0;
++
 +        public PECipherDecoder(BungeeCipher cipher) {
 +            super(cipher);
 +        }
@@ -1780,59 +1812,64 @@ index 00000000..0b21c9f1
 +            msg = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), msg);
 +            try {
 +                super.decode(ctx, msg, out);
-+                final ByteBuf data = (ByteBuf) out.get(0);
-+                data.writerIndex(data.writerIndex() - 8); //ignore hash
++                final ByteBuf fullData = (ByteBuf) out.get(0);
++                final ByteBuf data = fullData.readSlice(fullData.readableBytes() - 8);
++                final ByteBuf includedHash = fullData.readSlice(8);
++                final byte[] computedHash = createHash(data, counter++);
++                for (int i = 0 ; i < 8 ; i++) {
++                    if (includedHash.readByte() != computedHash[i]) {
++                        throw new DecoderException("Corrupt encrypted data!");
++                    }
++                }
++                fullData.readerIndex(data.readerIndex());
++                fullData.writerIndex(data.writerIndex());
 +            } finally {
 +                msg.release();
 +            }
 +        }
 +    }
 +
-+    static class PECipherEncoder extends CipherEncoder {
-+        private final byte[] keyBytes;
-+        private final MessageDigest digest;
++    class PECipherEncoder extends CipherEncoder {
 +        private long counter = 0;
 +
-+        public PECipherEncoder(BungeeCipher cipher, byte[] keyBytes) throws NoSuchAlgorithmException {
++        public PECipherEncoder(BungeeCipher cipher) {
 +            super(cipher);
-+            this.keyBytes = keyBytes;
-+            this.digest = MessageDigest.getInstance("SHA-256");
 +        }
 +
 +        @Override
 +        protected void encode(ChannelHandlerContext ctx, ByteBuf in, ByteBuf out) throws Exception {
-+            in = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), in);
++            in = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), in, 8);
 +            try {
-+                appendHash(in);
++                final byte[] hash = createHash(in, counter++);
++                in.writeBytes(hash, 0, 8);
 +                super.encode(ctx, in, out);
 +            } finally {
 +                in.release();
 +            }
 +        }
++    }
 +
-+        void appendHash(ByteBuf data) {
-+            final ByteBuf counterBytes = Unpooled.buffer(8, 8).writeLongLE(counter++);
-+            final int maxReader = data.readerIndex() + data.readableBytes();
-+            while (counterBytes.isReadable()) {
-+                digest.update(counterBytes.readByte());
-+            }
-+            for (int i = data.readerIndex() ; i < maxReader ; i++) {
-+                digest.update(data.getByte(i));
-+            }
-+            for (byte b : keyBytes) {
-+                digest.update(b);
-+            }
-+            data.writeBytes(digest.digest(), 0, 8);
-+            digest.reset();
++    byte[] createHash(ByteBuf data, long counter) {
++        final ByteBuf counterBytes = Unpooled.buffer(8, 8).writeLongLE(counter);
++        final int maxReader = data.readerIndex() + data.readableBytes();
++        while (counterBytes.isReadable()) {
++            digest.update(counterBytes.readByte());
 +        }
++        for (int i = data.readerIndex() ; i < maxReader ; i++) {
++            digest.update(data.getByte(i));
++        }
++        for (byte b : keyBytes) {
++            digest.update(b);
++        }
++        return digest.digest();
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..6ff58734
+index 00000000..0dadfebd
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,298 @@
+@@ -0,0 +1,308 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
@@ -1874,7 +1911,6 @@ index 00000000..6ff58734
 +import java.math.BigInteger;
 +import java.net.URI;
 +import java.nio.charset.StandardCharsets;
-+import java.security.Key;
 +import java.security.KeyFactory;
 +import java.security.KeyPair;
 +import java.security.KeyPairGenerator;
@@ -1894,13 +1930,14 @@ index 00000000..6ff58734
 +    public static final String MOJANG_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
 +
 +    static final Gson GSON;
-+    static final DefaultJWSVerifierFactory jwsverifierfactory;
++    static final DefaultJWSVerifierFactory jwsVerifierFactory;
 +    static final KeyPair keyPair;
 +    static final KeyFactory keyfactory;
++    static final PublicKey mojangPublicKey;
 +
 +    static {
 +        GSON = new GsonBuilder().setPrettyPrinting().create();
-+        jwsverifierfactory = new DefaultJWSVerifierFactory();
++        jwsVerifierFactory = new DefaultJWSVerifierFactory();
 +        try {
 +            KeyPairGenerator gen = KeyPairGenerator.getInstance("EC");
 +            gen.initialize(Curve.P_384.toECParameterSpec());
@@ -1913,6 +1950,11 @@ index 00000000..6ff58734
 +        } catch (NoSuchAlgorithmException e) {
 +            throw new RuntimeException("Unable to init key factory", e);
 +        }
++        try {
++            mojangPublicKey = parseKey(MOJANG_KEY);
++        } catch (InvalidKeySpecException e) {
++            throw new RuntimeException("Unable to init mojang key", e);
++        }
 +    }
 +
 +    public static void parseHandshake(PEHandshake handshake) {
@@ -1921,11 +1963,11 @@ index 00000000..6ff58734
 +        final ByteBuf loginData = buf.readSlice(DefinedPacket.readVarInt(buf));
 +        final ByteBuf chainDataBytes = loginData.readSlice(loginData.readIntLE());
 +        final ByteBuf jwsDataBytes = loginData.readSlice(loginData.readIntLE());
-+        final Pair<Key, JsonObject> chainData = extractChainData(GSON.fromJson(
++        final Pair<PublicKey, JsonObject> chainData = extractChainData(GSON.fromJson(
 +                new InputStreamReader(new ByteBufInputStream(chainDataBytes)),
 +                new TypeToken<Map<String, List<String>>>() {}.getType()
 +        ));
-+        final Key key = chainData.getLeft();
++        final PublicKey key = chainData.getLeft();
 +        final JsonObject identityData = chainData.getRight();
 +        final String jwsString = jwsDataBytes.readCharSequence(jwsDataBytes.readableBytes(), Charsets.UTF_8).toString();
 +        final JWSObject additionalData;
@@ -1948,6 +1990,7 @@ index 00000000..6ff58734
 +        handshake.setLoginUUID(handshake.getUuid());
 +        handshake.setAuthorized(key != null);
 +        if (handshake.isAuthorized()) {
++            handshake.setPublicKey(key);
 +            handshake.setXuid(new BigInteger(getString(identityData, "XUID")));
 +            if (BungeeCord.getInstance().config.isUseXUIDForUUID()) {
 +                handshake.setUuid(new UUID(0, handshake.getXuid().longValue()));
@@ -1979,22 +2022,26 @@ index 00000000..6ff58734
 +    }
 +
 +    static public ByteBuf makeDirectOrRetain(ByteBufAllocator alloc, ByteBuf in) {
++        return makeDirectOrRetain(alloc, in, 0);
++    }
++
++    static public ByteBuf makeDirectOrRetain(ByteBufAllocator alloc, ByteBuf in, int extraBytes) {
 +        if (in.hasMemoryAddress()) {
 +            return in.retain();
 +        }
-+        final ByteBuf out = alloc.directBuffer(in.readableBytes());
++        final ByteBuf out = alloc.directBuffer(in.readableBytes() + extraBytes);
 +        out.writeBytes(in);
 +        return out;
 +    }
 +
 +    ////// READING
 +
-+    static Pair<Key, JsonObject> extractChainData(Map<String, List<String>> maindata) {
++    static Pair<PublicKey, JsonObject> extractChainData(Map<String, List<String>> maindata) {
 +        final List<String> chain = maindata.get("chain");
 +        try {
-+            PublicKey key = parseKey(MOJANG_KEY);
 +            boolean foundMojangKey = false;
 +            boolean signatureValid = false;
++            PublicKey key = mojangPublicKey;
 +            for (String element : chain) {
 +                final JWSObject jwsobject = JWSObject.parse(element);
 +                if (!foundMojangKey && jwsobject.getHeader().getX509CertURL().toString().equals(MOJANG_KEY)) {
@@ -2073,7 +2120,7 @@ index 00000000..6ff58734
 +    }
 +
 +    static boolean verify(JWSObject object, PublicKey key) throws JOSEException {
-+        return object.verify(jwsverifierfactory.createJWSVerifier(object.getHeader(), key));
++        return object.verify(jwsVerifierFactory.createJWSVerifier(object.getHeader(), key));
 +    }
 +
 +    static public PublicKey parseKey(String key) throws InvalidKeySpecException {
@@ -2091,12 +2138,12 @@ index 00000000..6ff58734
 +        final Map<String, List<String>> chainmap = new HashMap<>();
 +        final long iat = System.currentTimeMillis() / 1000;
 +        final long exp = iat + 24 * 3600;
-+        JsonObject extraData = new JsonObject();
++        final JsonObject extraData = new JsonObject();
 +        extraData.addProperty("identity", uuid.toString());
 +        extraData.addProperty("displayName", username);
 +        extraData.addProperty("XUID", xuid == null ? "" : xuid.toString());
-+        JsonObject dataChain = new JsonObject();
-+        dataChain.addProperty("nbf", iat - 10);
++        final JsonObject dataChain = new JsonObject();
++        dataChain.addProperty("nbf", iat - 3600);
 +        dataChain.addProperty("exp", exp);
 +        dataChain.addProperty("iat", iat);
 +        dataChain.addProperty("iss", "self");
@@ -2456,5 +2503,5 @@ index 00000000..36072583
 +    }
 +}
 -- 
-2.17.2 (Apple Git-113)
+2.20.1
 
