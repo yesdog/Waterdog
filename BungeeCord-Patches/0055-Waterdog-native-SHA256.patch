@@ -1,0 +1,796 @@
+From b62c2a7ba1ed1e41add98120a393086333d3fc98 Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Wed, 17 Jul 2019 13:24:55 -0600
+Subject: [PATCH] Waterdog native SHA256
+
+
+diff --git a/native/compile-native.sh b/native/compile-native.sh
+index bdd1cd6b..2f44dd82 100755
+--- a/native/compile-native.sh
++++ b/native/compile-native.sh
+@@ -8,10 +8,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
+   CXX_ARGS="/usr/local/lib/libmbedcrypto.a -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/darwin/ -I/usr/local/include -L/usr/local/lib"
+ else
+   # apt-get install libmbedtls-dev zlib1g-dev
+-  CXX_ARGS="-lcrypto -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/"
++  CXX_ARGS="-l:libmbedcrypto.a -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/"
+ fi
+ 
+ CXX="g++ -shared -fPIC -O3 -Wall -Werror"
+ 
+ $CXX src/main/c/NativeCipherImpl.cpp -o src/main/resources/${PREFIX}native-cipher.so $CXX_ARGS
+ $CXX src/main/c/NativeCompressImpl.cpp -o src/main/resources/${PREFIX}native-compress.so $CXX_ARGS
++$CXX src/main/c/NativeHashImpl.cpp -o src/main/resources/${PREFIX}native-hash.so $CXX_ARGS
+diff --git a/native/src/main/c/NativeHashImpl.cpp b/native/src/main/c/NativeHashImpl.cpp
+new file mode 100644
+index 00000000..f9a30d74
+--- /dev/null
++++ b/native/src/main/c/NativeHashImpl.cpp
+@@ -0,0 +1,118 @@
++// Support for CentOS 6
++#if __linux__ // Waterfall
++__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
++#endif // Waterfall
++
++#include <stdlib.h>
++#include <string.h>
++
++#include <mbedtls/sha256.h>
++
++#include "network_ycc_waterdog_jni_NativeHashImpl.h"
++
++#ifdef __APPLE__
++    #define htole64(x) x
++#else
++    #include <endian.h>
++#endif
++
++typedef unsigned char byte;
++
++jint throwException(JNIEnv *env, const char* message, int err) {
++    // These can't be static for some unknown reason
++    jclass exceptionClass = env->FindClass("net/md_5/bungee/jni/NativeCodeException");
++    jmethodID exceptionInitID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;I)V");
++
++    jstring jMessage = env->NewStringUTF(message);
++
++    jthrowable throwable = (jthrowable) env->NewObject(exceptionClass, exceptionInitID, jMessage, err);
++    return env->Throw(throwable);
++}
++
++//do everything in one call using stack allocation
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_staticPEHash(JNIEnv *env, jclass clazz,
++        jlong counter, jlong in, jint inLength, jlong key, jlong out) {
++    int ret;
++    mbedtls_sha256_context ctx;
++
++    counter = htole64(counter);
++
++    mbedtls_sha256_init(&ctx);
++    if((ret = mbedtls_sha256_starts_ret(&ctx, 0)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)&counter, 8)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)in, inLength)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)key, 32)) != 0) goto err;
++    if((ret = mbedtls_sha256_finish_ret(&ctx, (byte *)out)) != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not complete static SHA256 hash: ", ret);
++}
++
++jlong JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_init(JNIEnv *env, jobject thiz) {
++    mbedtls_sha256_context *ctx = new mbedtls_sha256_context;
++
++    mbedtls_sha256_init(ctx);
++
++    int ret = mbedtls_sha256_starts_ret(ctx, 0);
++    if (ret != 0) goto err;
++
++    return (jlong)ctx;
++
++err:
++    throwException(env, "Could not start SHA256 hash: ", ret);
++    return 0;
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_free(JNIEnv *env, jobject thiz, jlong ctx) {
++    mbedtls_sha256_free((mbedtls_sha256_context *)ctx);
++    delete (mbedtls_sha256_context *)ctx;
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JB(JNIEnv *env, jobject thiz, jlong ctx, jbyte in) {
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)&in, 1);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_updateLongLE(JNIEnv *env, jobject thiz, jlong ctx, jlong in) {
++    in = htole64(in);
++
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)&in, 8);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JJI(JNIEnv *env, jobject thiz, jlong ctx, jlong in, jint len) {
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)in, len);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_digest(JNIEnv *env, jobject thiz, jlong ctx, jlong out) {
++    int ret;
++
++    ret = mbedtls_sha256_finish_ret((mbedtls_sha256_context *)ctx, (byte *)out);
++    if (ret != 0) goto err;
++
++    ret = mbedtls_sha256_starts_ret((mbedtls_sha256_context *)ctx, 0);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not finish SHA256 hash: ", ret);
++}
+\ No newline at end of file
+diff --git a/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h b/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h
+new file mode 100644
+index 00000000..b3ada134
+--- /dev/null
++++ b/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h
+@@ -0,0 +1,69 @@
++/* DO NOT EDIT THIS FILE - it is machine generated */
++#include <jni.h>
++/* Header for class network_ycc_waterdog_jni_NativeHashImpl */
++
++#ifndef _Included_network_ycc_waterdog_jni_NativeHashImpl
++#define _Included_network_ycc_waterdog_jni_NativeHashImpl
++#ifdef __cplusplus
++extern "C" {
++#endif
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    init
++ * Signature: ()J
++ */
++JNIEXPORT jlong JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_init
++  (JNIEnv *, jobject);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    free
++ * Signature: (J)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_free
++  (JNIEnv *, jobject, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JB)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JB
++  (JNIEnv *, jobject, jlong, jbyte);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    updateLongLE
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_updateLongLE
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JJI)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JJI
++  (JNIEnv *, jobject, jlong, jlong, jint);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    digest
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_digest
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    staticPEHash
++ * Signature: (JJIJJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_staticPEHash
++  (JNIEnv *, jclass, jlong, jlong, jint, jlong, jlong);
++
++#ifdef __cplusplus
++}
++#endif
++#endif
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+new file mode 100644
+index 00000000..70c5d3cf
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+@@ -0,0 +1,73 @@
++package network.ycc.waterdog.jni;
++
++import com.google.common.base.Preconditions;
++import io.netty.buffer.ByteBuf;
++import io.netty.buffer.Unpooled;
++
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++
++public class JavaHash implements WaterdogHash {
++    private MessageDigest digest;
++
++    public void init(String algorithm) throws NoSuchAlgorithmException {
++        if (!algorithm.equals("SHA-256")) {
++            throw new NoSuchAlgorithmException("Native only supports SHA-256, can not use " + algorithm);
++        }
++
++        digest = MessageDigest.getInstance(algorithm);
++    }
++
++    public void free() {
++        digest = null;
++    }
++
++    public void update(byte in) {
++        digest.update(in);
++    }
++
++    public void updateLongLE(long in) {
++        final ByteBuf counterBytes = Unpooled.buffer(8, 8).writeLongLE(in);
++        while (counterBytes.isReadable()) {
++            update(counterBytes.readByte());
++        }
++    }
++
++    public void update(ByteBuf in) {
++        in.memoryAddress(); //smoke test
++        while (in.isReadable()) {
++            update(in.readByte());
++        }
++    }
++
++    public void digest(ByteBuf out) {
++        out.memoryAddress(); //smoke test
++        out.writeBytes(digest.digest());
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        if (digest == null) {
++            try {
++                init("SHA-256");
++            } catch (NoSuchAlgorithmException e) {
++                e.printStackTrace();
++            }
++        }
++
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++        in.memoryAddress(); //smoke test
++        key.memoryAddress();
++        out.memoryAddress();
++
++        key.markReaderIndex();
++
++        updateLongLE(counter);
++        update(in);
++        update(key);
++        digest(out);
++
++        key.resetReaderIndex();
++    }
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
+new file mode 100644
+index 00000000..2cca6699
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
+@@ -0,0 +1,79 @@
++package network.ycc.waterdog.jni;
++
++import com.google.common.base.Preconditions;
++
++import io.netty.buffer.ByteBuf;
++
++import lombok.Getter;
++
++import java.security.NoSuchAlgorithmException;
++
++public class NativeHash implements WaterdogHash {
++    @Getter
++    private final NativeHashImpl nativeHash = new NativeHashImpl();
++    private long ctx;
++
++    public void init(String algorithm) throws NoSuchAlgorithmException {
++        if (!algorithm.equals("SHA-256")) {
++            throw new NoSuchAlgorithmException("Native only supports SHA-256, can not use " + algorithm);
++        }
++        free();
++        ctx = nativeHash.init();
++        Preconditions.checkState(ctx != 0, "Something wrong initializing native hash!");
++    }
++
++    public void free() {
++        if (ctx != 0) {
++            nativeHash.free(ctx);
++            ctx = 0;
++        }
++    }
++
++    protected void check() {
++        Preconditions.checkState(ctx != 0, "Invalid pointer to native hash!");
++    }
++
++    public void update(byte in) {
++        check();
++        nativeHash.update(ctx, in);
++    }
++
++    public void updateLongLE(long in) {
++        check();
++        nativeHash.updateLongLE(ctx, in);
++    }
++
++    public void update(ByteBuf in) {
++        final int length = in.readableBytes();
++        if (length > 0) {
++            in.memoryAddress(); //smoke test
++            check();
++
++            nativeHash.update(ctx, in.memoryAddress() + in.readerIndex(), length);
++            in.readerIndex(in.readerIndex() + length);
++        }
++    }
++
++    public void digest(ByteBuf out) {
++        out.memoryAddress(); //smoke test
++        out.ensureWritable(32);
++        check();
++
++        nativeHash.digest(ctx, out.memoryAddress() + out.writerIndex());
++        out.writerIndex(out.writerIndex() + 32);
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++
++        NativeHashImpl.staticPEHash(counter,
++                in.memoryAddress() + in.readerIndex(), in.readableBytes(),
++                key.memoryAddress() + key.readerIndex(),
++                out.memoryAddress() + out.writerIndex());
++
++        in.readerIndex(in.readerIndex() + in.readableBytes());
++        out.writerIndex(out.writerIndex() + 32);
++    }
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java b/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java
+new file mode 100644
+index 00000000..2e528612
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java
+@@ -0,0 +1,14 @@
++package network.ycc.waterdog.jni;
++
++class NativeHashImpl {
++    native long init();
++    native void free(long ctx);
++
++    native void update(long ctx, byte in);
++    native void updateLongLE(long ctx, long in);
++    native void update(long ctx, long in, int length);
++
++    native void digest(long ctx, long out);
++
++    native static void staticPEHash(long counter, long in, int inLength, long key, long out);
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java b/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java
+new file mode 100644
+index 00000000..4209eed3
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java
+@@ -0,0 +1,18 @@
++package network.ycc.waterdog.jni;
++
++import io.netty.buffer.ByteBuf;
++
++import java.security.NoSuchAlgorithmException;
++
++public interface WaterdogHash {
++    void init(String algorithm) throws NoSuchAlgorithmException;
++    void free();
++
++    void update(byte in);
++    void updateLongLE(long in);
++    void update(ByteBuf in);
++
++    void digest(ByteBuf out);
++
++    void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out);
++}
+diff --git a/native/src/main/resources/native-hash.so b/native/src/main/resources/native-hash.so
+new file mode 100755
+index 0000000000000000000000000000000000000000..acd05b3206dcec25397d26eda49531da889f0cf9
+GIT binary patch
+literal 22416
+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
+TVY^`dU(7Z*jtNE%qx1h?#FceX
+
+literal 0
+HcmV?d00001
+
+diff --git a/native/src/main/resources/osx-native-hash.so b/native/src/main/resources/osx-native-hash.so
+new file mode 100755
+index 0000000000000000000000000000000000000000..529ec40f43007fb7b4c58fafe68b6e251c5ade96
+GIT binary patch
+literal 19188
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
+index 615c7247..6b3de71f 100644
+--- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
++++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
+@@ -238,6 +238,15 @@ public class BungeeCord extends ProxyServer
+             {
+                 logger.info( "Using standard Java compressor." );
+             }
++            // Waterdog start
++            if ( network.ycc.waterdog.pe.PEEncryptionUtils.nativeHashFactory.load() )
++            {
++                logger.info( "Using mbed TLS based native SHA256 hash." );
++            } else
++            {
++                logger.info( "Using standard Java SHA256 digest." );
++            }
++            // Waterdog end
+         }
+     }
+ 
+-- 
+2.20.1
+

@@ -1,4 +1,4 @@
-From 4e93806df4f81dbbaf82c1e956c1f4ce97e6be38 Mon Sep 17 00:00:00 2001
+From fa0097c4494613db115298c4fa54dbfac56cd447 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -966,10 +966,10 @@ index 3e39f0db..2bef7c31 100644
  
      protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..87fc2b9e 100644
+index 6b3de71f..7a29a6e9 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -330,6 +330,7 @@ public class BungeeCord extends ProxyServer
+@@ -339,6 +339,7 @@ public class BungeeCord extends ProxyServer
                      }
                  }
              };
@@ -977,7 +977,7 @@ index 615c7247..87fc2b9e 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -338,8 +339,23 @@ public class BungeeCord extends ProxyServer
+@@ -347,8 +348,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1002,7 +1002,7 @@ index 615c7247..87fc2b9e 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -635,7 +651,7 @@ public class BungeeCord extends ProxyServer
+@@ -644,7 +660,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1011,7 +1011,7 @@ index 615c7247..87fc2b9e 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -656,9 +672,9 @@ public class BungeeCord extends ProxyServer
+@@ -665,9 +681,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override

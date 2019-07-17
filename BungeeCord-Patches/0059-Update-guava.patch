@@ -1,4 +1,4 @@
-From f0cb5820d2b1ddd0ae347a96764c4abae3a6af27 Mon Sep 17 00:00:00 2001
+From 3a090af08113740034913ba4950a3d7e0cd3c6f3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Fri, 19 Apr 2019 07:42:33 -0600
 Subject: [PATCH] Update guava
@@ -19,5 +19,5 @@ index 5441c8ec..d2a27566 100644
          </dependency>
          <dependency>
 -- 
-2.17.2 (Apple Git-113)
+2.20.1
 

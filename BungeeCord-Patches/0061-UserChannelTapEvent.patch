@@ -1,4 +1,4 @@
-From 053309abaa86bcc9758638fc36c7c5dae0f009b3 Mon Sep 17 00:00:00 2001
+From 3423b7a5b40f6cbdbbcd010008179cd6ff4bfff7 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Thu, 25 Apr 2019 17:51:18 -0600
 Subject: [PATCH] UserChannelTapEvent
@@ -27,7 +27,7 @@ index 00000000..231fc70d
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-index 5ef25093..ea839357 100644
+index ac33a323..fa2b4cd7 100644
 --- a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 @@ -4,13 +4,15 @@ import io.netty.channel.Channel;
@@ -60,5 +60,5 @@ index 5ef25093..ea839357 100644
              .addLast(new ChannelInboundHandlerAdapter() {
                  @Override
 -- 
-2.17.2 (Apple Git-113)
+2.20.1
 
