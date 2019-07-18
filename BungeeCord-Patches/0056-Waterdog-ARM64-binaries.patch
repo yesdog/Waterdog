@@ -1,4 +1,4 @@
-From 61803e500272d8161d8b4addf07e099f82a266c7 Mon Sep 17 00:00:00 2001
+From 96f8c93ada54e5f596f9674d4d753da40a2bc234 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Jul 2019 21:00:24 +0000
 Subject: [PATCH] Waterdog ARM64 binaries
@@ -60,17 +60,25 @@ index f9a30d74..15beed63 100644
 \ No newline at end of file
 +}
 diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
-index 9695c6e4..c2764816 100644
+index 9695c6e4..997e17b4 100644
 --- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 +++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 @@ -20,6 +20,7 @@ public final class NativeCode<T>
      public NativeCode(String name, Class<? extends T> javaImpl, Class<? extends T> nativeImpl)
      {
          if ("Mac OS X".equals( System.getProperty( "os.name" ))) name = "osx-" + name; // Waterfall
-+        if ("aarch64".equals( System.getProperty( "os.arch" ))) name = "aarch64-" + name; // Waterdog
++        else if ("aarch64".equals( System.getProperty( "os.arch" ))) name = "aarch64-" + name; // Waterdog
          this.name = name;
          this.javaImpl = javaImpl;
          this.nativeImpl = nativeImpl;
+@@ -81,6 +82,6 @@ public final class NativeCode<T>
+ 
+     public static boolean isSupported()
+     {
+-        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) ); // Waterfall
++        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) || "aarch64".equals( System.getProperty( "os.arch" )) ); // Waterfall + Waterdog
+     }
+ }
 diff --git a/native/src/main/resources/aarch64-native-cipher.so b/native/src/main/resources/aarch64-native-cipher.so
 new file mode 100755
 index 0000000000000000000000000000000000000000..58d406f5e14c39149b6dfae143e2fee0bf936f71
