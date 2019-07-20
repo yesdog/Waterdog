@@ -1,4 +1,4 @@
-From a878588b121a1d08bf9ba960f6a58131549b89da Mon Sep 17 00:00:00 2001
+From 07e2f58bbdbed8fe12c1e61fdec7a6bc7664c2a4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1487,7 +1487,7 @@ index 44011a96..7f2f171b 100644
  
          return ret;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1f8a2439..338a64d6 100644
+index 1f8a2439..b61bb405 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 @@ -137,6 +137,21 @@ public class DownstreamBridge extends PacketHandler
@@ -1534,6 +1534,26 @@ index 1f8a2439..338a64d6 100644
      @Override
      public void handle(ScoreboardObjective objective) throws Exception
      {
+@@ -463,6 +493,19 @@ public class DownstreamBridge extends PacketHandler
+                     out.writeUTF( player.getUUID() );
+                 }
+             }
++            // Waterdog start
++            if ( subChannel.equals( "GetPing" ) )
++            {
++                out.writeInt( con.getPing() );
++            }
++            if ( subChannel.equals( "GetPingOther" ) )
++            {
++                ProxiedPlayer player = bungee.getPlayer( in.readUTF() );
++                if ( player != null ) {
++                    out.writeInt(player.getPing());
++                }
++            }
++            // Waterdog end
+             if ( subChannel.equals( "ServerIP" ) )
+             {
+                 ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 index 3a9dab68..36d25a03 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
