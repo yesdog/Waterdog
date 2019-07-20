@@ -1,4 +1,4 @@
-From 5fa9d004a31fd5d798d77b9182acc4a73bbbf338 Mon Sep 17 00:00:00 2001
+From 727eb91be4121ffc7284732a389d6a9366075326 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -290,7 +290,7 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 87093807..6acc1f00 100644
+index 87093807..a3b399c7 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 @@ -51,6 +51,16 @@ public enum Protocol
@@ -310,7 +310,7 @@ index 87093807..6acc1f00 100644
              TO_SERVER.registerPacket(
                      Handshake.class,
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
-@@ -62,8 +72,47 @@ public enum Protocol
+@@ -62,8 +72,51 @@ public enum Protocol
      {
  
          {
@@ -351,6 +351,10 @@ index 87093807..6acc1f00 100644
 +                    network.ycc.waterdog.pe.packet.PELocalPlayerInitialized.class,
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x71 )
 +            );
++            TO_CLIENT.registerPacket(
++                    network.ycc.waterdog.pe.packet.PEStopSoundPacket.class,
++                    Protocol.map( ProtocolConstants.MINECRAFT_PE_1_8, 0x57 )
++            );
 +            // Waterdog end
              TO_CLIENT.registerPacket(
                      KeepAlive.class,
@@ -358,7 +362,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x21 ),
-@@ -77,12 +126,14 @@ public enum Protocol
+@@ -77,12 +130,14 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Chat.class,
@@ -373,7 +377,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x07 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x33 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x34 ),
-@@ -92,6 +143,7 @@ public enum Protocol
+@@ -92,6 +147,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      BossBar.class,
@@ -381,7 +385,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0C )
              );
              // Waterfall start
-@@ -167,6 +219,7 @@ public enum Protocol
+@@ -167,6 +223,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      PluginMessage.class,
@@ -389,7 +393,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x3F ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x18 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x19 ),
-@@ -174,6 +227,7 @@ public enum Protocol
+@@ -174,6 +231,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Kick.class,
@@ -397,7 +401,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x40 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1A ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x1B ),
-@@ -215,6 +269,7 @@ public enum Protocol
+@@ -215,6 +273,7 @@ public enum Protocol
  
              TO_SERVER.registerPacket(
                      KeepAlive.class,
@@ -405,7 +409,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0B ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0C ),
-@@ -224,6 +279,7 @@ public enum Protocol
+@@ -224,6 +283,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      Chat.class,
@@ -413,7 +417,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x03 ),
-@@ -241,6 +297,7 @@ public enum Protocol
+@@ -241,6 +301,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      ClientSettings.class,
@@ -421,7 +425,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x15 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x04 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x05 ),
-@@ -249,6 +306,7 @@ public enum Protocol
+@@ -249,6 +310,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      PluginMessage.class,
@@ -429,7 +433,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x17 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x09 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0A ),
-@@ -287,8 +345,19 @@ public enum Protocol
+@@ -287,8 +349,19 @@ public enum Protocol
      {
  
          {
@@ -449,7 +453,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
              );
              TO_CLIENT.registerPacket(
-@@ -297,6 +366,7 @@ public enum Protocol
+@@ -297,6 +370,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      LoginSuccess.class,
@@ -457,7 +461,7 @@ index 87093807..6acc1f00 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 )
              );
              TO_CLIENT.registerPacket(
-@@ -419,6 +489,13 @@ public enum Protocol
+@@ -419,6 +493,13 @@ public enum Protocol
              return supportsForge || i >= 0 && i <= MAX_PACKET_ID;
          }
  
@@ -471,7 +475,7 @@ index 87093807..6acc1f00 100644
          public final DefinedPacket createPacket(int id, int version)
          {
              return createPacket(id, version, true);
-@@ -433,6 +510,7 @@ public enum Protocol
+@@ -433,6 +514,7 @@ public enum Protocol
              }
              if ( !hasPacket(id, supportsForge) )
              {
@@ -479,7 +483,7 @@ index 87093807..6acc1f00 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -456,6 +534,13 @@ public enum Protocol
+@@ -456,6 +538,13 @@ public enum Protocol
                  ProtocolMapping mapping = mappings[mappingIndex];
                  for ( int protocol : ProtocolConstants.SUPPORTED_VERSION_IDS )
                  {
@@ -1059,7 +1063,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 72f487dc..2f7cf311 100644
+index 72f487dc..2e4a858c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1201,7 +1205,7 @@ index 72f487dc..2f7cf311 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -320,6 +398,35 @@ public class ServerConnector extends PacketHandler
+@@ -320,6 +398,37 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1231,6 +1235,8 @@ index 72f487dc..2f7cf311 100644
 +                entityIDs.forEach((java.util.function.LongConsumer) id ->
 +                        network.ycc.waterdog.pe.PERawPacketData.injectRemoveEntity(user.getCh().getHandle(), id));
 +                entityIDs.clear();
++
++                user.unsafe().sendPacket( new network.ycc.waterdog.pe.packet.PEStopSoundPacket( "portal.travel", true ) );
 +            }
 +            // Waterdog end
 +

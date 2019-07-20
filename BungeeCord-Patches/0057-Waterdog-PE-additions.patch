@@ -1,4 +1,4 @@
-From 31d411aea08e20058e6dd3668f82bbfd475503a4 Mon Sep 17 00:00:00 2001
+From 6d2223aceed9ccd9d91ee6880bd1ad74caa17ee2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -996,6 +996,48 @@ index 00000000..c6eb87eb
 +        handler.handle(this);
 +    }
 +}
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
+new file mode 100644
+index 00000000..dab227a1
+--- /dev/null
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
+@@ -0,0 +1,35 @@
++package network.ycc.waterdog.pe.packet;
++
++import io.netty.buffer.ByteBuf;
++import lombok.AllArgsConstructor;
++import lombok.Data;
++import lombok.EqualsAndHashCode;
++import lombok.NoArgsConstructor;
++import net.md_5.bungee.protocol.AbstractPacketHandler;
++import net.md_5.bungee.protocol.DefinedPacket;
++
++@Data
++@NoArgsConstructor
++@AllArgsConstructor
++@EqualsAndHashCode(callSuper = false)
++public class PEStopSoundPacket extends DefinedPacket {
++
++    public String name;
++    public boolean stopAll;
++
++    @Override
++    public void read( ByteBuf buf ) {
++        //Ignore
++    }
++
++    @Override
++    public void write( ByteBuf buf ) {
++        writeString( name, buf );
++        buf.writeBoolean( stopAll );
++    }
++
++    @Override
++    public void handle( AbstractPacketHandler handler ) throws Exception {
++
++    }
++}
+\ No newline at end of file
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PETransfer.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PETransfer.java
 new file mode 100644
 index 00000000..0a5d0f6f
