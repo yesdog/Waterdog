@@ -1,4 +1,4 @@
-From b62c2a7ba1ed1e41add98120a393086333d3fc98 Mon Sep 17 00:00:00 2001
+From 9b7e842d3efc09cdf3673729608d677b8fb349e7 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Jul 2019 13:24:55 -0600
 Subject: [PATCH] Waterdog native SHA256
@@ -223,10 +223,10 @@ index 00000000..b3ada134
 +#endif
 diff --git a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
 new file mode 100644
-index 00000000..70c5d3cf
+index 00000000..741f4d17
 --- /dev/null
 +++ b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
-@@ -0,0 +1,73 @@
+@@ -0,0 +1,74 @@
 +package network.ycc.waterdog.jni;
 +
 +import com.google.common.base.Preconditions;
@@ -263,14 +263,14 @@ index 00000000..70c5d3cf
 +    }
 +
 +    public void update(ByteBuf in) {
-+        in.memoryAddress(); //smoke test
++        //in.memoryAddress(); //smoke test
 +        while (in.isReadable()) {
 +            update(in.readByte());
 +        }
 +    }
 +
 +    public void digest(ByteBuf out) {
-+        out.memoryAddress(); //smoke test
++        //out.memoryAddress(); //smoke test
 +        out.writeBytes(digest.digest());
 +    }
 +
@@ -286,9 +286,10 @@ index 00000000..70c5d3cf
 +        out.ensureWritable(32);
 +        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
 +        Preconditions.checkState(in.isReadable(), "No hashable data!");
-+        in.memoryAddress(); //smoke test
-+        key.memoryAddress();
-+        out.memoryAddress();
++        //TODO: does windows not support direct buffers at all?
++        //in.memoryAddress(); //smoke test
++        //key.memoryAddress();
++        //out.memoryAddress();
 +
 +        key.markReaderIndex();
 +
