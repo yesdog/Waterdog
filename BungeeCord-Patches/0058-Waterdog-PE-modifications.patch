@@ -1,4 +1,4 @@
-From 727eb91be4121ffc7284732a389d6a9366075326 Mon Sep 17 00:00:00 2001
+From ae67e2ed745e5502b7be89173d13b182c9c58f8f Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -956,11 +956,30 @@ index dbb24e22..112c7229 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-index 3e39f0db..2bef7c31 100644
+index 3e39f0db..827ce225 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -145,8 +145,7 @@ public abstract class PEBlockRewrite {
-                     throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
+@@ -132,6 +132,7 @@ public abstract class PEBlockRewrite {
+ 
+     protected void rewriteChunkSections(ByteBuf in, ByteBuf out, int sections) {
+         for (int section = 0 ; section < sections ; section++) {
++            boolean notSupported = false;
+             final int subchunkVersion = in.readUnsignedByte();
+             out.writeByte(subchunkVersion);
+             switch (subchunkVersion) {
+@@ -142,11 +143,17 @@ public abstract class PEBlockRewrite {
+                     rewriteV8ChunkSection(in, out);
+                     break;
+                 default: //unsupported
+-                    throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
++                    //TODO: erm, what changed here?
++                    //throw new IllegalArgumentException("Unknown subchunk format " + subchunkVersion);
++                    notSupported = true;
++                    System.out.println("PEBlockRewrite: Unknown subchunk format " + subchunkVersion);
++                    break;
++            }
++            if (notSupported) {
++                break;
              }
          }
 -        out.writeBytes(in, 512); //heightmap
@@ -969,6 +988,20 @@ index 3e39f0db..2bef7c31 100644
      }
  
      protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
+index dab227a1..12b52465 100644
+--- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
+@@ -19,7 +19,8 @@ public class PEStopSoundPacket extends DefinedPacket {
+ 
+     @Override
+     public void read( ByteBuf buf ) {
+-        //Ignore
++        name = readString(buf);
++        stopAll = buf.readBoolean();
+     }
+ 
+     @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 index 6b3de71f..7a29a6e9 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
