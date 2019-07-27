@@ -1,4 +1,4 @@
-From ae67e2ed745e5502b7be89173d13b182c9c58f8f Mon Sep 17 00:00:00 2001
+From f09346371a0a8a47f6861599e352ddeecf242668 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1594,7 +1594,7 @@ index 1f8a2439..b61bb405 100644
              {
                  ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 3a9dab68..36d25a03 100644
+index 3a9dab68..ca0aa88e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -98,6 +98,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1628,7 +1628,7 @@ index 3a9dab68..36d25a03 100644
          this.handshake = handshake;
          ch.setVersion( handshake.getProtocolVersion() );
  
-@@ -332,6 +342,24 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -332,6 +342,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                      }
                      return;
                  }
@@ -1643,6 +1643,9 @@ index 3a9dab68..36d25a03 100644
 +
 +                    peHandshake.getClientInfo().addProperty("WaterDog_RemoteIP", getAddress().getHostString()); //old format, deprecated.
 +                    peHandshake.getClientInfo().addProperty("Waterdog_RemoteIP", getAddress().getHostString());
++                    if (peHandshake.getXuid() != null) {
++                        peHandshake.getClientInfo().addProperty("Waterdog_XUID", peHandshake.getXuid().toString());
++                    }
 +
 +                    if (isOnlineMode() && !peHandshake.isAuthorized()) {
 +                        disconnect( bungee.getTranslation( "offline_mode_player" ) );
@@ -1653,7 +1656,7 @@ index 3a9dab68..36d25a03 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -386,6 +414,25 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -386,6 +417,25 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
@@ -1679,7 +1682,7 @@ index 3a9dab68..36d25a03 100644
                  if ( onlineMode )
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
-@@ -589,10 +636,22 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -589,10 +639,22 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  

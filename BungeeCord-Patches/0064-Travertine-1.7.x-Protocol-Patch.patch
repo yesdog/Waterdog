@@ -1,4 +1,4 @@
-From 69c2c64d73e4a6848d90b01a219f2e50626efeb4 Mon Sep 17 00:00:00 2001
+From 9904431d6b2893a0025346a311a132ee63f6011d Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1526,7 +1526,7 @@ index b61bb405..7cb4deb3 100644
              con.unsafe().sendPacket( pluginMessage );
              throw CancelSendSignal.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 35de2dda..87f8c696 100644
+index e640f13d..98900ef5 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -11,6 +11,13 @@ import java.util.List;
@@ -1574,7 +1574,7 @@ index 35de2dda..87f8c696 100644
                      }
                  };
  
-@@ -588,7 +611,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -591,7 +614,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                              userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
                              userCon.init();
  
