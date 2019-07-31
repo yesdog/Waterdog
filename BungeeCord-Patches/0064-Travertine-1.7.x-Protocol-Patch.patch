@@ -1,4 +1,4 @@
-From 6ab033edeffc77fef00b08a499a2706086a943d0 Mon Sep 17 00:00:00 2001
+From a58c2921ef62fe98fe8015a781dd598858c9cde2 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1403,7 +1403,7 @@ index 031acf7a..dca3687f 100644
                  throw CancelSendSignal.INSTANCE;
              }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index b90a2861..7bfeb183 100644
+index 09856c8c..a3a161a7 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
@@ -1422,7 +1422,7 @@ index b90a2861..7bfeb183 100644
          displayName = name;
      }
  
-@@ -545,7 +547,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -546,7 +548,7 @@ public final class UserConnection implements ProxiedPlayer
          message = ChatComponentTransformer.getInstance().transform( this, message );
  
          // Action bar doesn't display the new JSON formattings, legacy works - send it using this for now
@@ -1431,7 +1431,7 @@ index b90a2861..7bfeb183 100644
          {
              sendMessage( position, ComponentSerializer.toString( new TextComponent( BaseComponent.toLegacyText( message ) ) ) );
          } else
-@@ -560,7 +562,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -561,7 +563,7 @@ public final class UserConnection implements ProxiedPlayer
          message = ChatComponentTransformer.getInstance().transform( this, message )[0];
  
          // Action bar doesn't display the new JSON formattings, legacy works - send it using this for now
@@ -1440,7 +1440,7 @@ index b90a2861..7bfeb183 100644
          {
              sendMessage( position, ComponentSerializer.toString( new TextComponent( BaseComponent.toLegacyText( message ) ) ) );
          } else
-@@ -754,6 +756,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -755,6 +757,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent header, BaseComponent footer)
      {
@@ -1448,7 +1448,7 @@ index b90a2861..7bfeb183 100644
          header = ChatComponentTransformer.getInstance().transform( this, header )[0];
          footer = ChatComponentTransformer.getInstance().transform( this, footer )[0];
  
-@@ -766,6 +769,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -767,6 +770,7 @@ public final class UserConnection implements ProxiedPlayer
      @Override
      public void setTabHeader(BaseComponent[] header, BaseComponent[] footer)
      {
@@ -1456,7 +1456,7 @@ index b90a2861..7bfeb183 100644
          header = ChatComponentTransformer.getInstance().transform( this, header );
          footer = ChatComponentTransformer.getInstance().transform( this, footer );
  
-@@ -796,6 +800,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -797,6 +801,7 @@ public final class UserConnection implements ProxiedPlayer
      public void setCompressionThreshold(int compressionThreshold)
      {
          if (net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())) return; // Waterdog
@@ -1526,7 +1526,7 @@ index b61bb405..7cb4deb3 100644
              con.unsafe().sendPacket( pluginMessage );
              throw CancelSendSignal.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 4a60e597..9b75d5a3 100644
+index f50ee37c..187421cf 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -11,6 +11,13 @@ import java.util.List;

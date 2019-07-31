@@ -1,4 +1,4 @@
-From d65f432c5e61bd261c13ecb54ed3ac66d135ad28 Mon Sep 17 00:00:00 2001
+From ac8d1a685a2cbabcddacf9423d08a9fe79d69c85 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1291,7 +1291,7 @@ index 72f487dc..031acf7a 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..24866594 100644
+index 15f7c5b5..dd713fa0 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1375,7 +1375,7 @@ index 15f7c5b5..24866594 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +436,23 @@ public final class UserConnection implements ProxiedPlayer
+@@ -387,12 +436,24 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1384,6 +1384,7 @@ index 15f7c5b5..24866594 100644
 +        b = new Bootstrap()
                  .channel( PipelineUtils.getChannel() )
                  .group( ch.getHandle().eventLoop() )
++                .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
                  .handler( initializer )
                  .option( ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout() )
                  .remoteAddress( target.getAddress() );
@@ -1400,7 +1401,7 @@ index 15f7c5b5..24866594 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,7 +664,22 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,7 +665,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1423,7 +1424,7 @@ index 15f7c5b5..24866594 100644
  
      @Override
      public Locale getLocale()
-@@ -719,6 +794,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -719,6 +795,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
@@ -1608,7 +1609,7 @@ index 1f8a2439..b61bb405 100644
              {
                  ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 3a9dab68..9955ca1a 100644
+index 3a9dab68..0daf4de7 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -98,6 +98,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1719,7 +1720,7 @@ index 3a9dab68..9955ca1a 100644
  
 +    // Waterdog start
 +    @Override
-+    public void handle(network.ycc.waterdog.pe.packet.PEEncryptionResponse response) throws Exception {
++    public void handle(network.ycc.waterdog.pe.packet.PEEncryptionResponse response) {
 +        startResourcePack();
 +    }
 +
