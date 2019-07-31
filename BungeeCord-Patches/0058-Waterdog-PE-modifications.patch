@@ -1,4 +1,4 @@
-From 070860da51ba9f63b39eca068af99239f8a16d66 Mon Sep 17 00:00:00 2001
+From d65f432c5e61bd261c13ecb54ed3ac66d135ad28 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -968,7 +968,7 @@ index dbb24e22..112c7229 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-index 3e39f0db..827ce225 100644
+index fc483b0a..153e6782 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 @@ -132,6 +132,7 @@ public abstract class PEBlockRewrite {
@@ -979,7 +979,7 @@ index 3e39f0db..827ce225 100644
              final int subchunkVersion = in.readUnsignedByte();
              out.writeByte(subchunkVersion);
              switch (subchunkVersion) {
-@@ -142,11 +143,17 @@ public abstract class PEBlockRewrite {
+@@ -143,11 +144,17 @@ public abstract class PEBlockRewrite {
                      rewriteV8ChunkSection(in, out);
                      break;
                  default: //unsupported
@@ -1015,7 +1015,7 @@ index dab227a1..12b52465 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 6b3de71f..acea2dbb 100644
+index 6b3de71f..5f1742c6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -248,6 +248,7 @@ public class BungeeCord extends ProxyServer
@@ -1034,7 +1034,7 @@ index 6b3de71f..acea2dbb 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -347,8 +349,23 @@ public class BungeeCord extends ProxyServer
+@@ -347,8 +349,24 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1043,6 +1043,7 @@ index 6b3de71f..acea2dbb 100644
 +                new ServerBootstrap()
 +                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
 +                    //.option(UnixChannelOption.SO_REUSEPORT, true)
++                    .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
 +                    .option(network.ycc.raknet.RakNet.MAX_CONNECTIONS, info.getMaxPlayers())
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
 +                    .childAttr(PipelineUtils.LISTENER, info)
@@ -1059,7 +1060,7 @@ index 6b3de71f..acea2dbb 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -644,7 +661,7 @@ public class BungeeCord extends ProxyServer
+@@ -644,7 +662,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1068,7 +1069,7 @@ index 6b3de71f..acea2dbb 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -665,9 +682,9 @@ public class BungeeCord extends ProxyServer
+@@ -665,9 +683,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override
@@ -1116,7 +1117,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 72f487dc..67a5eefb 100644
+index 72f487dc..031acf7a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1249,7 +1250,7 @@ index 72f487dc..67a5eefb 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -320,6 +396,37 @@ public class ServerConnector extends PacketHandler
+@@ -320,6 +396,39 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1281,6 +1282,8 @@ index 72f487dc..67a5eefb 100644
 +                entityIDs.clear();
 +
 +                user.unsafe().sendPacket( new network.ycc.waterdog.pe.packet.PEStopSoundPacket( "portal.travel", true ) );
++
++                network.ycc.waterdog.pe.PERawPacketData.injectRemoveAllEffects(user.getCh().getHandle(), user.getClientEntityId());
 +            }
 +            // Waterdog end
 +
@@ -1923,9 +1926,18 @@ index a66099fc..7287197c 100644
                  {
                      ProxyServer.getInstance().getLogger().log( Level.SEVERE, handler + " - encountered exception", cause );
 diff --git a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
-index ac99d02c..96dc06c9 100644
+index ac99d02c..4ef5d859 100644
 --- a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
 +++ b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
+@@ -69,7 +69,7 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket>
+         ByteBuf in = msg.content();
+         if ( in.readUnsignedByte() != 0xFE || in.readUnsignedByte() != 0xFD )
+         {
+-            bungee.getLogger().log( Level.WARNING, "Query - Incorrect magic!: {0}", msg.sender() );
++            //bungee.getLogger().log( Level.WARNING, "Query - Incorrect magic!: {0}", msg.sender() ); // Waterdog
+             return;
+         }
+ 
 @@ -100,12 +100,16 @@ public class QueryHandler extends SimpleChannelInboundHandler<DatagramPacket>
              }
  

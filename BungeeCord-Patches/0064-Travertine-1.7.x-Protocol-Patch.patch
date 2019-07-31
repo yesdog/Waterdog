@@ -1,4 +1,4 @@
-From 1f8284d072feaec449aa5fe265c0cf779b6661ae Mon Sep 17 00:00:00 2001
+From 6ab033edeffc77fef00b08a499a2706086a943d0 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1248,7 +1248,7 @@ index 85d386c0..7a80acac 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index acea2dbb..96c81601 100644
+index 5f1742c6..98bcb919 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -162,6 +162,14 @@ public class BungeeCord extends ProxyServer
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 67a5eefb..54f7b4d2 100644
+index 031acf7a..dca3687f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1387,7 +1387,7 @@ index 67a5eefb..54f7b4d2 100644
              }
              for ( Score score : serverScoreboard.getScores() )
              {
-@@ -531,6 +542,14 @@ public class ServerConnector extends PacketHandler
+@@ -533,6 +544,14 @@ public class ServerConnector extends PacketHandler
              {
                  this.handshakeHandler.handle( pluginMessage );
  
