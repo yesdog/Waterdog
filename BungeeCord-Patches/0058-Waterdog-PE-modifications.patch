@@ -1,4 +1,4 @@
-From f09346371a0a8a47f6861599e352ddeecf242668 Mon Sep 17 00:00:00 2001
+From 070860da51ba9f63b39eca068af99239f8a16d66 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -146,10 +146,10 @@ index 7797a46b..5449cf9b 100644
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-index e4f14974..deb3b736 100644
+index e4f14974..0129ae39 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-@@ -185,4 +185,38 @@ public abstract class AbstractPacketHandler
+@@ -185,4 +185,42 @@ public abstract class AbstractPacketHandler
      {
      }
      // Waterfall end
@@ -184,6 +184,10 @@ index e4f14974..deb3b736 100644
 +    }
 +
 +    public void handle(network.ycc.waterdog.pe.packet.PERemoveObjectivePacket removeObjectivePacket) throws Exception
++    {
++    }
++
++    public void handle(network.ycc.waterdog.pe.packet.PEResourcePackChunkRequest resourcePackChunkRequest) throws Exception
 +    {
 +    }
 +    // Waterdog end
@@ -290,7 +294,7 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 87093807..a3b399c7 100644
+index 87093807..1dd50291 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 @@ -51,6 +51,16 @@ public enum Protocol
@@ -310,7 +314,7 @@ index 87093807..a3b399c7 100644
              TO_SERVER.registerPacket(
                      Handshake.class,
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
-@@ -62,8 +72,51 @@ public enum Protocol
+@@ -62,8 +72,55 @@ public enum Protocol
      {
  
          {
@@ -322,6 +326,14 @@ index 87093807..a3b399c7 100644
 +            TO_CLIENT.registerPacket(
 +                    network.ycc.waterdog.pe.packet.PEResourceStack.class,
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x07 )
++            );
++            TO_SERVER.registerPacket(
++                    network.ycc.waterdog.pe.packet.PEResourcePackChunkRequest.class,
++                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x54 )
++            );
++            TO_SERVER.registerPacket(
++                    network.ycc.waterdog.pe.packet.PEResourcePackResponse.class,
++                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x08 )
 +            );
 +            TO_CLIENT.registerPacket(
 +                    network.ycc.waterdog.pe.packet.PELogin.class,
@@ -344,10 +356,6 @@ index 87093807..a3b399c7 100644
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x4D )
 +            );
 +            TO_SERVER.registerPacket(
-+                    network.ycc.waterdog.pe.packet.PEResourcePackResponse.class,
-+                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x08 )
-+            );
-+            TO_SERVER.registerPacket(
 +                    network.ycc.waterdog.pe.packet.PELocalPlayerInitialized.class,
 +                    map( ProtocolConstants.MINECRAFT_PE_1_8, 0x71 )
 +            );
@@ -362,7 +370,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x21 ),
-@@ -77,12 +130,14 @@ public enum Protocol
+@@ -77,12 +134,14 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Chat.class,
@@ -377,7 +385,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x07 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x33 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x34 ),
-@@ -92,6 +147,7 @@ public enum Protocol
+@@ -92,6 +151,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      BossBar.class,
@@ -385,7 +393,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0C )
              );
              // Waterfall start
-@@ -167,6 +223,7 @@ public enum Protocol
+@@ -167,6 +227,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      PluginMessage.class,
@@ -393,7 +401,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x3F ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x18 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x19 ),
-@@ -174,6 +231,7 @@ public enum Protocol
+@@ -174,6 +235,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      Kick.class,
@@ -401,7 +409,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x40 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1A ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x1B ),
-@@ -215,6 +273,7 @@ public enum Protocol
+@@ -215,6 +277,7 @@ public enum Protocol
  
              TO_SERVER.registerPacket(
                      KeepAlive.class,
@@ -409,7 +417,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0B ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0C ),
-@@ -224,6 +283,7 @@ public enum Protocol
+@@ -224,6 +287,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      Chat.class,
@@ -417,7 +425,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x03 ),
-@@ -241,6 +301,7 @@ public enum Protocol
+@@ -241,6 +305,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      ClientSettings.class,
@@ -425,7 +433,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x15 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x04 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x05 ),
-@@ -249,6 +310,7 @@ public enum Protocol
+@@ -249,6 +314,7 @@ public enum Protocol
              );
              TO_SERVER.registerPacket(
                      PluginMessage.class,
@@ -433,7 +441,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x17 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x09 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0A ),
-@@ -287,8 +349,19 @@ public enum Protocol
+@@ -287,8 +353,19 @@ public enum Protocol
      {
  
          {
@@ -453,7 +461,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
              );
              TO_CLIENT.registerPacket(
-@@ -297,6 +370,7 @@ public enum Protocol
+@@ -297,6 +374,7 @@ public enum Protocol
              );
              TO_CLIENT.registerPacket(
                      LoginSuccess.class,
@@ -461,7 +469,7 @@ index 87093807..a3b399c7 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 )
              );
              TO_CLIENT.registerPacket(
-@@ -419,6 +493,13 @@ public enum Protocol
+@@ -419,6 +497,13 @@ public enum Protocol
              return supportsForge || i >= 0 && i <= MAX_PACKET_ID;
          }
  
@@ -475,7 +483,7 @@ index 87093807..a3b399c7 100644
          public final DefinedPacket createPacket(int id, int version)
          {
              return createPacket(id, version, true);
-@@ -433,6 +514,7 @@ public enum Protocol
+@@ -433,6 +518,7 @@ public enum Protocol
              }
              if ( !hasPacket(id, supportsForge) )
              {
@@ -483,7 +491,7 @@ index 87093807..a3b399c7 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -456,6 +538,13 @@ public enum Protocol
+@@ -456,6 +542,13 @@ public enum Protocol
                  ProtocolMapping mapping = mappings[mappingIndex];
                  for ( int protocol : ProtocolConstants.SUPPORTED_VERSION_IDS )
                  {
@@ -810,10 +818,10 @@ index b004bc41..2caa02eb 100644
          {
              buf.writeLong( randomId );
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Kick.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Kick.java
-index 3976d91c..a1c991f9 100644
+index 3976d91c..25cc4b68 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/Kick.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/Kick.java
-@@ -18,14 +18,28 @@ public class Kick extends DefinedPacket
+@@ -18,14 +18,32 @@ public class Kick extends DefinedPacket
      private String message;
  
      @Override
@@ -837,7 +845,11 @@ index 3976d91c..a1c991f9 100644
 +        // Waterdog start
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(protocolVersion)) {
 +            buf.writeBoolean( false ); // hide disconnect screen
-+            writeString( net.md_5.bungee.chat.ComponentSerializer.parse(message)[0].toLegacyText(), buf );
++            String disconnectText = net.md_5.bungee.chat.ComponentSerializer.parse(message)[0].toLegacyText();
++            if (disconnectText.startsWith("§f")) {
++                disconnectText = disconnectText.substring(2);
++            }
++            writeString(disconnectText, buf);
 +            return;
 +        }
 +        // Waterdog end
@@ -1003,10 +1015,18 @@ index dab227a1..12b52465 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 6b3de71f..7a29a6e9 100644
+index 6b3de71f..acea2dbb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -339,6 +339,7 @@ public class BungeeCord extends ProxyServer
+@@ -248,6 +248,7 @@ public class BungeeCord extends ProxyServer
+             }
+             // Waterdog end
+         }
++        network.ycc.waterdog.pe.PEResourcePackManager.INSTANCE.load(logger); // Waterdog
+     }
+ 
+     /**
+@@ -339,6 +340,7 @@ public class BungeeCord extends ProxyServer
                      }
                  }
              };
@@ -1014,7 +1034,7 @@ index 6b3de71f..7a29a6e9 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -347,8 +348,23 @@ public class BungeeCord extends ProxyServer
+@@ -347,8 +349,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
@@ -1039,7 +1059,7 @@ index 6b3de71f..7a29a6e9 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -644,7 +660,7 @@ public class BungeeCord extends ProxyServer
+@@ -644,7 +661,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1048,7 +1068,7 @@ index 6b3de71f..7a29a6e9 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -665,9 +681,9 @@ public class BungeeCord extends ProxyServer
+@@ -665,9 +682,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override
@@ -1096,7 +1116,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 72f487dc..2e4a858c 100644
+index 72f487dc..67a5eefb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1154,15 +1174,7 @@ index 72f487dc..2e4a858c 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -187,6 +209,7 @@ public class ServerConnector extends PacketHandler
-             user.getForgeClientHandler().resetHandshake();
-         }
- 
-+        if (!ProtocolConstants.isPE(user.getPendingConnection().getVersion())) // Waterdog
-         throw CancelSendSignal.INSTANCE;
-     }
- 
-@@ -196,6 +219,28 @@ public class ServerConnector extends PacketHandler
+@@ -196,6 +218,30 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1171,12 +1183,14 @@ index 72f487dc..2e4a858c 100644
 +    public void handle(network.ycc.waterdog.pe.packet.PEResourcePack resourcePack) throws Exception
 +    {
 +        ch.write(new network.ycc.waterdog.pe.packet.PEResourcePackResponse(network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_HAVE_ALL_PACKS));
++        throw CancelSendSignal.INSTANCE;
 +    }
 +
 +    @Override
 +    public void handle(network.ycc.waterdog.pe.packet.PEResourceStack resourceStack) throws Exception
 +    {
 +        ch.write(new network.ycc.waterdog.pe.packet.PEResourcePackResponse(network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_COMPLETED));
++        throw CancelSendSignal.INSTANCE;
 +    }
 +
 +    @Override
@@ -1191,16 +1205,13 @@ index 72f487dc..2e4a858c 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -246,6 +291,32 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +292,29 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
 +            // Waterdog start
 +            if (login instanceof network.ycc.waterdog.pe.packet.PELogin) {
 +                network.ycc.waterdog.pe.packet.PELogin peLogin = (network.ycc.waterdog.pe.packet.PELogin) login;
-+
-+                user.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PEResourcePack());
-+                user.unsafe().sendPacket(new network.ycc.waterdog.pe.packet.PEResourceStack());
 +
 +                modLogin = new network.ycc.waterdog.pe.packet.PELogin( login.getEntityId(),
 +                        login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
@@ -1224,7 +1235,7 @@ index 72f487dc..2e4a858c 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -260,6 +331,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +329,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1238,7 +1249,7 @@ index 72f487dc..2e4a858c 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -320,6 +398,37 @@ public class ServerConnector extends PacketHandler
+@@ -320,6 +396,37 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1594,7 +1605,7 @@ index 1f8a2439..b61bb405 100644
              {
                  ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 3a9dab68..ca0aa88e 100644
+index 3a9dab68..9955ca1a 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -98,6 +98,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1648,7 +1659,7 @@ index 3a9dab68..ca0aa88e 100644
 +                    }
 +
 +                    if (isOnlineMode() && !peHandshake.isAuthorized()) {
-+                        disconnect( bungee.getTranslation( "offline_mode_player" ) );
++                        disconnect("disconnectionScreen.notAuthenticated");
 +                        break;
 +                    }
 +                }
@@ -1656,13 +1667,13 @@ index 3a9dab68..ca0aa88e 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -386,6 +417,25 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -386,6 +417,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
 +                // Waterdog start
-+                if (onlineMode && ProtocolConstants.isPE(getVersion())) {
-+                    if (BungeeCord.getInstance().config.isBedrockEncryption()) {
++                if (ProtocolConstants.isPE(getVersion())) {
++                    if (onlineMode && BungeeCord.getInstance().config.isBedrockEncryption()) {
 +                        try {
 +                            network.ycc.waterdog.pe.packet.PEHandshake peHandshake =
 +                                    (network.ycc.waterdog.pe.packet.PEHandshake) handshake;
@@ -1671,30 +1682,91 @@ index 3a9dab68..ca0aa88e 100644
 +                            unsafe().sendPacket(initializer.getRequest());
 +                            ch.getHandle().flush();
 +                            ch.getHandle().pipeline().addLast(initializer);
-+                        } catch (Exception e) {
-+                            throw new RuntimeException("Failed to start encryption", e);
++                        } catch (java.security.InvalidKeyException e) {
++                            bungee.getLogger().log(Level.WARNING,
++                                    "Bad public key for " + InitialHandler.this + ": " + e.getMessage());
++                            startResourcePack();
++                        } catch (java.security.NoSuchAlgorithmException e) {
++                            bungee.getLogger().log(Level.SEVERE, e.getMessage(), e);
++                            disconnect(e.getMessage());
 +                        }
 +                    } else {
-+                        finish();
++                        startResourcePack();
 +                    }
 +                } else
 +                // Waterdog end
                  if ( onlineMode )
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
-@@ -589,10 +639,22 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -519,6 +574,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+                             userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
+                             userCon.init();
+ 
++                            // Waterdog start
++                            if (ProtocolConstants.isPE(getVersion())) {
++                                // NOOP
++                            } else
++                            // Waterdog end
+                             unsafe.sendPacket( new LoginSuccess( getUniqueId().toString(), getName() ) ); // With dashes in between
+                             ch.setProtocol( Protocol.GAME );
+ 
+@@ -589,10 +649,66 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  
 +    // Waterdog start
 +    @Override
 +    public void handle(network.ycc.waterdog.pe.packet.PEEncryptionResponse response) throws Exception {
-+        finish();
++        startResourcePack();
++    }
++
++    @Override
++    public void handle(network.ycc.waterdog.pe.packet.PEResourcePackChunkRequest request) {
++        network.ycc.waterdog.pe.PEResourcePackManager.INSTANCE.sendPackDataChunk(
++                ch.getHandle(), request.getPackUUID(), request.getChunkIndex(), getVersion());
++    }
++
++    @Override
++    public void handle(network.ycc.waterdog.pe.packet.PEResourcePackResponse response) {
++        switch (response.getStatus()) {
++            case network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_REFUSED: {
++                disconnect("disconnectionScreen.noReason");
++                break;
++            }
++            case network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_SEND_PACKS: {
++                for (String packString : response.getPacks()) {
++                    final UUID uuid = UUID.fromString(packString.split("_")[0]);
++                    final network.ycc.waterdog.pe.PEResourcePackData pack =
++                            network.ycc.waterdog.pe.PEResourcePackManager.INSTANCE.get(uuid);
++                    if (pack == null) {
++                        disconnect("disconnectionScreen.resourcePack");
++                        break;
++                    }
++                    network.ycc.waterdog.pe.PERawPacketData.injectResourcePackInfo(ch.getHandle(), pack);
++                }
++                break;
++            }
++            case network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_HAVE_ALL_PACKS: {
++                network.ycc.waterdog.pe.PEResourcePackManager.INSTANCE.sendResourceStack(this);
++                break;
++            }
++            case network.ycc.waterdog.pe.packet.PEResourcePackResponse.STATUS_COMPLETED: {
++                finish();
++                break;
++            }
++        }
++        ch.getHandle().flush();
 +    }
 +
 +    //TODO: can probably get rid of this
 +    public int getDefaultVersion() {
 +        return ch == null ? -1 : (ch.getHandle() instanceof network.ycc.raknet.server.channel.RakNetChildChannel ? ProtocolConstants.MINECRAFT_1_8 : -1);
++    }
++
++    public void startResourcePack() {
++        unsafe.sendPacket(new LoginSuccess());
++        ch.setProtocol( Protocol.GAME );
++        network.ycc.waterdog.pe.PEResourcePackManager.INSTANCE.sendResourcePack(this);
 +    }
 +    // Waterdog end
 +
@@ -1905,5 +1977,5 @@ index ac99d02c..96dc06c9 100644
      }
  
 -- 
-2.20.1
+2.17.2 (Apple Git-113)
 
