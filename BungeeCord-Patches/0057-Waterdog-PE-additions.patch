@@ -1,4 +1,4 @@
-From 510bc80f7c6c1c2a51c9d2ee074994340d84dfe9 Mon Sep 17 00:00:00 2001
+From bc8b984fbe64aaa153cf4c2f6c55e75dccc670f8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2692,10 +2692,10 @@ index 00000000..66563ead
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java
 new file mode 100644
-index 00000000..6c8ef00f
+index 00000000..0ed42cee
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,89 @@
 +package network.ycc.waterdog.pe;
 +
 +import network.ycc.waterdog.pe.packet.PEResourcePack;
@@ -2768,17 +2768,21 @@ index 00000000..6c8ef00f
 +        return packMap.get(uuid);
 +    }
 +
++    public boolean hasPacks() {
++        return resourcePacks.length != 0 || behaviorPacks.length != 0;
++    }
++
 +    //TODO: lets figure out an async pattern here eventually, shave off some RAM
 +    public void sendPackDataChunk(Channel channel, UUID uuid, int chunkIndex, int version) {
 +        PERawPacketData.injectResourcePackData(channel, packMap.get(uuid), chunkIndex, version);
 +    }
 +
 +    public void sendResourcePack(InitialHandler handler) {
-+        handler.unsafe().sendPacket(new PEResourcePack(true, resourcePacks, behaviorPacks));
++        handler.unsafe().sendPacket(new PEResourcePack(hasPacks(), resourcePacks, behaviorPacks));
 +    }
 +
 +    public void sendResourceStack(InitialHandler handler) {
-+        handler.unsafe().sendPacket(new PEResourceStack(true, true, resourcePacks, behaviorPacks));
++        handler.unsafe().sendPacket(new PEResourceStack(hasPacks(), true, resourcePacks, behaviorPacks));
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEZippedResourcePackData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEZippedResourcePackData.java

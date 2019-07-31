@@ -56,18 +56,17 @@ servers, you will need to set *raknet* to true if using a native Bedrock server.
 ProtocolSupport for Bedrock, you can leave this field false and Bedrock connections will run over TCP using
 the ProtocolSupport [encapsulation protocol](https://github.com/ProtocolSupport/ProtocolSupport/wiki/Encapsulation-Protocol), as well as normal Java version connections. 
 
+Waterdog allows you to distribute Resource and Behavior packs from the proxy itself. 
+Place any *.mcaddon or *.mcpack files in the *packs* folder and they'll 
+be loaded on proxy start and sent to connecting clients. 
+
 The servers also have a new *transfer_group* config option. This option is used to determine if 
 the server mechanic will use the Bedrock 'Server Transfer' packet, or if it will use
 the traditional dimension switch and entity rewriting mechanics of BungeeCord. 
-This can be useful if you have servers that use different resouce packs. 
 If a user transfers from a server of one group to a server of a different group, 
 it will use the Server Transfer method. Waterdog includes palette rewriting, so
 you should be able to use the traditional transfer mechanics even if the backend
 servers have different block ID palettes. 
-
-Waterdog allows you to distribute Resource and Behavior packs from the proxy itself (forwarding
-resource packs from the downstream server coming soon). Place any *.mcaddon or *.mcpack files
-in the *packs* folder and they'll be loaded on proxy start. 
 
 *Does Waterdog support synapse protocol?*
 
@@ -105,10 +104,12 @@ Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/b
 ## Gotchas
 
 * Synapse support will not be included.
+* Currently no support for downstream server resource packs. Use Waterdog directly for packs.
 * The vanilla Bedrock Dedicated Server is a bit weird after transfer. It's low priority, but will have better support over time. 
 * *Why are my Bedrock UUIDs different?* - Waterdog unifies Bedrock UUIDs for online mode by using the user's XUID. They will
 be consistent for all downstream servers, and they should always be the same for each XUID. Offline mode authorization
-will produce a UUID based on the username, just like normal BungeeCord. 
+will produce a UUID based on the username, just like normal BungeeCord. This can be configured using the
+*use_xuid_for_uuid* config option. 
 
 ## Join us
 
