@@ -48,7 +48,9 @@ a panel, you should be able to find general instructions online for BungeeCord i
 
 Waterfall requires **Java 8** or above.
 
-To enable the Bedrock protocol, you need to create a new listener in config.yml and set the *raknet* field to true.
+### Bedrock Config
+
+To enable the Bedrock protocol, you need to create a listener in config.yml and set the *raknet* field to true.
 Each listener can only support Bedrock or Java, but you should be able to add any combination you want. For downstream
 servers, you will need to set *raknet* to true if using a native Bedrock server. If the server is using
 ProtocolSupport for Bedrock, you can leave this field false and Bedrock connections will run over TCP using
@@ -62,6 +64,10 @@ If a user transfers from a server of one group to a server of a different group,
 it will use the Server Transfer method. Waterdog includes palette rewriting, so
 you should be able to use the traditional transfer mechanics even if the backend
 servers have different block ID palettes. 
+
+Waterdog allows you to distribute Resource and Behavior packs from the proxy itself (forwarding
+resource packs from the downstream server coming soon). Place any *.mcaddon or *.mcpack files
+in the *packs* folder and they'll be loaded on proxy start. 
 
 *Does Waterdog support synapse protocol?*
 

@@ -1,4 +1,4 @@
-From ac8d1a685a2cbabcddacf9423d08a9fe79d69c85 Mon Sep 17 00:00:00 2001
+From c5e69998b6cae021c8a8e123ab7ffe48f05b5e37 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -857,16 +857,25 @@ index 3976d91c..25cc4b68 100644
      }
  
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/packet/LoginSuccess.java b/protocol/src/main/java/net/md_5/bungee/protocol/packet/LoginSuccess.java
-index 2aa5ad58..fac91c32 100644
+index 2aa5ad58..e783eb46 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/packet/LoginSuccess.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/packet/LoginSuccess.java
-@@ -14,22 +14,38 @@ import net.md_5.bungee.protocol.DefinedPacket;
+@@ -14,22 +14,47 @@ import net.md_5.bungee.protocol.DefinedPacket;
  @EqualsAndHashCode(callSuper = false)
  public class LoginSuccess extends DefinedPacket
  {
 +    // Waterdog start
 +    public static final int PE_LOGIN_SUCCESS = 0;
++    public static final int PE_LOGIN_FAILED_CLIENT = 1;
++    public static final int PE_LOGIN_FAILED_SERVER = 2;
 +    public static final int PE_PLAYER_SPAWN = 3;
++
++    private int statusCode = PE_LOGIN_SUCCESS;
++
++    public LoginSuccess(String uuid, String username) {
++        this.uuid = uuid;
++        this.username = username;
++    }
 +    // Waterdog end
  
      private String uuid;
@@ -880,7 +889,7 @@ index 2aa5ad58..fac91c32 100644
 -        username = readString( buf );
 +        // Waterdog start
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(protocolVersion)) {
-+            buf.readInt();
++            statusCode = buf.readInt();
 +            return;
 +        }
 +        // Waterdog end
@@ -896,7 +905,7 @@ index 2aa5ad58..fac91c32 100644
 -        writeString( username, buf );
 +        // Waterdog start
 +        if (net.md_5.bungee.protocol.ProtocolConstants.isPE(protocolVersion)) {
-+            buf.writeInt(PE_LOGIN_SUCCESS);
++            buf.writeInt(statusCode);
 +            return;
 +        }
 +        // Waterdog end
@@ -1117,7 +1126,7 @@ index 4c0637b9..f2898669 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 72f487dc..031acf7a 100644
+index 72f487dc..a25d8a82 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -52,6 +52,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1175,7 +1184,23 @@ index 72f487dc..031acf7a 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -196,6 +218,30 @@ public class ServerConnector extends PacketHandler
+@@ -164,6 +186,15 @@ public class ServerConnector extends PacketHandler
+     @Override
+     public void handle(LoginSuccess loginSuccess) throws Exception
+     {
++        // Waterdog start
++        if (loginSuccess.getStatusCode() == LoginSuccess.PE_LOGIN_FAILED_CLIENT) {
++            handle(new Kick("disconnectionScreen.outdatedClient"));
++            throw CancelSendSignal.INSTANCE;
++        } else if (loginSuccess.getStatusCode() == LoginSuccess.PE_LOGIN_FAILED_SERVER) {
++            handle(new Kick("disconnectionScreen.outdatedServer"));
++            throw CancelSendSignal.INSTANCE;
++        }
++        // Waterdog end
+         Preconditions.checkState( thisState == State.LOGIN_SUCCESS, "Not expecting LOGIN_SUCCESS" );
+         ch.setProtocol( Protocol.GAME );
+         thisState = State.LOGIN;
+@@ -196,6 +227,30 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1206,7 +1231,7 @@ index 72f487dc..031acf7a 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -246,6 +292,29 @@ public class ServerConnector extends PacketHandler
+@@ -246,6 +301,29 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo() );
  
@@ -1236,7 +1261,7 @@ index 72f487dc..031acf7a 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -260,6 +329,13 @@ public class ServerConnector extends PacketHandler
+@@ -260,6 +338,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1250,7 +1275,7 @@ index 72f487dc..031acf7a 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -320,6 +396,39 @@ public class ServerConnector extends PacketHandler
+@@ -320,6 +405,39 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1291,7 +1316,7 @@ index 72f487dc..031acf7a 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..dd713fa0 100644
+index 15f7c5b5..fdc93dd1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1384,7 +1409,6 @@ index 15f7c5b5..dd713fa0 100644
 +        b = new Bootstrap()
                  .channel( PipelineUtils.getChannel() )
                  .group( ch.getHandle().eventLoop() )
-+                .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
                  .handler( initializer )
                  .option( ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout() )
                  .remoteAddress( target.getAddress() );
@@ -1394,6 +1418,7 @@ index 15f7c5b5..dd713fa0 100644
 +                .channelFactory(() -> new network.ycc.raknet.client.channel.RakNetClientChannel(PipelineUtils.getDatagramChannel()))
 +                .group(ch.getHandle().eventLoop())
 +                .handler( initializer )
++                .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
 +                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout())
 +                .remoteAddress(target.getAddress());
 +        }

@@ -1,4 +1,4 @@
-From a58c2921ef62fe98fe8015a781dd598858c9cde2 Mon Sep 17 00:00:00 2001
+From a0fd9e9c04ce80fbfc0c83df9eb9bd0e91514861 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1342,7 +1342,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 031acf7a..dca3687f 100644
+index a25d8a82..c1e3dd6b 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1353,7 +1353,7 @@ index 031acf7a..dca3687f 100644
  import java.util.Queue;
  import java.util.Set;
  import java.util.UUID;
-@@ -317,10 +318,20 @@ public class ServerConnector extends PacketHandler
+@@ -326,10 +327,20 @@ public class ServerConnector extends PacketHandler
  
              user.unsafe().sendPacket( modLogin );
  
@@ -1378,7 +1378,7 @@ index 031acf7a..dca3687f 100644
  
              user.setDimension( login.getDimension() );
          } else
-@@ -339,7 +350,7 @@ public class ServerConnector extends PacketHandler
+@@ -348,7 +359,7 @@ public class ServerConnector extends PacketHandler
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
@@ -1387,7 +1387,7 @@ index 031acf7a..dca3687f 100644
              }
              for ( Score score : serverScoreboard.getScores() )
              {
-@@ -533,6 +544,14 @@ public class ServerConnector extends PacketHandler
+@@ -542,6 +553,14 @@ public class ServerConnector extends PacketHandler
              {
                  this.handshakeHandler.handle( pluginMessage );
  
@@ -1403,7 +1403,7 @@ index 031acf7a..dca3687f 100644
                  throw CancelSendSignal.INSTANCE;
              }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 09856c8c..a3a161a7 100644
+index aff1eafb..c1bdca54 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
