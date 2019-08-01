@@ -1,4 +1,4 @@
-From 88302f1b356da57686dd8edd316706eb586277e8 Mon Sep 17 00:00:00 2001
+From e4bbdc574b31826d839e5ebb5a2374bc11aef7d9 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -977,10 +977,10 @@ index dbb24e22..112c7229 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-index fc483b0a..153e6782 100644
+index 46da7981..34f139a2 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -132,6 +132,7 @@ public abstract class PEBlockRewrite {
+@@ -138,6 +138,7 @@ public abstract class PEBlockRewrite {
  
      protected void rewriteChunkSections(ByteBuf in, ByteBuf out, int sections) {
          for (int section = 0 ; section < sections ; section++) {
@@ -988,7 +988,7 @@ index fc483b0a..153e6782 100644
              final int subchunkVersion = in.readUnsignedByte();
              out.writeByte(subchunkVersion);
              switch (subchunkVersion) {
-@@ -143,11 +144,17 @@ public abstract class PEBlockRewrite {
+@@ -149,11 +150,17 @@ public abstract class PEBlockRewrite {
                      rewriteV8ChunkSection(in, out);
                      break;
                  default: //unsupported

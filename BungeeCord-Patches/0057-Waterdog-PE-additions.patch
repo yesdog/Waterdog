@@ -1,4 +1,4 @@
-From bc8b984fbe64aaa153cf4c2f6c55e75dccc670f8 Mon Sep 17 00:00:00 2001
+From afdbfaacc76201a27bfec1dcd8dd70440207a7de Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..fc483b0a
+index 00000000..46da7981
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,175 @@
+@@ -0,0 +1,181 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -31,6 +31,12 @@ index 00000000..fc483b0a
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +
 +public abstract class PEBlockRewrite {
++
++    public final static PEBlockRewrite EMPTY = new PEBlockRewrite() {
++        public int map(int id) {
++            return id;
++        }
++    };
 +
 +    protected static final int nV8Blocks = 16 * 16 * 16;
 +
@@ -1506,10 +1512,10 @@ index 00000000..fe6344fa
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..98347825
+index 00000000..0037f220
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,158 @@
+@@ -0,0 +1,161 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -1586,6 +1592,9 @@ index 00000000..98347825
 +    Short2ObjectMap<BlockPair> idToEntry = new Short2ObjectLinkedOpenHashMap<>();
 +
 +    public PEBlockRewrite createRewrite(PEBlockPalette to) {
++        if (PEBlockPalette.this == to || uuid.equals(to.uuid)) {
++            return PEBlockRewrite.EMPTY;
++        }
 +        return new PEBlockRewrite() {
 +            public int map(int id) {
 +                return to.getId(getEntry(id));
