@@ -1,4 +1,4 @@
-From c5e69998b6cae021c8a8e123ab7ffe48f05b5e37 Mon Sep 17 00:00:00 2001
+From 88302f1b356da57686dd8edd316706eb586277e8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1316,7 +1316,7 @@ index 72f487dc..a25d8a82 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..fdc93dd1 100644
+index 15f7c5b5..1a6b4dbb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1400,7 +1400,7 @@ index 15f7c5b5..fdc93dd1 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -387,12 +436,24 @@ public final class UserConnection implements ProxiedPlayer
+@@ -387,12 +436,25 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1414,11 +1414,12 @@ index 15f7c5b5..fdc93dd1 100644
                  .remoteAddress( target.getAddress() );
 +        // Waterdog start
 +        } else {
++            final int maxMTU = BungeeCord.getInstance().config.getMaxMTU();
 +            b = new Bootstrap()
 +                .channelFactory(() -> new network.ycc.raknet.client.channel.RakNetClientChannel(PipelineUtils.getDatagramChannel()))
 +                .group(ch.getHandle().eventLoop())
 +                .handler( initializer )
-+                .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
++                .option(network.ycc.raknet.RakNet.MTU, maxMTU == -1 ? network.ycc.raknet.config.DefaultConfig.DEFAULT_MTU : maxMTU) //some servers hate large frames
 +                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout())
 +                .remoteAddress(target.getAddress());
 +        }
@@ -1426,7 +1427,7 @@ index 15f7c5b5..fdc93dd1 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() )
          {
-@@ -604,7 +665,22 @@ public final class UserConnection implements ProxiedPlayer
+@@ -604,7 +666,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1449,7 +1450,7 @@ index 15f7c5b5..fdc93dd1 100644
  
      @Override
      public Locale getLocale()
-@@ -719,6 +795,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -719,6 +796,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
@@ -1470,10 +1471,10 @@ index 37fe6ac7..fdb26501 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
-index 5841cf63..2df2e618 100644
+index 5841cf63..20e224f0 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
-@@ -68,6 +68,12 @@ public abstract class Configuration implements ProxyConfig
+@@ -68,6 +68,13 @@ public abstract class Configuration implements ProxyConfig
      private boolean preventProxyConnections;
      private boolean forgeSupport = true; // Waterfall: default to enabled
  
@@ -1481,12 +1482,13 @@ index 5841cf63..2df2e618 100644
 +    private boolean replaceUsernameSpaces = true;
 +    private boolean useXUIDForUUID = true;
 +    private boolean bedrockEncryption = true;
++    private int maxMTU = -1;
 +    // Waterdog end
 +
      @Synchronized("serversLock") // Waterfall
      public void load()
      {
-@@ -99,6 +105,11 @@ public abstract class Configuration implements ProxyConfig
+@@ -99,6 +106,12 @@ public abstract class Configuration implements ProxyConfig
          compressionThreshold = adapter.getInt( "network_compression_threshold", compressionThreshold );
          preventProxyConnections = adapter.getBoolean( "prevent_proxy_connections", preventProxyConnections );
          forgeSupport = adapter.getBoolean( "forge_support", forgeSupport );
@@ -1494,6 +1496,7 @@ index 5841cf63..2df2e618 100644
 +        replaceUsernameSpaces = adapter.getBoolean( "replace_username_spaces", replaceUsernameSpaces );
 +        useXUIDForUUID = adapter.getBoolean( "use_xuid_for_uuid", useXUIDForUUID);
 +        bedrockEncryption = adapter.getBoolean( "bedrock_encryption", bedrockEncryption);
++        maxMTU = adapter.getInt( "max_mtu", maxMTU);
 +        // Waterdog end
  
          disabledCommands = new CaseInsensitiveSet( (Collection<String>) adapter.getList( "disabled_commands", Arrays.asList( "disabledcommandhere" ) ) );
