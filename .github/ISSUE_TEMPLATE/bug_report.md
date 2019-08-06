@@ -22,17 +22,16 @@ assignees: ''
 <!--- USE https://hastebin.com FOR ANY LOGS OR DUMPS -->
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+<!--- A clear and concise description of what the bug is. -->
 
 **To Reproduce**
-Steps to reproduce the behavior:
 <!--- Reliable steps which someone can use to reproduce the issue. Please do not create issues for non reproducible bug! -->
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+<!--- If applicable, add screenshots to help explain your problem. -->
 
 **Server software used:**
 <!--- Nukkit, Pocketmine, etc. ! -->
 
 **Additional context**
-Add any other context about the problem here.
+<!--- Add any other context about the problem here. -->
