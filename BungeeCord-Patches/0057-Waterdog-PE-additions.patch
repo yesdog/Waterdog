@@ -1,4 +1,4 @@
-From afdbfaacc76201a27bfec1dcd8dd70440207a7de Mon Sep 17 00:00:00 2001
+From 82eb414463f881762b20ccd76326e15f0ca9e7e3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2419,19 +2419,24 @@ index 00000000..45897b60
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..ac33a323
+index 00000000..a6c74658
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,125 @@
 +package network.ycc.waterdog.pe;
 +
++import io.netty.bootstrap.ServerBootstrap;
 +import io.netty.channel.Channel;
++import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelInboundHandlerAdapter;
 +import io.netty.channel.ChannelInitializer;
 +
 +import io.netty.channel.ChannelPipeline;
++import io.netty.channel.WriteBufferWaterMark;
++import io.netty.channel.epoll.EpollDatagramChannel;
 +import io.netty.channel.socket.DatagramPacket;
++import io.netty.channel.unix.UnixChannelOption;
 +import io.netty.handler.timeout.ReadTimeoutHandler;
 +import io.netty.util.ReferenceCountUtil;
 +import lombok.RequiredArgsConstructor;
@@ -2443,15 +2448,27 @@ index 00000000..ac33a323
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +import net.md_5.bungee.query.QueryHandler;
 +
++import network.ycc.raknet.pipeline.PongHandler;
 +import network.ycc.raknet.pipeline.UserDataCodec;
 +
 +import network.ycc.waterdog.api.event.UserChannelTapEvent;
 +
 +import java.util.concurrent.TimeUnit;
++import java.util.function.Supplier;
 +import java.util.logging.Level;
++import java.util.logging.Logger;
 +
 +public class PEPipelineUtils {
 +    public static final UserDataCodec MC_USER_DATA_CODEC = new UserDataCodec(0xFE);
++
++    private static final int SERVER_LOW_MARK = Integer.getInteger(
++            "network.ycc.waterdog.server_low_mark",   5 * 1024 * 1024 ); // 5 mb
++    private static final int SERVER_HIGH_MARK = Integer.getInteger(
++            "network.ycc.waterdog.server_high_mark", 10 * 1024 * 1024 ); // 10 mb
++    private static final WriteBufferWaterMark SERVER_MARK = new WriteBufferWaterMark( SERVER_LOW_MARK, SERVER_HIGH_MARK );
++
++    private static final int REUSE_LISTENERS = Integer.getInteger(
++            "network.ycc.waterdog.reuse_listeners", Runtime.getRuntime().availableProcessors());
 +
 +    public static final ChannelInitializer<Channel> SERVER_CHILD = new ChannelInitializer<Channel>() {
 +        protected void initChannel(Channel channel) {
@@ -2465,7 +2482,8 @@ index 00000000..ac33a323
 +                @Override
 +                public void channelRead(ChannelHandlerContext ctx, Object msg) {
 +                    if (msg instanceof network.ycc.raknet.packet.Packet) {
-+                        BungeeCord.getInstance().getLogger().log(Level.FINER, "Stray raknet packet sent to a child channel handler");
++                        BungeeCord.getInstance().getLogger().log(Level.FINER,
++                                "Stray RakNet packet sent to a child channel handler");
 +                        ReferenceCountUtil.safeRelease(msg);
 +                        return;
 +                    }
@@ -2473,7 +2491,7 @@ index 00000000..ac33a323
 +                }
 +            })
 +            .addLast(PipelineUtils.SERVER_CHILD);
-+            pipeline.replace(PEPongHandler.NAME, PEPongHandler.NAME, new PEPongHandler());
++            pipeline.replace(PongHandler.NAME, PEPongHandler.NAME, PEPongHandler.INSTANCE);
 +            pipeline.replace(PipelineUtils.FRAME_DECODER, PipelineUtils.FRAME_DECODER, new ChannelInboundHandlerAdapter());
 +            pipeline.replace(PipelineUtils.FRAME_PREPENDER, PipelineUtils.FRAME_PREPENDER, new ChannelInboundHandlerAdapter());
 +            pipeline.get(MinecraftDecoder.class).setProtocolVersion(ProtocolConstants.MINECRAFT_PE_1_8);
@@ -2485,8 +2503,22 @@ index 00000000..ac33a323
 +        channel.eventLoop().execute(() -> {
 +            //move timeout to the top of the pipeline
 +            channel.pipeline().remove(PipelineUtils.TIMEOUT_HANDLER);
-+            channel.pipeline().addFirst(PipelineUtils.TIMEOUT_HANDLER, new ReadTimeoutHandler( BungeeCord.getInstance().config.getTimeout(), TimeUnit.MILLISECONDS ));
++            channel.pipeline().addFirst(PipelineUtils.TIMEOUT_HANDLER,
++                    new ReadTimeoutHandler( BungeeCord.getInstance().config.getTimeout(), TimeUnit.MILLISECONDS ));
 +        });
++    }
++
++    public static void multiServerBootstrap(ChannelFutureListener listener, Logger logger, Supplier<ServerBootstrap> f) {
++        final ServerBootstrap bootstrap = f.get();
++        if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class)) {
++            logger.info("Epoll enabled, creating " + REUSE_LISTENERS + " RakNet sockets with SO_REUSEPORT");
++            bootstrap.option(UnixChannelOption.SO_REUSEPORT, true);
++            for (int i = 0 ; i < REUSE_LISTENERS ; i++) {
++                bootstrap.clone().bind().addListener(listener);
++            }
++        } else {
++            bootstrap.bind().addListener(listener);
++        }
 +    }
 +
 +    @RequiredArgsConstructor
@@ -2509,6 +2541,7 @@ index 00000000..ac33a323
 +                    }
 +                });
 +            });
++            channel.config().setWriteBufferWaterMark(SERVER_MARK);
 +            channel.pipeline()
 +            .addLast(new PEProxyServerInfoHandler(bungee, listener))
 +            .addLast(new QueryHandler(bungee, listener));

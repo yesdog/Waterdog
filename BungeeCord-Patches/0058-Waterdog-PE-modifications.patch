@@ -1,4 +1,4 @@
-From e4bbdc574b31826d839e5ebb5a2374bc11aef7d9 Mon Sep 17 00:00:00 2001
+From 057c63d8bb0af18d99a1f54c56941f25ec1e18b8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1024,7 +1024,7 @@ index dab227a1..12b52465 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 6b3de71f..5f1742c6 100644
+index 6b3de71f..0b86171b 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -248,6 +248,7 @@ public class BungeeCord extends ProxyServer
@@ -1043,24 +1043,23 @@ index 6b3de71f..5f1742c6 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel() )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -347,8 +349,24 @@ public class BungeeCord extends ProxyServer
+@@ -347,8 +349,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getHost() )
                      .bind().addListener( listener );
 +            // Waterdog start
 +            } else {
-+                new ServerBootstrap()
++                network.ycc.waterdog.pe.PEPipelineUtils.multiServerBootstrap(listener, getLogger(), () ->
++                    new ServerBootstrap()
 +                    .channelFactory(() -> new network.ycc.raknet.server.channel.RakNetServerChannel(PipelineUtils.getDatagramChannel()))
-+                    //.option(UnixChannelOption.SO_REUSEPORT, true)
-+                    .option(network.ycc.raknet.RakNet.MTU, 1500) //some servers hate large frames
 +                    .option(network.ycc.raknet.RakNet.MAX_CONNECTIONS, info.getMaxPlayers())
 +                    .option(network.ycc.raknet.RakNet.SERVER_ID, UUID.randomUUID().getMostSignificantBits())
 +                    .childAttr(PipelineUtils.LISTENER, info)
 +                    .handler(new network.ycc.waterdog.pe.PEPipelineUtils.ServerChannel(this, info))
 +                    .childHandler(network.ycc.waterdog.pe.PEPipelineUtils.SERVER_CHILD)
 +                    .group(bossEventLoopGroup, workerEventLoopGroup)
-+                    .localAddress( info.getHost() )
-+                    .bind().addListener( listener );
++                    .localAddress(info.getHost())
++                );
 +            }
 +            // Waterdog end
  
@@ -1069,7 +1068,7 @@ index 6b3de71f..5f1742c6 100644
              {
                  ChannelFutureListener bindListener = new ChannelFutureListener()
                  {
-@@ -644,7 +662,7 @@ public class BungeeCord extends ProxyServer
+@@ -644,7 +661,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1078,7 +1077,7 @@ index 6b3de71f..5f1742c6 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -665,9 +683,9 @@ public class BungeeCord extends ProxyServer
+@@ -665,9 +682,9 @@ public class BungeeCord extends ProxyServer
      }
  
      @Override

@@ -105,6 +105,7 @@ Clone this repo, run `./waterfall b` from *bash*, get jar from Waterfall-Proxy/b
 
 * Synapse support will not be included.
 * Currently no support for downstream server resource packs. Use Waterdog directly for packs.
+* MiNET will not work with larger MTUs. If you are using MiNET, set the *max_mtu* configuration to 1500.
 * The vanilla Bedrock Dedicated Server is a bit weird after transfer. It's low priority, but will have better support over time. 
 * *Why are my Bedrock UUIDs different?* - Waterdog unifies Bedrock UUIDs for online mode by using the user's XUID. They will
 be consistent for all downstream servers, and they should always be the same for each XUID. Offline mode authorization
