@@ -1,4 +1,4 @@
-From 82eb414463f881762b20ccd76326e15f0ca9e7e3 Mon Sep 17 00:00:00 2001
+From 17b3e05458fc979993e4df248d45318870dec062 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..46da7981
+index 00000000..1d85c399
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,182 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -103,7 +103,8 @@ index 00000000..46da7981
 +                final float x = packet.readFloatLE();
 +                final float y = packet.readFloatLE();
 +                final float z = packet.readFloatLE();
-+                int data = DefinedPacket.readSVarInt(packet);
++                //should be a svarint, but nukkit does weird things sometimes
++                int data = (int) DefinedPacket.readSVarLong(packet);
 +
 +                switch (evID) {
 +                    case PEDataValues.LEVEL_EVENT_EVENT_TERRAIN_PARTICLE:
@@ -686,7 +687,7 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..79550ed2
+index 00000000..88528127
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 @@ -0,0 +1,163 @@
@@ -740,8 +741,8 @@ index 00000000..79550ed2
 +        buf.readBytes(tailPayload);
 +        buf.readerIndex(payloadStartIndex);
 +
-+        DefinedPacket.readSVarInt(buf);//spawn position
-+        DefinedPacket.readVarInt(buf);
++        DefinedPacket.readSVarInt(buf); //spawn position
++        DefinedPacket.readSVarLong(buf); //should be VarInt, but nukkit...
 +        DefinedPacket.readSVarInt(buf);
 +        buf.readBoolean(); //disable achievements
 +        DefinedPacket.readSVarInt(buf); //time
@@ -2419,7 +2420,7 @@ index 00000000..45897b60
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..a6c74658
+index 00000000..33f83cc2
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 @@ -0,0 +1,125 @@
@@ -2510,7 +2511,7 @@ index 00000000..a6c74658
 +
 +    public static void multiServerBootstrap(ChannelFutureListener listener, Logger logger, Supplier<ServerBootstrap> f) {
 +        final ServerBootstrap bootstrap = f.get();
-+        if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class)) {
++        if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class) && REUSE_LISTENERS > 1) {
 +            logger.info("Epoll enabled, creating " + REUSE_LISTENERS + " RakNet sockets with SO_REUSEPORT");
 +            bootstrap.option(UnixChannelOption.SO_REUSEPORT, true);
 +            for (int i = 0 ; i < REUSE_LISTENERS ; i++) {

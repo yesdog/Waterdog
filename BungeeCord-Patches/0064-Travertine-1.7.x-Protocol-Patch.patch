@@ -1,4 +1,4 @@
-From fbe0e1ff72b21118b22163730dd72d2216b2b21c Mon Sep 17 00:00:00 2001
+From 1cc9d714989b3ea27d0e1905eb8048bdd11af735 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -129,7 +129,7 @@ index dc63f0a6..36c5901a 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-index a8bee487..5ade2334 100644
+index ca6e6071..cb49e898 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 @@ -5,10 +5,11 @@ import io.netty.buffer.ByteBufUtil;
@@ -145,7 +145,7 @@ index a8bee487..5ade2334 100644
  @AllArgsConstructor
  public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
  {
-@@ -68,7 +69,7 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
+@@ -69,7 +70,7 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
              if ( packet != null )
              {
                  packetTypeInfo = packet.getClass();
@@ -1248,7 +1248,7 @@ index 85d386c0..7a80acac 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 5f1742c6..98bcb919 100644
+index 0b86171b..38cadfb4 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -162,6 +162,14 @@ public class BungeeCord extends ProxyServer
