@@ -1,4 +1,4 @@
-From f4855512009095101d25e9e21d7c305074919555 Mon Sep 17 00:00:00 2001
+From 05da79e6b2ab4a5cab84e5a714be71fb89b8b617 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -145,6 +145,44 @@ index 7797a46b..5449cf9b 100644
          free();
  
          this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
+diff --git a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
+index f1f3b1e3..0bd16da3 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
++++ b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
+@@ -36,6 +36,33 @@ public class NativeZlib implements BungeeZlib
+         nativeCompress.finished = false;
+     }
+ 
++    // Waterdog start
++    public io.netty.buffer.CompositeByteBuf process(ByteBuf in, io.netty.buffer.ByteBufAllocator alloc) throws DataFormatException {
++        in.memoryAddress();
++        Preconditions.checkState( ctx != 0, "Invalid pointer to compress!" );
++
++        final io.netty.buffer.CompositeByteBuf out = alloc.compositeDirectBuffer();
++
++        while ( !nativeCompress.finished && ( compress || in.isReadable() ) )
++        {
++            final ByteBuf chunk = alloc.directBuffer(8192, 8192);
++
++            int processed = nativeCompress.process( ctx, in.memoryAddress() + in.readerIndex(), in.readableBytes(), chunk.memoryAddress() + chunk.writerIndex(), chunk.writableBytes(), compress );
++
++            in.readerIndex( in.readerIndex() + nativeCompress.consumed );
++            chunk.writerIndex( chunk.writerIndex() + processed );
++
++            out.addComponent(true, chunk);
++        }
++
++        nativeCompress.reset( ctx, compress );
++        nativeCompress.consumed = 0;
++        nativeCompress.finished = false;
++
++        return out;
++    }
++    // Waterdog end
++
+     @Override
+     public void process(ByteBuf in, ByteBuf out) throws DataFormatException
+     {
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 index e4f14974..0129ae39 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java

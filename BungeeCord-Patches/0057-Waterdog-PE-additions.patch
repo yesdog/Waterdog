@@ -1,4 +1,4 @@
-From 17b3e05458fc979993e4df248d45318870dec062 Mon Sep 17 00:00:00 2001
+From 164cb2114153ca82fad0e9151f3679a8b48d06b4 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -17,6 +17,21 @@ index 00000000..73495872
 +    void postCompressionBytes(int i);
 +    void preCompressionPacket(int i);
 +}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+index 741f4d17..c4423f86 100644
+--- a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
++++ b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+@@ -57,10 +57,6 @@ public class JavaHash implements WaterdogHash {
+         out.ensureWritable(32);
+         Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
+         Preconditions.checkState(in.isReadable(), "No hashable data!");
+-        //TODO: does windows not support direct buffers at all?
+-        //in.memoryAddress(); //smoke test
+-        //key.memoryAddress();
+-        //out.memoryAddress();
+ 
+         key.markReaderIndex();
+ 
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
 index 00000000..1d85c399
@@ -1680,10 +1695,10 @@ index 00000000..0037f220
 +
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..86034cb3
+index 00000000..26a740fc
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,96 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Preconditions;
@@ -1710,15 +1725,17 @@ index 00000000..86034cb3
 +public class PECompressor extends ChannelOutboundHandlerAdapter {
 +
 +    public static final String NAME = "compress";
-+    protected static final int MAX_POOL_BYTES = 16 * 1024;
++    protected static final int MAX_POOL_BYTES = 128 * 1024;
 +
 +    protected final BungeeZlib zlib = CompressFactory.zlib.newInstance();
 +    protected ByteBuf stashBuffer;
++    protected int stashBufferReaderIndex;
 +
 +    @Override
 +    public void handlerAdded(ChannelHandlerContext ctx) {
 +        zlib.init( true, Deflater.DEFAULT_COMPRESSION );
 +        stashBuffer = ctx.alloc().directBuffer(MAX_POOL_BYTES);
++        stashBufferReaderIndex = stashBuffer.readerIndex();
 +    }
 +
 +    @Override
@@ -1750,7 +1767,7 @@ index 00000000..86034cb3
 +            FlushTickHandler.checkFlushTick(ctx.channel());
 +            return;
 +        }
-+        super.write(ctx, msg, promise);
++        ctx.write(msg, promise);
 +    }
 +
 +    @Override
@@ -1758,16 +1775,16 @@ index 00000000..86034cb3
 +        if (stashBuffer.readableBytes() > 0) {
 +            flushData(ctx);
 +        }
-+        super.flush(ctx);
++        ctx.flush();
 +    }
 +
 +    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
-+        final ByteBuf out = ctx.alloc().directBuffer(128);
++        final ByteBuf out = ctx.alloc().directBuffer(stashBuffer.readableBytes() / 4 + 16);
 +        Preconditions.checkArgument(stashBuffer.hasMemoryAddress(), "pre-compression buffer is not direct");
 +        metricsIncrement(ctx, stashBuffer.readableBytes(), RakNetMetrics::preCompressionBytes);
 +        zlib.process(stashBuffer, out);
 +        metricsIncrement(ctx, out.readableBytes(), RakNetMetrics::postCompressionBytes);
-+        stashBuffer.clear();
++        stashBuffer.readerIndex(stashBufferReaderIndex).writerIndex(stashBufferReaderIndex);
 +        ctx.write(out).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
 +    }
 +
@@ -1780,19 +1797,18 @@ index 00000000..86034cb3
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
 new file mode 100644
-index 00000000..5d785901
+index 00000000..465c5efb
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,42 @@
 +package network.ycc.waterdog.pe;
-+
-+import com.google.common.base.Preconditions;
 +
 +import io.netty.buffer.ByteBuf;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.util.ReferenceCountUtil;
 +
 +import net.md_5.bungee.compress.PacketDecompressor;
++import net.md_5.bungee.jni.zlib.NativeZlib;
 +import net.md_5.bungee.protocol.DefinedPacket;
 +
 +import java.util.List;
@@ -1806,15 +1822,20 @@ index 00000000..5d785901
 +    }
 +
 +    @Override
-+    protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) throws Exception {
++    protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> out) throws Exception {
 +        buf = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), buf);
-+        final ByteBuf data = ctx.alloc().ioBuffer(32);
++
++        ByteBuf data = null;
 +        try {
-+            getZlib().process(buf, data);
-+            while (data.isReadable()) {
-+                list.add(data.readRetainedSlice(DefinedPacket.readVarInt(data)));
++            if (getZlib() instanceof NativeZlib) {
++                data = ((NativeZlib) getZlib()).process(buf, ctx.alloc());
++            } else {
++                data = ctx.alloc().ioBuffer(buf.readableBytes() * 4);
++                getZlib().process(buf, data);
 +            }
-+            Preconditions.checkArgument(!data.isReadable(), "Compressed data not handled");
++            while (data.isReadable()) {
++                out.add(data.readRetainedSlice(DefinedPacket.readVarInt(data)));
++            }
 +        } finally {
 +            ReferenceCountUtil.safeRelease(data);
 +            ReferenceCountUtil.safeRelease(buf);
@@ -1933,10 +1954,10 @@ index 00000000..4f0057ee
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..ce5d0fcc
+index 00000000..00b611d5
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,186 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.gson.JsonObject;
@@ -1946,12 +1967,17 @@ index 00000000..ce5d0fcc
 +import io.netty.buffer.ByteBuf;
 +import io.netty.channel.Channel;
 +import io.netty.channel.ChannelHandlerContext;
++import io.netty.channel.ChannelInboundHandlerAdapter;
 +import io.netty.channel.ChannelInitializer;
++import io.netty.channel.ChannelOutboundHandlerAdapter;
++import io.netty.channel.ChannelPromise;
 +import io.netty.handler.codec.DecoderException;
++import io.netty.util.ReferenceCountUtil;
 +
 +import lombok.Getter;
 +
 +import net.md_5.bungee.EncryptionUtil;
++import net.md_5.bungee.jni.cipher.BungeeCipher;
 +import net.md_5.bungee.netty.PipelineUtils;
 +import net.md_5.bungee.netty.cipher.CipherDecoder;
 +import net.md_5.bungee.netty.cipher.CipherEncoder;
@@ -2035,57 +2061,76 @@ index 00000000..ce5d0fcc
 +        keyBuffer.release();
 +    }
 +
-+    class PECipherDecoder extends CipherDecoder {
++    class PECipherDecoder extends ChannelInboundHandlerAdapter {
 +        private long counter = 0;
++        private final BungeeCipher cipher;
 +
 +        public PECipherDecoder() throws GeneralSecurityException {
-+            super(EncryptionUtil.getCipher(false, serverKey));
++            cipher = EncryptionUtil.getCipher(false, serverKey);
 +        }
 +
 +        @Override
-+        public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-+            super.handlerRemoved(ctx);
++        public void handlerRemoved(ChannelHandlerContext ctx) {
++            cipher.free();
 +            destroy();
 +        }
 +
 +        @Override
-+        protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
-+            msg = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), msg);
-+            try {
-+                super.decode(ctx, msg, out);
-+                final ByteBuf data = (ByteBuf) out.get(0);
-+                final int readerIndex = data.readerIndex();
-+                final int writerIndex = data.writerIndex();
-+                createHash(data.writerIndex(writerIndex - HASH_LENGTH), counter++);
-+                data.writerIndex(writerIndex);
-+                while (hashBuffer.isReadable()) {
-+                    if (data.readByte() != hashBuffer.readByte()) {
-+                        throw new DecoderException("Corrupt encrypted data!");
++        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
++            if (msg instanceof ByteBuf) {
++                final ByteBuf data = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), (ByteBuf) msg);
++                try {
++                    final int readerIndex = data.readerIndex();
++                    final int writerIndex = data.writerIndex();
++                    cipher.cipher(data, data.duplicate().writerIndex(readerIndex));
++                    createHash(data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH), counter++);
++                    data.writerIndex(writerIndex);
++                    while (hashBuffer.isReadable()) {
++                        if (data.readByte() != hashBuffer.readByte()) {
++                            throw new DecoderException("Corrupt encrypted data!");
++                        }
 +                    }
++                    data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH);
++                    ctx.fireChannelRead(data.retain());
++                } finally {
++                    ReferenceCountUtil.safeRelease(msg);
++                    data.release();
 +                }
-+                data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH);
-+            } finally {
-+                msg.release();
++            } else {
++                ctx.fireChannelRead(msg);
 +            }
 +        }
 +    }
 +
-+    class PECipherEncoder extends CipherEncoder {
++    class PECipherEncoder extends ChannelOutboundHandlerAdapter {
 +        private long counter = 0;
++        private final BungeeCipher cipher;
 +
 +        public PECipherEncoder() throws GeneralSecurityException {
-+            super(EncryptionUtil.getCipher(true, serverKey));
++            cipher = EncryptionUtil.getCipher(true, serverKey);
 +        }
 +
 +        @Override
-+        protected void encode(ChannelHandlerContext ctx, ByteBuf in, ByteBuf out) throws Exception {
-+            in = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), in, HASH_LENGTH);
-+            try {
-+                final int readerIndex = in.readerIndex();
-+                in.writeBytes(createHash(in, counter++));
-+                super.encode(ctx, in.readerIndex(readerIndex), out);
-+            } finally {
-+                in.release();
++        public void handlerRemoved(ChannelHandlerContext ctx) {
++            cipher.free();
++        }
++
++        @Override
++        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
++            if (msg instanceof ByteBuf) {
++                final ByteBuf data = PEEncryptionUtils.makeDirectOrRetain(ctx.alloc(), (ByteBuf) msg, HASH_LENGTH);
++                try {
++                    final int readerIndex = data.readerIndex();
++                    data.writeBytes(createHash(data, counter++));
++                    data.readerIndex(readerIndex);
++                    cipher.cipher(data, data.duplicate().writerIndex(readerIndex));
++                    ctx.write(data.readerIndex(readerIndex).retain(), promise);
++                } finally {
++                    ReferenceCountUtil.safeRelease(msg);
++                    data.release();
++                }
++            } else {
++                ctx.write(msg, promise);
 +            }
 +        }
 +    }
