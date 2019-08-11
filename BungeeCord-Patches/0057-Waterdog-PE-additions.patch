@@ -1,4 +1,4 @@
-From 51ae5b29872e2a3e95658b0e7971067cdc929bbd Mon Sep 17 00:00:00 2001
+From 3d986d9eef74165535ca9c67c08dd2f645c64286 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -17,47 +17,6 @@ index 00000000..73495872
 +    void postCompressionBytes(int i);
 +    void preCompressionPacket(int i);
 +}
-diff --git a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
-index 741f4d17..c4423f86 100644
---- a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
-+++ b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
-@@ -57,10 +57,6 @@ public class JavaHash implements WaterdogHash {
-         out.ensureWritable(32);
-         Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
-         Preconditions.checkState(in.isReadable(), "No hashable data!");
--        //TODO: does windows not support direct buffers at all?
--        //in.memoryAddress(); //smoke test
--        //key.memoryAddress();
--        //out.memoryAddress();
- 
-         key.markReaderIndex();
- 
-diff --git a/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
-index 2cca6699..cb9e03d6 100644
---- a/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
-+++ b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
-@@ -54,6 +54,11 @@ public class NativeHash implements WaterdogHash {
-         }
-     }
- 
-+    public void updateUnsafe(long addr, int length) {
-+        check();
-+        nativeHash.update(ctx, addr, length);
-+    }
-+
-     public void digest(ByteBuf out) {
-         out.memoryAddress(); //smoke test
-         out.ensureWritable(32);
-@@ -72,8 +77,7 @@ public class NativeHash implements WaterdogHash {
-                 in.memoryAddress() + in.readerIndex(), in.readableBytes(),
-                 key.memoryAddress() + key.readerIndex(),
-                 out.memoryAddress() + out.writerIndex());
--
--        in.readerIndex(in.readerIndex() + in.readableBytes());
-         out.writerIndex(out.writerIndex() + 32);
-+        in.readerIndex(in.readerIndex() + in.readableBytes());
-     }
- }
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
 index 00000000..1d85c399
