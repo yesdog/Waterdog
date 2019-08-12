@@ -1,4 +1,4 @@
-From 058487bdd2965a2906d2e332c809606a54b2dcb7 Mon Sep 17 00:00:00 2001
+From dca7ff3bc6d792c4d9175f1fcbb7470ad9ad5dcc Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -133,7 +133,7 @@ index d211cef6..161aa2aa 100644
  
      @Override
 diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
-index 7797a46b..97dcc899 100644
+index 7797a46b..d2865815 100644
 --- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
 +++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
 @@ -18,7 +18,7 @@ public class NativeCipher implements BungeeCipher
@@ -149,11 +149,11 @@ index 7797a46b..97dcc899 100644
          out.writerIndex( out.writerIndex() + length );
      }
  
-+    //Waterdog start
++    // Waterdog start
 +    public void cipherUnsafe(long addr, int length) {
 +        nativeCipher.cipher(ctx, addr, addr, length);
 +    }
-+    //Waterdog end
++    // Waterdog end
 +
      @Override
      public ByteBuf cipher(ChannelHandlerContext ctx, ByteBuf in) throws GeneralSecurityException
@@ -1689,7 +1689,7 @@ index 1f8a2439..b61bb405 100644
              {
                  ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 3a9dab68..0daf4de7 100644
+index 3a9dab68..f382df5f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -98,6 +98,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1751,16 +1751,30 @@ index 3a9dab68..0daf4de7 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -386,6 +417,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -371,6 +402,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+             return;
+         }
+ 
++        // Waterdog start
++        if (ProtocolConstants.isPE(getVersion()) && onlineMode && !((network.ycc.waterdog.pe.packet.PEHandshake) handshake).isAuthorized()) {
++            disconnect( bungee.getTranslation( "offline_mode_player" ) );
++            return;
++        }
++        // Waterdog end
++
+         Callback<PreLoginEvent> callback = new Callback<PreLoginEvent>()
+         {
+ 
+@@ -386,6 +424,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
 +                // Waterdog start
 +                if (ProtocolConstants.isPE(getVersion())) {
-+                    if (onlineMode && BungeeCord.getInstance().config.isBedrockEncryption()) {
++                    network.ycc.waterdog.pe.packet.PEHandshake peHandshake =
++                            (network.ycc.waterdog.pe.packet.PEHandshake) handshake;
++                    if (onlineMode && BungeeCord.getInstance().config.isBedrockEncryption() && peHandshake.isAuthorized()) {
 +                        try {
-+                            network.ycc.waterdog.pe.packet.PEHandshake peHandshake =
-+                                    (network.ycc.waterdog.pe.packet.PEHandshake) handshake;
 +                            network.ycc.waterdog.pe.PEEncryptionInitializer initializer =
 +                                    new network.ycc.waterdog.pe.PEEncryptionInitializer(peHandshake.getPublicKey());
 +                            unsafe().sendPacket(initializer.getRequest());
@@ -1782,7 +1796,7 @@ index 3a9dab68..0daf4de7 100644
                  if ( onlineMode )
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
-@@ -519,6 +574,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -519,6 +581,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                              userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
                              userCon.init();
  
@@ -1794,7 +1808,7 @@ index 3a9dab68..0daf4de7 100644
                              unsafe.sendPacket( new LoginSuccess( getUniqueId().toString(), getName() ) ); // With dashes in between
                              ch.setProtocol( Protocol.GAME );
  
-@@ -589,10 +649,66 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -589,10 +656,66 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  

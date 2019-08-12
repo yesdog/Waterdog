@@ -1,4 +1,4 @@
-From 1cc9d714989b3ea27d0e1905eb8048bdd11af735 Mon Sep 17 00:00:00 2001
+From d48d442dc4c1a957a2546f61ddbd3d21d838fc20 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1526,7 +1526,7 @@ index b61bb405..7cb4deb3 100644
              con.unsafe().sendPacket( pluginMessage );
              throw CancelSendSignal.INSTANCE;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index f50ee37c..187421cf 100644
+index a0f16d53..7c32fc26 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -11,6 +11,13 @@ import java.util.List;
@@ -1574,7 +1574,7 @@ index f50ee37c..187421cf 100644
                      }
                  };
  
-@@ -601,7 +624,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -608,7 +631,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                                  // NOOP
                              } else
                              // Waterdog end
