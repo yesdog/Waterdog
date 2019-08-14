@@ -1,4 +1,4 @@
-From ba0e64d7951af348d30f1af255b621fc84d179dc Mon Sep 17 00:00:00 2001
+From 57776bd8da5fbb0143a2527367ce35465134bfbd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Apr 2019 06:51:16 -0600
 Subject: [PATCH] ServerChannelTapEvent
@@ -33,7 +33,7 @@ index 00000000..a1475d4a
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 24866594..b90a2861 100644
+index 1a6b4dbb..72222fa1 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -392,6 +392,7 @@ public final class UserConnection implements ProxiedPlayer
@@ -45,5 +45,5 @@ index 24866594..b90a2861 100644
                  PipelineUtils.BASE.initChannel( ch );
                  ch.pipeline().addAfter( PipelineUtils.FRAME_DECODER, PipelineUtils.PACKET_DECODER, new MinecraftDecoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion(), bungee.getConfig().isAllowEmptyPackets() ) ); // Waterfall
 -- 
-2.20.1
+2.17.2 (Apple Git-113)
 

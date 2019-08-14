@@ -1,4 +1,4 @@
-From 464402428b87faa2509abb99527a3c91f9b5a012 Mon Sep 17 00:00:00 2001
+From ff29a62929c6935fb739852e15e7fd5e8badf7bf Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Sun, 28 Apr 2019 16:58:30 -0600
 Subject: [PATCH] javadoc fix
@@ -32,5 +32,5 @@ index d69c35d9..24e2f91d 100644
       * @param player player
       * @param component the component to transform
 -- 
-2.20.1
+2.17.2 (Apple Git-113)
 
