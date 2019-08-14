@@ -1,4 +1,4 @@
-From 96f8c93ada54e5f596f9674d4d753da40a2bc234 Mon Sep 17 00:00:00 2001
+From 2b2eae50e5bc31a1c02ebc798f7e868f166ee3b6 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Jul 2019 21:00:24 +0000
 Subject: [PATCH] Waterdog ARM64 binaries
@@ -567,5 +567,5 @@ literal 0
 HcmV?d00001
 
 -- 
-2.20.1
+2.17.2 (Apple Git-113)
 

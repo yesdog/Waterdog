@@ -1,4 +1,4 @@
-From fd0c4dfc575efddd4e9767d11c61d86047ae37bb Mon Sep 17 00:00:00 2001
+From 8da3582976f0bda5c32a2739b646f568da936af9 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1680,7 +1680,7 @@ index 00000000..0037f220
 +
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..8830f6dc
+index 00000000..f17c0bd1
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 @@ -0,0 +1,234 @@
@@ -1778,10 +1778,10 @@ index 00000000..8830f6dc
 +                    inBuffer.addComponent(true, header);
 +                    inBuffer.addComponent(true, buf.retain());
 +                }
++                dirty = true;
 +                if (outBuffer.readableBytes() > MAX_POOL_BYTES) {
 +                    flushData(ctx);
 +                }
-+                dirty = true;
 +                metricsIncrement(ctx, 1, RakNetMetrics::preCompressionPacket);
 +                FlushTickHandler.checkFlushTick(ctx.channel());
 +            } finally {
@@ -1795,7 +1795,6 @@ index 00000000..8830f6dc
 +    @Override
 +    public void flush(ChannelHandlerContext ctx) throws Exception {
 +        if (dirty) {
-+            dirty = false;
 +            flushData(ctx);
 +        }
 +        ctx.flush();
@@ -1903,6 +1902,7 @@ index 00000000..8830f6dc
 +    }
 +
 +    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
++        dirty = false;
 +        if (zlib instanceof NativeZlib) {
 +            flushInTmp(ctx);
 +            flushDataNative(ctx);
