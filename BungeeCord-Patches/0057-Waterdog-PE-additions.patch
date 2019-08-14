@@ -1,4 +1,4 @@
-From 3d986d9eef74165535ca9c67c08dd2f645c64286 Mon Sep 17 00:00:00 2001
+From 3756d5881dafc2901d9ce959b9b31e7730f24ba9 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1680,20 +1680,25 @@ index 00000000..0037f220
 +
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..840e5225
+index 00000000..4cd23ec4
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,217 @@
 +package network.ycc.waterdog.pe;
++
++import static network.ycc.waterdog.pe.PENativeExt.CHUNK_FLOOR;
++import static network.ycc.waterdog.pe.PENativeExt.CHUNK_SIZE;
 +
 +import com.google.common.base.Preconditions;
 +
 +import io.netty.buffer.ByteBuf;
++import io.netty.buffer.ByteBufAllocator;
 +import io.netty.buffer.CompositeByteBuf;
 +import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelOutboundHandlerAdapter;
 +import io.netty.channel.ChannelPromise;
++import io.netty.channel.unix.Buffer;
 +import io.netty.util.ReferenceCountUtil;
 +
 +import net.md_5.bungee.compress.CompressFactory;
@@ -1705,6 +1710,7 @@ index 00000000..840e5225
 +import network.ycc.raknet.pipeline.FlushTickHandler;
 +import network.ycc.waterdog.api.metrics.RakNetMetrics;
 +
++import java.nio.ByteBuffer;
 +import java.util.function.BiConsumer;
 +import java.util.zip.DataFormatException;
 +import java.util.zip.Deflater;
@@ -1712,21 +1718,33 @@ index 00000000..840e5225
 +public class PECompressor extends ChannelOutboundHandlerAdapter {
 +
 +    public static final String NAME = "compress";
++
 +    protected static final int MAX_POOL_BYTES = 128 * 1024;
++    protected static final int MAX_COMPONENTS = 512;
 +
 +    protected final BungeeZlib zlib = CompressFactory.zlib.newInstance();
-+    protected CompositeByteBuf stashBuffer;
++    protected CompositeByteBuf outBuffer, inBuffer;
++    protected ByteBuf headerTmp, outTmp, inTmp;
 +
 +    @Override
 +    public void handlerAdded(ChannelHandlerContext ctx) {
-+        zlib.init( true, Deflater.DEFAULT_COMPRESSION );
-+        stashBuffer = ctx.alloc().compositeDirectBuffer();
++        //4 is fastest without the big dropoff in compression
++        zlib.init( true, 4 );
++        outBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
++        inBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
++        headerTmp = ctx.alloc().directBuffer(8, 8);
++        outTmp = ctx.alloc().directBuffer(CHUNK_SIZE, CHUNK_SIZE);
++        inTmp = ctx.alloc().directBuffer(CHUNK_SIZE, CHUNK_SIZE);
 +    }
 +
 +    @Override
 +    public void handlerRemoved(ChannelHandlerContext ctx) {
 +        zlib.free();
-+        ReferenceCountUtil.safeRelease(stashBuffer);
++        ReferenceCountUtil.safeRelease(outBuffer);
++        ReferenceCountUtil.safeRelease(inBuffer);
++        ReferenceCountUtil.safeRelease(headerTmp);
++        ReferenceCountUtil.safeRelease(outTmp);
++        ReferenceCountUtil.safeRelease(inTmp);
 +    }
 +
 +    @Override
@@ -1738,11 +1756,22 @@ index 00000000..840e5225
 +                if (!buf.isReadable()) {
 +                    return;
 +                }
-+                final ByteBuf header = ctx.alloc().directBuffer(8, 8);
-+                DefinedPacket.writeVarInt(buf.readableBytes(), header);
-+                stashBuffer.addComponent(true, header);
-+                stashBuffer.addComponent(true, buf.retain());
-+                if (stashBuffer.readableBytes() > MAX_POOL_BYTES) {
++                if (inBuffer.readableBytes() > MAX_POOL_BYTES) {
++                    flushData(ctx);
++                }
++                if (zlib instanceof NativeZlib) {
++                    //TODO: this needs some sort of aggregating buffer
++                    DefinedPacket.writeVarInt(buf.readableBytes(), headerTmp.clear());
++                    metricsIncrement(ctx, headerTmp.readableBytes() + buf.readableBytes(), RakNetMetrics::preCompressionBytes);
++                    nativeDeflatePart(headerTmp, ctx.alloc());
++                    nativeDeflatePart(buf, ctx.alloc());
++                } else {
++                    final ByteBuf header = ctx.alloc().directBuffer(8, 8);
++                    DefinedPacket.writeVarInt(buf.readableBytes(), header);
++                    inBuffer.addComponent(true, header);
++                    inBuffer.addComponent(true, buf.retain());
++                }
++                if (outBuffer.readableBytes() > MAX_POOL_BYTES) {
 +                    flushData(ctx);
 +                }
 +                metricsIncrement(ctx, 1, RakNetMetrics::preCompressionPacket);
@@ -1757,27 +1786,112 @@ index 00000000..840e5225
 +
 +    @Override
 +    public void flush(ChannelHandlerContext ctx) throws Exception {
-+        if (stashBuffer.readableBytes() > 0) {
++        if (inBuffer.readableBytes() > 0 || outBuffer.readableBytes() > 0 || outTmp.readableBytes() > 0) {
 +            flushData(ctx);
 +        }
 +        ctx.flush();
 +    }
 +
-+    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
-+        final ByteBuf out;
-+        metricsIncrement(ctx, stashBuffer.readableBytes(), RakNetMetrics::preCompressionBytes);
-+        if (zlib instanceof NativeZlib) {
-+            stashBuffer.consolidate(); //TODO: guess we have to modify the native zlib
-+            out = PENativeExt.processZlibComposite((NativeZlib) zlib, stashBuffer, ctx.alloc());
++    protected void nativeDeflatePart(ByteBuf in, ByteBufAllocator alloc) {
++        if (!in.isReadable()) {
++            return;
++        } else if (in.hasMemoryAddress()) {
++            nativeDeflatePartSingle(in, alloc);
 +        } else {
-+            Preconditions.checkArgument(stashBuffer.hasMemoryAddress(), "pre-compression buffer is not direct");
-+            out = ctx.alloc().directBuffer(stashBuffer.readableBytes() / 4 + 16);
-+            zlib.process(stashBuffer, out);
++            nativeDeflatePartMany(in, alloc);
 +        }
-+        stashBuffer.release();
-+        stashBuffer = ctx.alloc().compositeDirectBuffer();
++    }
++
++    protected void nativeDeflatePartSingle(ByteBuf in, ByteBufAllocator alloc) {
++        final NativeZlib nzl = (NativeZlib) zlib;
++
++        while (in.isReadable()) {
++            checkOutBufferFloor(alloc);
++
++            final int processed = nzl.processEx(
++                    in.memoryAddress() + in.readerIndex(), in.readableBytes(),
++                    outTmp.memoryAddress() + outTmp.writerIndex(), outTmp.writableBytes());
++
++            outTmp.writerIndex(outTmp.writerIndex() + processed);
++            in.readerIndex(in.readerIndex() + nzl.getConsumed());
++        }
++    }
++
++    protected void nativeDeflatePartMany(ByteBuf in, ByteBufAllocator alloc) {
++        final NativeZlib nzl = (NativeZlib) zlib;
++        final ByteBuffer[] buffers = in.nioBuffers();
++        int bufferIndex = 0;
++
++        while (bufferIndex != buffers.length) {
++            checkOutBufferFloor(alloc);
++
++            final ByteBuffer inChunk = buffers[bufferIndex];
++            final int processed = nzl.processEx(
++                    Buffer.memoryAddress(inChunk) + inChunk.position(), inChunk.remaining(),
++                    outTmp.memoryAddress() + outTmp.writerIndex(), outTmp.writableBytes());
++
++            outTmp.writerIndex(outTmp.writerIndex() + processed);
++            inChunk.position(inChunk.position() + nzl.getConsumed());
++
++            if (!inChunk.hasRemaining()) {
++                bufferIndex++;
++            }
++        }
++
++        in.readerIndex(in.readerIndex() + in.readableBytes());
++    }
++
++    protected void nativeDeflateFinish(ByteBufAllocator alloc) {
++        final NativeZlib nzl = (NativeZlib) zlib;
++        while (!nzl.getFinished()) {
++            checkOutBufferFloor(alloc);
++
++            final int processed = nzl.processEx(
++                    0, 0,
++                    outTmp.memoryAddress() + outTmp.writerIndex(), outTmp.writableBytes());
++
++            outTmp.writerIndex(outTmp.writerIndex() + processed);
++        }
++
++        if (outTmp.isReadable()) {
++            outBuffer.addComponent(true, outTmp);
++            outTmp = alloc.directBuffer(CHUNK_SIZE, CHUNK_SIZE);
++        }
++
++        nzl.doReset();
++    }
++
++    protected void checkOutBufferFloor(ByteBufAllocator alloc) {
++        if (outTmp.writableBytes() < CHUNK_FLOOR) {
++            outBuffer.addComponent(true, outTmp);
++            outTmp = alloc.directBuffer(CHUNK_SIZE, CHUNK_SIZE);
++        }
++    }
++
++    protected void flushDataNative(ChannelHandlerContext ctx) throws DataFormatException {
++        nativeDeflateFinish(ctx.alloc());
++        final ByteBuf out = outBuffer;
++        outBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
 +        metricsIncrement(ctx, out.readableBytes(), RakNetMetrics::postCompressionBytes);
 +        ctx.write(out).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
++    }
++
++    protected void flushDataNonNative(ChannelHandlerContext ctx) throws DataFormatException {
++        final ByteBuf out = ctx.alloc().directBuffer(inBuffer.readableBytes() / 4 + 16);
++        metricsIncrement(ctx, inBuffer.readableBytes(), RakNetMetrics::preCompressionBytes);
++        zlib.process(inBuffer, out);
++        inBuffer.release();
++        inBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
++        metricsIncrement(ctx, out.readableBytes(), RakNetMetrics::postCompressionBytes);
++        ctx.write(out).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
++    }
++
++    protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
++        if (zlib instanceof NativeZlib) {
++            flushDataNative(ctx);
++        } else {
++            flushDataNonNative(ctx);
++        }
 +    }
 +
 +    protected void metricsIncrement(ChannelHandlerContext ctx, int i, BiConsumer<RakNetMetrics, Integer> consumer) {
@@ -1789,7 +1903,7 @@ index 00000000..840e5225
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
 new file mode 100644
-index 00000000..a7b7c833
+index 00000000..e6f50f44
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEDecompressor.java
 @@ -0,0 +1,39 @@
@@ -1818,7 +1932,7 @@ index 00000000..a7b7c833
 +        ByteBuf data = null;
 +        try {
 +            if (getZlib() instanceof NativeZlib) {
-+                data = PENativeExt.processZlibComposite((NativeZlib) getZlib(), buf, ctx.alloc());
++                data = PENativeExt.inflateZlibComposite((NativeZlib) getZlib(), buf, ctx.alloc());
 +            } else {
 +                data = ctx.alloc().ioBuffer(buf.readableBytes() * 4);
 +                getZlib().process(buf, data);
@@ -2454,10 +2568,10 @@ index 00000000..7a5d57b2
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
 new file mode 100644
-index 00000000..704fd963
+index 00000000..b0c6ea41
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,95 @@
 +package network.ycc.waterdog.pe;
 +
 +import network.ycc.waterdog.jni.NativeHash;
@@ -2479,27 +2593,29 @@ index 00000000..704fd963
 +    public static final int CHUNK_SIZE = 8192;
 +    public static final int CHUNK_FLOOR = 512;
 +
-+    public static CompositeByteBuf processZlibComposite(NativeZlib nzl, ByteBuf in, ByteBufAllocator alloc) {
-+        final CompositeByteBuf out = alloc.compositeDirectBuffer();
++    public static CompositeByteBuf inflateZlibComposite(NativeZlib nzl, ByteBuf in, ByteBufAllocator alloc) {
++        final CompositeByteBuf out = alloc.compositeDirectBuffer(128);
 +        final ByteBuffer[] buffers = in.nioBuffers();
 +        ByteBuf outChunk = alloc.directBuffer(CHUNK_SIZE, CHUNK_SIZE);
 +        int bufferIndex = 0;
 +
-+        while ( !nzl.getFinished() && ( nzl.isCompress() || bufferIndex != buffers.length ) )
++        assert !nzl.isCompress();
++
++        while ( !nzl.getFinished() && bufferIndex != buffers.length )
 +        {
++            if (outChunk.writableBytes() < CHUNK_FLOOR) {
++                out.addComponent(true, outChunk);
++                outChunk = alloc.directBuffer(CHUNK_SIZE, CHUNK_SIZE);
++            }
++
 +            final ByteBuffer inChunk = buffers[Math.min(bufferIndex, buffers.length - 1)];
 +
-+            int processed = nzl.process(
++            int processed = nzl.processEx(
 +                    Buffer.memoryAddress(inChunk) + inChunk.position(), inChunk.remaining(),
 +                    outChunk.memoryAddress() + outChunk.writerIndex(), outChunk.writableBytes());
 +
 +            inChunk.position(inChunk.position() + nzl.getConsumed());
 +            outChunk.writerIndex(outChunk.writerIndex() + processed);
-+
-+            if (outChunk.writableBytes() < CHUNK_FLOOR) {
-+                out.addComponent(true, outChunk);
-+                outChunk = alloc.directBuffer(CHUNK_SIZE, CHUNK_SIZE);
-+            }
 +
 +            if (!inChunk.hasRemaining()) {
 +                bufferIndex++;
