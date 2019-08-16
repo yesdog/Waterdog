@@ -1,0 +1,975 @@
+From f7011eac835c0b0029171d658e804acfdd836c92 Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Tue, 16 Apr 2019 07:50:25 -0600
+Subject: [PATCH] Waterdog PE (native modifications)
+
+
+diff --git a/native/compile-native.sh b/native/compile-native.sh
+index bdd1cd6b..e6f8ffd0 100755
+--- a/native/compile-native.sh
++++ b/native/compile-native.sh
+@@ -1,14 +1,31 @@
+-#!/bin/sh
++#!/bin/bash
++
++#Build embed using this fork here: https://github.com/yesdog/mbed-crypto
++#This has 1 minor change to the CMake build scripts so that
++#everything is generated with fPIC.
++
++#Build mbed, then build these binaries with:
++#MBED_CRYPTO_PATH=/your/mbed/path/here ./compile-native.sh
+ 
+ # Waterfall - rewrite below to extend platform support
+ 
+-if [[ "$OSTYPE" == "darwin"* ]]; then
++if [ "$OSTYPE" == "darwin"* ]; then
+   # brew install mbedtls zlib
+   PREFIX="osx-"
+-  CXX_ARGS="/usr/local/lib/libmbedcrypto.a -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/darwin/ -I/usr/local/include -L/usr/local/lib"
++  CXX_ARGS="-lmbedcrypto -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/darwin/ \
++    -I/usr/local/include -I$MBED_CRYPTO_PATH/include -L/usr/local/lib/ -L$MBED_CRYPTO_PATH/library/"
+ else
+   # apt-get install libmbedtls-dev zlib1g-dev
+-  CXX_ARGS="-lcrypto -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/"
++  CXX_ARGS="-lmbedcrypto -lz -I$JAVA_HOME/include/ -I$JAVA_HOME/include/linux/ \
++    -I$MBED_CRYPTO_PATH/include/ -L$MBED_CRYPTO_PATH/library/"
++fi
++
++arch=$(uname -i)
++
++if [[ $AARCH64 ]]; then
++  PREFIX="aarch64-"
++elif [[ $arch == arm* ]]; then
++  PREFIX="armhf-"
+ fi
+ 
+ CXX="g++ -shared -fPIC -O3 -Wall -Werror"
+diff --git a/native/src/main/c/NativeCipherImpl.cpp b/native/src/main/c/NativeCipherImpl.cpp
+index 0cedd7e5..3be208e3 100644
+--- a/native/src/main/c/NativeCipherImpl.cpp
++++ b/native/src/main/c/NativeCipherImpl.cpp
+@@ -1,5 +1,5 @@
+ // Support for CentOS 6
+-#if __linux__ // Waterfall
++#if __linux__ && !__arm__ && !__aarch64__ // Waterfall
+ __asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+ #endif // Waterfall
+ 
+@@ -11,10 +11,21 @@ __asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+ 
+ typedef unsigned char byte;
+ 
++// Waterdog start
++#include <mbedtls/sha256.h>
++
++#ifdef __APPLE__
++    #define htole64(x) x
++#else
++    #include <endian.h>
++#endif
++// Waterdog end
++
+ struct crypto_context {
+     int mode;
+     mbedtls_aes_context cipher;
+     byte *key;
++    mbedtls_sha256_context sha256; // Waterdog
+ };
+ 
+ jlong JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_init(JNIEnv* env, jobject obj, jboolean forEncryption, jbyteArray key) {
+@@ -31,6 +42,11 @@ jlong JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_init(JNIEnv* env
+ 
+     crypto->mode = (forEncryption) ? MBEDTLS_AES_ENCRYPT : MBEDTLS_AES_DECRYPT;
+ 
++    // Waterdog start
++    mbedtls_sha256_init(&crypto->sha256);
++    mbedtls_sha256_starts_ret(&crypto->sha256, 0);
++    // Waterdog end
++
+     env->ReleaseByteArrayElements(key, keyBytes, JNI_ABORT);
+     return (jlong) crypto;
+ }
+@@ -48,3 +64,86 @@ void Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_cipher(JNIEnv* env, jobje
+ 
+     mbedtls_aes_crypt_cfb8(&crypto->cipher, crypto->mode, length, crypto->key, (byte*) in, (byte*) out);
+ }
++
++// Waterdog start
++#define SHA256_CTX(ctx) (&((crypto_context *)ctx)->sha256)
++
++jint throwException(JNIEnv *env, const char* message, int err) {
++    // These can't be static for some unknown reason
++    jclass exceptionClass = env->FindClass("net/md_5/bungee/jni/NativeCodeException");
++    jmethodID exceptionInitID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;I)V");
++
++    jstring jMessage = env->NewStringUTF(message);
++
++    jthrowable throwable = (jthrowable) env->NewObject(exceptionClass, exceptionInitID, jMessage, err);
++    return env->Throw(throwable);
++}
++
++void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_staticPEHash(JNIEnv *env, jclass clazz,
++        jlong counter, jlong in, jint inLength, jlong key, jlong out) {
++    int ret;
++    mbedtls_sha256_context ctx;
++
++    counter = htole64(counter);
++
++    //do everything in one call using stack allocation
++    mbedtls_sha256_init(&ctx);
++    if((ret = mbedtls_sha256_starts_ret(&ctx, 0)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)&counter, 8)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)in, inLength)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)key, 32)) != 0) goto err;
++    if((ret = mbedtls_sha256_finish_ret(&ctx, (byte *)out)) != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not complete static SHA256 hash: ", ret);
++}
++
++void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_update__JB(JNIEnv *env, jobject thiz, jlong ctx, jbyte in) {
++    int ret = mbedtls_sha256_update_ret(SHA256_CTX(ctx), (byte *)&in, 1);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_updateLongLE(JNIEnv *env, jobject thiz, jlong ctx, jlong in) {
++    in = htole64(in);
++
++    int ret = mbedtls_sha256_update_ret(SHA256_CTX(ctx), (byte *)&in, 8);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_update__JJI(JNIEnv *env, jobject thiz, jlong ctx, jlong in, jint len) {
++    int ret = mbedtls_sha256_update_ret(SHA256_CTX(ctx), (byte *)in, len);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_digest(JNIEnv *env, jobject thiz, jlong ctx, jlong out) {
++    int ret;
++
++    ret = mbedtls_sha256_finish_ret(SHA256_CTX(ctx), (byte *)out);
++    if (ret != 0) goto err;
++
++    ret = mbedtls_sha256_starts_ret(SHA256_CTX(ctx), 0);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not finish SHA256 hash: ", ret);
++}
++// Waterdog end
+diff --git a/native/src/main/c/NativeCompressImpl.cpp b/native/src/main/c/NativeCompressImpl.cpp
+index 9bda6300..36d67513 100644
+--- a/native/src/main/c/NativeCompressImpl.cpp
++++ b/native/src/main/c/NativeCompressImpl.cpp
+@@ -80,3 +80,31 @@ jint JNICALL Java_net_md_15_bungee_jni_zlib_NativeCompressImpl_process(JNIEnv* e
+ 
+     return outLength - stream->avail_out;
+ }
++
++// Waterdog start
++jint JNICALL Java_net_md_15_bungee_jni_zlib_NativeCompressImpl_processEx(JNIEnv* env, jobject obj, jlong ctx, jlong in, jint inLength, jlong out, jint outLength, jboolean compress) {
++    z_stream* stream = (z_stream*) ctx;
++
++    stream->avail_in = inLength;
++    stream->next_in = (byte*) in;
++
++    stream->avail_out = outLength;
++    stream->next_out = (byte*) out;
++
++    int ret = (compress) ? deflate(stream, !inLength ? Z_FINISH : Z_NO_FLUSH) : inflate(stream, Z_PARTIAL_FLUSH);
++
++    switch (ret) {
++        case Z_STREAM_END:
++            env->SetBooleanField(obj, finishedID, true);
++            break;
++        case Z_OK:
++            break;
++        default:
++            throwException(env, "Unknown z_stream return code", ret);
++    }
++
++    env->SetIntField(obj, consumedID, inLength - stream->avail_in);
++
++    return outLength - stream->avail_out;
++}
++// Waterdog end
+\ No newline at end of file
+diff --git a/native/src/main/c/NativeHashImpl.cpp b/native/src/main/c/NativeHashImpl.cpp
+new file mode 100644
+index 00000000..15beed63
+--- /dev/null
++++ b/native/src/main/c/NativeHashImpl.cpp
+@@ -0,0 +1,118 @@
++// Support for CentOS 6
++#if __linux__ && !__arm__ // Waterfall
++__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
++#endif // Waterfall
++
++#include <stdlib.h>
++#include <string.h>
++
++#include <mbedtls/sha256.h>
++
++#include "network_ycc_waterdog_jni_NativeHashImpl.h"
++
++#ifdef __APPLE__
++    #define htole64(x) x
++#else
++    #include <endian.h>
++#endif
++
++typedef unsigned char byte;
++
++jint throwException(JNIEnv *env, const char* message, int err) {
++    // These can't be static for some unknown reason
++    jclass exceptionClass = env->FindClass("net/md_5/bungee/jni/NativeCodeException");
++    jmethodID exceptionInitID = env->GetMethodID(exceptionClass, "<init>", "(Ljava/lang/String;I)V");
++
++    jstring jMessage = env->NewStringUTF(message);
++
++    jthrowable throwable = (jthrowable) env->NewObject(exceptionClass, exceptionInitID, jMessage, err);
++    return env->Throw(throwable);
++}
++
++//do everything in one call using stack allocation
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_staticPEHash(JNIEnv *env, jclass clazz,
++        jlong counter, jlong in, jint inLength, jlong key, jlong out) {
++    int ret;
++    mbedtls_sha256_context ctx;
++
++    counter = htole64(counter);
++
++    mbedtls_sha256_init(&ctx);
++    if((ret = mbedtls_sha256_starts_ret(&ctx, 0)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)&counter, 8)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)in, inLength)) != 0) goto err;
++    if((ret = mbedtls_sha256_update_ret(&ctx, (byte *)key, 32)) != 0) goto err;
++    if((ret = mbedtls_sha256_finish_ret(&ctx, (byte *)out)) != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not complete static SHA256 hash: ", ret);
++}
++
++jlong JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_init(JNIEnv *env, jobject thiz) {
++    mbedtls_sha256_context *ctx = new mbedtls_sha256_context;
++
++    mbedtls_sha256_init(ctx);
++
++    int ret = mbedtls_sha256_starts_ret(ctx, 0);
++    if (ret != 0) goto err;
++
++    return (jlong)ctx;
++
++err:
++    throwException(env, "Could not start SHA256 hash: ", ret);
++    return 0;
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_free(JNIEnv *env, jobject thiz, jlong ctx) {
++    mbedtls_sha256_free((mbedtls_sha256_context *)ctx);
++    delete (mbedtls_sha256_context *)ctx;
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JB(JNIEnv *env, jobject thiz, jlong ctx, jbyte in) {
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)&in, 1);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_updateLongLE(JNIEnv *env, jobject thiz, jlong ctx, jlong in) {
++    in = htole64(in);
++
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)&in, 8);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JJI(JNIEnv *env, jobject thiz, jlong ctx, jlong in, jint len) {
++    int ret = mbedtls_sha256_update_ret((mbedtls_sha256_context *)ctx, (byte *)in, len);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not update SHA256 hash: ", ret);
++}
++
++void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_digest(JNIEnv *env, jobject thiz, jlong ctx, jlong out) {
++    int ret;
++
++    ret = mbedtls_sha256_finish_ret((mbedtls_sha256_context *)ctx, (byte *)out);
++    if (ret != 0) goto err;
++
++    ret = mbedtls_sha256_starts_ret((mbedtls_sha256_context *)ctx, 0);
++    if (ret != 0) goto err;
++
++    return;
++
++err:
++    throwException(env, "Could not finish SHA256 hash: ", ret);
++}
+diff --git a/native/src/main/c/net_md_5_bungee_jni_cipher_NativeCipherImpl.h b/native/src/main/c/net_md_5_bungee_jni_cipher_NativeCipherImpl.h
+index 87cb45f2..eca45417 100644
+--- a/native/src/main/c/net_md_5_bungee_jni_cipher_NativeCipherImpl.h
++++ b/native/src/main/c/net_md_5_bungee_jni_cipher_NativeCipherImpl.h
+@@ -31,6 +31,48 @@ JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_free
+ JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_cipher
+   (JNIEnv *, jobject, jlong, jlong, jlong, jint);
+ 
++// Waterdog start
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JB)V
++ */
++JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_update__JB
++  (JNIEnv *, jobject, jlong, jbyte);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    updateLongLE
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_updateLongLE
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JJI)V
++ */
++JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_update__JJI
++  (JNIEnv *, jobject, jlong, jlong, jint);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    digest
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_digest
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    staticPEHash
++ * Signature: (JJIJJ)V
++ */
++JNIEXPORT void JNICALL Java_net_md_15_bungee_jni_cipher_NativeCipherImpl_staticPEHash
++  (JNIEnv *, jclass, jlong, jlong, jint, jlong, jlong);
++// Waterdog end
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/native/src/main/c/net_md_5_bungee_jni_zlib_NativeCompressImpl.h b/native/src/main/c/net_md_5_bungee_jni_zlib_NativeCompressImpl.h
+index befb7dcc..f7bb4cd1 100644
+--- a/native/src/main/c/net_md_5_bungee_jni_zlib_NativeCompressImpl.h
++++ b/native/src/main/c/net_md_5_bungee_jni_zlib_NativeCompressImpl.h
+@@ -47,6 +47,16 @@ JNIEXPORT jlong JNICALL Java_net_md_15_bungee_jni_zlib_NativeCompressImpl_init
+ JNIEXPORT jint JNICALL Java_net_md_15_bungee_jni_zlib_NativeCompressImpl_process
+   (JNIEnv *, jobject, jlong, jlong, jint, jlong, jint, jboolean);
+ 
++// Waterdog start
++/*
++ * Class:     net_md_5_bungee_jni_zlib_NativeCompressImpl
++ * Method:    process
++ * Signature: (JJIJIZ)I
++ */
++JNIEXPORT jint JNICALL Java_net_md_15_bungee_jni_zlib_NativeCompressImpl_processEx
++  (JNIEnv *, jobject, jlong, jlong, jint, jlong, jint, jboolean);
++// Waterdog end
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h b/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h
+new file mode 100644
+index 00000000..b3ada134
+--- /dev/null
++++ b/native/src/main/c/network_ycc_waterdog_jni_NativeHashImpl.h
+@@ -0,0 +1,69 @@
++/* DO NOT EDIT THIS FILE - it is machine generated */
++#include <jni.h>
++/* Header for class network_ycc_waterdog_jni_NativeHashImpl */
++
++#ifndef _Included_network_ycc_waterdog_jni_NativeHashImpl
++#define _Included_network_ycc_waterdog_jni_NativeHashImpl
++#ifdef __cplusplus
++extern "C" {
++#endif
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    init
++ * Signature: ()J
++ */
++JNIEXPORT jlong JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_init
++  (JNIEnv *, jobject);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    free
++ * Signature: (J)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_free
++  (JNIEnv *, jobject, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JB)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JB
++  (JNIEnv *, jobject, jlong, jbyte);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    updateLongLE
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_updateLongLE
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    update
++ * Signature: (JJI)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_update__JJI
++  (JNIEnv *, jobject, jlong, jlong, jint);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    digest
++ * Signature: (JJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_digest
++  (JNIEnv *, jobject, jlong, jlong);
++
++/*
++ * Class:     network_ycc_waterdog_jni_NativeHashImpl
++ * Method:    staticPEHash
++ * Signature: (JJIJJ)V
++ */
++JNIEXPORT void JNICALL Java_network_ycc_waterdog_jni_NativeHashImpl_staticPEHash
++  (JNIEnv *, jclass, jlong, jlong, jint, jlong, jlong);
++
++#ifdef __cplusplus
++}
++#endif
++#endif
+diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
+index 9695c6e4..a611d8ba 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
++++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
+@@ -20,6 +20,8 @@ public final class NativeCode<T>
+     public NativeCode(String name, Class<? extends T> javaImpl, Class<? extends T> nativeImpl)
+     {
+         if ("Mac OS X".equals( System.getProperty( "os.name" ))) name = "osx-" + name; // Waterfall
++        else if ("aarch64".equals( System.getProperty( "os.arch" ))) name = "aarch64-" + name; // Waterdog
++        else if ("arm".equals( System.getProperty( "os.arch" ))) name = "armhf-" + name; // Waterdog
+         this.name = name;
+         this.javaImpl = javaImpl;
+         this.nativeImpl = nativeImpl;
+@@ -81,6 +83,6 @@ public final class NativeCode<T>
+ 
+     public static boolean isSupported()
+     {
+-        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) ); // Waterfall
++        return ("Linux".equals( System.getProperty( "os.name" ) ) || "Mac OS X".equals( System.getProperty( "os.name" ) )) && ("amd64".equals( System.getProperty( "os.arch" ) ) || "x86_64".equals( System.getProperty( "os.arch" )) || "aarch64".equals( System.getProperty( "os.arch" )) || "arm".equals( System.getProperty( "os.arch" )) ); // Waterfall + Waterdog
+     }
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/BungeeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/BungeeCipher.java
+index f71cf9c9..0dcc79d6 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/BungeeCipher.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/BungeeCipher.java
+@@ -18,4 +18,14 @@ public interface BungeeCipher
+     void cipher(ByteBuf in, ByteBuf out) throws GeneralSecurityException;
+ 
+     ByteBuf cipher(ChannelHandlerContext ctx, ByteBuf in) throws GeneralSecurityException;
++
++    // Waterdog start
++    void update(byte in);
++    void updateLongLE(long in);
++    void update(ByteBuf in);
++
++    void digest(ByteBuf out);
++
++    void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out);
++    // Waterdog end
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java
+index d211cef6..ba8d6bcd 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/JavaCipher.java
+@@ -3,17 +3,27 @@ package net.md_5.bungee.jni.cipher;
+ import io.netty.buffer.ByteBuf;
+ import io.netty.channel.ChannelHandlerContext;
+ import java.security.GeneralSecurityException;
++
+ import javax.crypto.Cipher;
+ import javax.crypto.SecretKey;
+ import javax.crypto.ShortBufferException;
+ import javax.crypto.spec.IvParameterSpec;
+ 
++// Wateredog start
++import java.security.MessageDigest;
++
++import io.netty.buffer.Unpooled;
++
++import com.google.common.base.Preconditions;
++// Wateredog end
++
+ public class JavaCipher implements BungeeCipher
+ {
+ 
+     private final Cipher cipher;
+     private static final ThreadLocal<byte[]> heapInLocal = new EmptyByteThreadLocal();
+     private static final ThreadLocal<byte[]> heapOutLocal = new EmptyByteThreadLocal();
++    private MessageDigest digest; // Waterdog
+ 
+     private static class EmptyByteThreadLocal extends ThreadLocal<byte[]>
+     {
+@@ -28,13 +38,14 @@ public class JavaCipher implements BungeeCipher
+     public JavaCipher() throws GeneralSecurityException
+     {
+         this.cipher = Cipher.getInstance( "AES/CFB8/NoPadding" );
++        digest = MessageDigest.getInstance("SHA-256"); // Waterdog
+     }
+ 
+     @Override
+     public void init(boolean forEncryption, SecretKey key) throws GeneralSecurityException
+     {
+         int mode = forEncryption ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
+-        cipher.init( mode, key, new IvParameterSpec( key.getEncoded() ) );
++        cipher.init( mode, key, new IvParameterSpec( java.util.Arrays.copyOf(key.getEncoded(), 16) ) ); // Waterdog
+     }
+ 
+     @Override
+@@ -82,4 +93,42 @@ public class JavaCipher implements BungeeCipher
+         in.readBytes( heapIn, 0, readableBytes );
+         return heapIn;
+     }
++
++    // Waterdog start
++    public void update(byte in) {
++        digest.update(in);
++    }
++
++    public void updateLongLE(long in) {
++        final ByteBuf counterBytes = Unpooled.buffer(8, 8).writeLongLE(in);
++        while (counterBytes.isReadable()) {
++            update(counterBytes.readByte());
++        }
++    }
++
++    public void update(ByteBuf in) {
++        while (in.isReadable()) {
++            update(in.readByte());
++        }
++    }
++
++    public void digest(ByteBuf out) {
++        out.writeBytes(digest.digest());
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++
++        key.markReaderIndex();
++
++        updateLongLE(counter);
++        update(in);
++        update(key);
++        digest(out);
++
++        key.resetReaderIndex();
++    }
++    // Waterdog end
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+index 7797a46b..4feeaf72 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipher.java
+@@ -18,7 +18,7 @@ public class NativeCipher implements BungeeCipher
+     @Override
+     public void init(boolean forEncryption, SecretKey key) throws GeneralSecurityException
+     {
+-        Preconditions.checkArgument( key.getEncoded().length == 16, "Invalid key size" );
++        Preconditions.checkArgument( key.getEncoded().length == 16 || key.getEncoded().length == 32, "Invalid key size" ); // Waterdog
+         free();
+ 
+         this.ctx = nativeCipher.init( forEncryption, key.getEncoded() );
+@@ -71,4 +71,62 @@ public class NativeCipher implements BungeeCipher
+ 
+         return heapOut;
+     }
++
++    // Waterdog start
++    public void cipherUnsafe(long addr, int length) {
++        nativeCipher.cipher(ctx, addr, addr, length);
++    }
++
++    protected void check() {
++        Preconditions.checkState(ctx != 0, "Invalid pointer to native hash!");
++    }
++
++    public void update(byte in) {
++        check();
++        nativeCipher.update(ctx, in);
++    }
++
++    public void updateLongLE(long in) {
++        check();
++        nativeCipher.updateLongLE(ctx, in);
++    }
++
++    public void update(ByteBuf in) {
++        final int length = in.readableBytes();
++        if (length > 0) {
++            in.memoryAddress(); //smoke test
++            check();
++
++            nativeCipher.update(ctx, in.memoryAddress() + in.readerIndex(), length);
++            in.readerIndex(in.readerIndex() + length);
++        }
++    }
++
++    public void updateUnsafe(long addr, int length) {
++        check();
++        nativeCipher.update(ctx, addr, length);
++    }
++
++    public void digest(ByteBuf out) {
++        out.memoryAddress(); //smoke test
++        out.ensureWritable(32);
++        check();
++
++        nativeCipher.digest(ctx, out.memoryAddress() + out.writerIndex());
++        out.writerIndex(out.writerIndex() + 32);
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++
++        nativeCipher.staticPEHash(counter,
++                in.memoryAddress() + in.readerIndex(), in.readableBytes(),
++                key.memoryAddress() + key.readerIndex(),
++                out.memoryAddress() + out.writerIndex());
++        out.writerIndex(out.writerIndex() + 32);
++        in.readerIndex(in.readerIndex() + in.readableBytes());
++    }
++    // Waterdog end
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipherImpl.java b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipherImpl.java
+index df784080..92f743fa 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipherImpl.java
++++ b/native/src/main/java/net/md_5/bungee/jni/cipher/NativeCipherImpl.java
+@@ -8,4 +8,14 @@ class NativeCipherImpl
+     native void free(long ctx);
+ 
+     native void cipher(long ctx, long in, long out, int length);
++
++    // Waterdog start
++    native void update(long ctx, byte in);
++    native void updateLongLE(long ctx, long in);
++    native void update(long ctx, long in, int length);
++
++    native void digest(long ctx, long out);
++
++    native static void staticPEHash(long counter, long in, int inLength, long key, long out);
++    // Waterdog end
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeCompressImpl.java b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeCompressImpl.java
+index 3bcc6ddb..e4307a7d 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeCompressImpl.java
++++ b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeCompressImpl.java
+@@ -20,4 +20,5 @@ public class NativeCompressImpl
+     native long init(boolean compress, int compressionLevel);
+ 
+     native int process(long ctx, long in, int inLength, long out, int outLength, boolean compress);
++    native int processEx(long ctx, long in, int inLength, long out, int outLength, boolean compress); // Waterdog
+ }
+diff --git a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
+index f1f3b1e3..e0e11d5c 100644
+--- a/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
++++ b/native/src/main/java/net/md_5/bungee/jni/zlib/NativeZlib.java
+@@ -11,6 +11,7 @@ public class NativeZlib implements BungeeZlib
+     @Getter
+     private final NativeCompressImpl nativeCompress = new NativeCompressImpl();
+     /*============================================================================*/
++    @Getter // Waterdog
+     private boolean compress;
+     private long ctx;
+ 
+@@ -36,6 +37,26 @@ public class NativeZlib implements BungeeZlib
+         nativeCompress.finished = false;
+     }
+ 
++    // Waterdog start
++    public int processEx(long in, int inLength, long out, int outLength) {
++        return nativeCompress.processEx( ctx, in, inLength, out, outLength, compress );
++    }
++
++    public int getConsumed() {
++        return nativeCompress.consumed;
++    }
++
++    public boolean getFinished() {
++        return nativeCompress.finished;
++    }
++
++    public void doReset() {
++        nativeCompress.reset( ctx, compress );
++        nativeCompress.consumed = 0;
++        nativeCompress.finished = false;
++    }
++    // Waterdog end
++
+     @Override
+     public void process(ByteBuf in, ByteBuf out) throws DataFormatException
+     {
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+new file mode 100644
+index 00000000..c4423f86
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/JavaHash.java
+@@ -0,0 +1,70 @@
++package network.ycc.waterdog.jni;
++
++import com.google.common.base.Preconditions;
++import io.netty.buffer.ByteBuf;
++import io.netty.buffer.Unpooled;
++
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++
++public class JavaHash implements WaterdogHash {
++    private MessageDigest digest;
++
++    public void init(String algorithm) throws NoSuchAlgorithmException {
++        if (!algorithm.equals("SHA-256")) {
++            throw new NoSuchAlgorithmException("Native only supports SHA-256, can not use " + algorithm);
++        }
++
++        digest = MessageDigest.getInstance(algorithm);
++    }
++
++    public void free() {
++        digest = null;
++    }
++
++    public void update(byte in) {
++        digest.update(in);
++    }
++
++    public void updateLongLE(long in) {
++        final ByteBuf counterBytes = Unpooled.buffer(8, 8).writeLongLE(in);
++        while (counterBytes.isReadable()) {
++            update(counterBytes.readByte());
++        }
++    }
++
++    public void update(ByteBuf in) {
++        //in.memoryAddress(); //smoke test
++        while (in.isReadable()) {
++            update(in.readByte());
++        }
++    }
++
++    public void digest(ByteBuf out) {
++        //out.memoryAddress(); //smoke test
++        out.writeBytes(digest.digest());
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        if (digest == null) {
++            try {
++                init("SHA-256");
++            } catch (NoSuchAlgorithmException e) {
++                e.printStackTrace();
++            }
++        }
++
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++
++        key.markReaderIndex();
++
++        updateLongLE(counter);
++        update(in);
++        update(key);
++        digest(out);
++
++        key.resetReaderIndex();
++    }
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
+new file mode 100644
+index 00000000..cb9e03d6
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/NativeHash.java
+@@ -0,0 +1,83 @@
++package network.ycc.waterdog.jni;
++
++import com.google.common.base.Preconditions;
++
++import io.netty.buffer.ByteBuf;
++
++import lombok.Getter;
++
++import java.security.NoSuchAlgorithmException;
++
++public class NativeHash implements WaterdogHash {
++    @Getter
++    private final NativeHashImpl nativeHash = new NativeHashImpl();
++    private long ctx;
++
++    public void init(String algorithm) throws NoSuchAlgorithmException {
++        if (!algorithm.equals("SHA-256")) {
++            throw new NoSuchAlgorithmException("Native only supports SHA-256, can not use " + algorithm);
++        }
++        free();
++        ctx = nativeHash.init();
++        Preconditions.checkState(ctx != 0, "Something wrong initializing native hash!");
++    }
++
++    public void free() {
++        if (ctx != 0) {
++            nativeHash.free(ctx);
++            ctx = 0;
++        }
++    }
++
++    protected void check() {
++        Preconditions.checkState(ctx != 0, "Invalid pointer to native hash!");
++    }
++
++    public void update(byte in) {
++        check();
++        nativeHash.update(ctx, in);
++    }
++
++    public void updateLongLE(long in) {
++        check();
++        nativeHash.updateLongLE(ctx, in);
++    }
++
++    public void update(ByteBuf in) {
++        final int length = in.readableBytes();
++        if (length > 0) {
++            in.memoryAddress(); //smoke test
++            check();
++
++            nativeHash.update(ctx, in.memoryAddress() + in.readerIndex(), length);
++            in.readerIndex(in.readerIndex() + length);
++        }
++    }
++
++    public void updateUnsafe(long addr, int length) {
++        check();
++        nativeHash.update(ctx, addr, length);
++    }
++
++    public void digest(ByteBuf out) {
++        out.memoryAddress(); //smoke test
++        out.ensureWritable(32);
++        check();
++
++        nativeHash.digest(ctx, out.memoryAddress() + out.writerIndex());
++        out.writerIndex(out.writerIndex() + 32);
++    }
++
++    public void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++        out.ensureWritable(32);
++        Preconditions.checkState(key.readableBytes() == 32, "Hash key must be 32 bytes!");
++        Preconditions.checkState(in.isReadable(), "No hashable data!");
++
++        NativeHashImpl.staticPEHash(counter,
++                in.memoryAddress() + in.readerIndex(), in.readableBytes(),
++                key.memoryAddress() + key.readerIndex(),
++                out.memoryAddress() + out.writerIndex());
++        out.writerIndex(out.writerIndex() + 32);
++        in.readerIndex(in.readerIndex() + in.readableBytes());
++    }
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java b/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java
+new file mode 100644
+index 00000000..2e528612
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/NativeHashImpl.java
+@@ -0,0 +1,14 @@
++package network.ycc.waterdog.jni;
++
++class NativeHashImpl {
++    native long init();
++    native void free(long ctx);
++
++    native void update(long ctx, byte in);
++    native void updateLongLE(long ctx, long in);
++    native void update(long ctx, long in, int length);
++
++    native void digest(long ctx, long out);
++
++    native static void staticPEHash(long counter, long in, int inLength, long key, long out);
++}
+diff --git a/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java b/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java
+new file mode 100644
+index 00000000..4209eed3
+--- /dev/null
++++ b/native/src/main/java/network/ycc/waterdog/jni/WaterdogHash.java
+@@ -0,0 +1,18 @@
++package network.ycc.waterdog.jni;
++
++import io.netty.buffer.ByteBuf;
++
++import java.security.NoSuchAlgorithmException;
++
++public interface WaterdogHash {
++    void init(String algorithm) throws NoSuchAlgorithmException;
++    void free();
++
++    void update(byte in);
++    void updateLongLE(long in);
++    void update(ByteBuf in);
++
++    void digest(ByteBuf out);
++
++    void staticPEHash(long counter, ByteBuf in, ByteBuf key, ByteBuf out);
++}
+-- 
+2.17.2 (Apple Git-113)
+

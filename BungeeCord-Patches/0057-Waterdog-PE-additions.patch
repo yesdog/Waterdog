@@ -1,4 +1,4 @@
-From 8da3582976f0bda5c32a2739b646f568da936af9 Mon Sep 17 00:00:00 2001
+From 99d6f93c4f70285139ca3af19d880203b26ccdc3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1680,16 +1680,14 @@ index 00000000..0037f220
 +
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
 new file mode 100644
-index 00000000..f17c0bd1
+index 00000000..72ea99eb
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
-@@ -0,0 +1,234 @@
+@@ -0,0 +1,230 @@
 +package network.ycc.waterdog.pe;
 +
 +import static network.ycc.waterdog.pe.PENativeExt.CHUNK_FLOOR;
 +import static network.ycc.waterdog.pe.PENativeExt.CHUNK_SIZE;
-+
-+import com.google.common.base.Preconditions;
 +
 +import io.netty.buffer.ByteBuf;
 +import io.netty.buffer.ByteBufAllocator;
@@ -1713,7 +1711,6 @@ index 00000000..f17c0bd1
 +import java.nio.ByteBuffer;
 +import java.util.function.BiConsumer;
 +import java.util.zip.DataFormatException;
-+import java.util.zip.Deflater;
 +
 +public class PECompressor extends ChannelOutboundHandlerAdapter {
 +
@@ -1760,15 +1757,16 @@ index 00000000..f17c0bd1
 +                if (inBuffer.readableBytes() > MAX_POOL_BYTES) {
 +                    flushData(ctx);
 +                }
++                metricsIncrement(ctx, 4 + buf.readableBytes(), RakNetMetrics::preCompressionBytes);
 +                if (zlib instanceof NativeZlib) {
 +                    if (buf.readableBytes() >= (inTmp.writableBytes() - 5)) {
++                        //big packets are fine to encode per packet
 +                        flushInTmp(ctx);
 +                        DefinedPacket.writeVarInt(buf.readableBytes(), headerTmp.clear());
-+                        metricsIncrement(ctx, headerTmp.readableBytes() + buf.readableBytes(),
-+                                RakNetMetrics::preCompressionBytes);
-+                        nativeDeflatePart(headerTmp, ctx.alloc());
-+                        nativeDeflatePart(buf, ctx.alloc());
++                        nativeDeflatePacket(headerTmp, ctx.alloc());
++                        nativeDeflatePacket(buf, ctx.alloc());
 +                    } else {
++                        //otherwise fill the aggregate buffer when possible, for performance
 +                        DefinedPacket.writeVarInt(buf.readableBytes(), inTmp);
 +                        inTmp.writeBytes(buf);
 +                    }
@@ -1801,23 +1799,21 @@ index 00000000..f17c0bd1
 +    }
 +
 +    protected void flushInTmp(ChannelHandlerContext ctx) {
-+        if (inTmp.isReadable()) {
-+            nativeDeflatePart(inTmp, ctx.alloc());
-+            inTmp.clear();
-+        }
++        nativeDeflatePacket(inTmp, ctx.alloc());
++        inTmp.clear();
 +    }
 +
-+    protected void nativeDeflatePart(ByteBuf in, ByteBufAllocator alloc) {
++    protected void nativeDeflatePacket(ByteBuf in, ByteBufAllocator alloc) {
 +        if (!in.isReadable()) {
 +            return;
 +        } else if (in.hasMemoryAddress()) {
-+            nativeDeflatePartSingle(in, alloc);
++            nativeDeflatePacketSingle(in, alloc);
 +        } else {
-+            nativeDeflatePartMany(in, alloc);
++            nativeDeflatePacketComposite(in, alloc);
 +        }
 +    }
 +
-+    protected void nativeDeflatePartSingle(ByteBuf in, ByteBufAllocator alloc) {
++    protected void nativeDeflatePacketSingle(ByteBuf in, ByteBufAllocator alloc) {
 +        final NativeZlib nzl = (NativeZlib) zlib;
 +
 +        while (in.isReadable()) {
@@ -1832,7 +1828,7 @@ index 00000000..f17c0bd1
 +        }
 +    }
 +
-+    protected void nativeDeflatePartMany(ByteBuf in, ByteBufAllocator alloc) {
++    protected void nativeDeflatePacketComposite(ByteBuf in, ByteBufAllocator alloc) {
 +        final NativeZlib nzl = (NativeZlib) zlib;
 +        final ByteBuffer[] buffers = in.nioBuffers();
 +        int bufferIndex = 0;
@@ -1883,7 +1879,7 @@ index 00000000..f17c0bd1
 +        }
 +    }
 +
-+    protected void flushDataNative(ChannelHandlerContext ctx) throws DataFormatException {
++    protected void flushDataNative(ChannelHandlerContext ctx) {
 +        nativeDeflateFinish(ctx.alloc());
 +        final ByteBuf out = outBuffer;
 +        outBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
@@ -2074,10 +2070,10 @@ index 00000000..4f50e2e3
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..2be6ceff
+index 00000000..0d5ee9c9
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,200 @@
+@@ -0,0 +1,196 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.gson.JsonObject;
@@ -2099,10 +2095,9 @@ index 00000000..2be6ceff
 +
 +import net.md_5.bungee.EncryptionUtil;
 +import net.md_5.bungee.jni.cipher.BungeeCipher;
++import net.md_5.bungee.jni.cipher.NativeCipher;
 +import net.md_5.bungee.netty.PipelineUtils;
 +
-+import network.ycc.waterdog.jni.NativeHash;
-+import network.ycc.waterdog.jni.WaterdogHash;
 +import network.ycc.waterdog.pe.packet.PEEncryptionRequest;
 +
 +import javax.crypto.KeyAgreement;
@@ -2121,7 +2116,6 @@ index 00000000..2be6ceff
 +    private final PEEncryptionRequest request;
 +    private final byte[] keyBytes;
 +    private final SecretKeySpec serverKey;
-+    private final WaterdogHash hash = PEEncryptionUtils.nativeHashFactory.newInstance();
 +    private ByteBuf hashBuffer;
 +    private ByteBuf keyBuffer;
 +    private int hashBufferReader;
@@ -2167,7 +2161,6 @@ index 00000000..2be6ceff
 +        hashBuffer = ch.alloc().directBuffer(32, 32);
 +        keyBuffer = ch.alloc().directBuffer(32, 32).writeBytes(keyBytes);
 +        hashBufferReader = hashBuffer.readerIndex();
-+        hash.init("SHA-256");
 +
 +        ch.pipeline().addBefore(PEDecompressor.NAME, PipelineUtils.DECRYPT_HANDLER,
 +                new PECipherDecoder());
@@ -2176,7 +2169,6 @@ index 00000000..2be6ceff
 +    }
 +
 +    protected void destroy() {
-+        hash.free();
 +        hashBuffer.release();
 +        keyBuffer.release();
 +    }
@@ -2203,7 +2195,7 @@ index 00000000..2be6ceff
 +                    final int readerIndex = data.readerIndex();
 +                    final int writerIndex = data.writerIndex();
 +                    PENativeExt.cipherInPlace(cipher, data);
-+                    createHash(data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH), counter++);
++                    createHash(cipher, data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH), counter++);
 +                    data.writerIndex(writerIndex);
 +                    while (hashBuffer.isReadable()) {
 +                        if (data.readByte() != hashBuffer.readByte()) {
@@ -2242,7 +2234,7 @@ index 00000000..2be6ceff
 +                final ByteBuf hashChunk = ctx.alloc().directBuffer(32, 32);
 +                try {
 +                    final int readerIndex = data.readerIndex();
-+                    createHash(data, counter++, hashChunk);
++                    createHash(cipher, data, counter++, hashChunk);
 +                    data.readerIndex(readerIndex);
 +                    PENativeExt.cipherInPlace(cipher, data);
 +                    PENativeExt.cipherInPlace(cipher, hashChunk);
@@ -2260,19 +2252,19 @@ index 00000000..2be6ceff
 +        }
 +    }
 +
-+    protected void createHash(ByteBuf in, long counter) {
++    protected void createHash(BungeeCipher cipher, ByteBuf in, long counter) {
 +        hashBuffer.readerIndex(hashBufferReader);
 +        hashBuffer.writerIndex(hashBufferReader);
 +
-+        createHash(in, counter, hashBuffer);
++        createHash(cipher, in, counter, hashBuffer);
 +    }
 +
-+    protected void createHash(ByteBuf in, long counter, ByteBuf out) {
++    protected void createHash(BungeeCipher cipher, ByteBuf in, long counter, ByteBuf out) {
 +        final int readerIndex = out.readerIndex();
-+        if (hash instanceof NativeHash) {
-+            PENativeExt.staticPEHash((NativeHash) hash, counter, in, keyBuffer, out);
++        if (cipher instanceof NativeCipher) {
++            PENativeExt.staticPEHash((NativeCipher) cipher, counter, in, keyBuffer, out);
 +        } else {
-+            hash.staticPEHash(counter, in, keyBuffer, out);
++            cipher.staticPEHash(counter, in, keyBuffer, out);
 +        }
 +
 +        out.writerIndex(readerIndex + HASH_LENGTH); //need only the first 8 bytes
@@ -2280,10 +2272,10 @@ index 00000000..2be6ceff
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..7a5d57b2
+index 00000000..27adebeb
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,299 @@
+@@ -0,0 +1,296 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
@@ -2312,13 +2304,9 @@ index 00000000..7a5d57b2
 +import io.netty.handler.codec.EncoderException;
 +
 +import net.md_5.bungee.BungeeCord;
-+import net.md_5.bungee.jni.NativeCode;
 +import net.md_5.bungee.protocol.DefinedPacket;
 +import net.md_5.bungee.protocol.ProtocolConstants;
 +
-+import network.ycc.waterdog.jni.JavaHash;
-+import network.ycc.waterdog.jni.NativeHash;
-+import network.ycc.waterdog.jni.WaterdogHash;
 +import network.ycc.waterdog.pe.packet.PEHandshake;
 +
 +import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -2344,7 +2332,6 @@ index 00000000..7a5d57b2
 +import java.util.UUID;
 +
 +public class PEEncryptionUtils {
-+    public static final NativeCode<WaterdogHash> nativeHashFactory = new NativeCode<>( "native-hash", JavaHash.class, NativeHash.class );
 +    public static final String MOJANG_KEY = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V";
 +
 +    static final Gson GSON;
@@ -2398,6 +2385,8 @@ index 00000000..7a5d57b2
 +        final String serverAddr = clientInfo.get("ServerAddress").getAsString();
 +        Preconditions.checkArgument(serverAddr != null, "ServerAddress is missing");
 +        final String[] serverAddrSplit = serverAddr.split("[:]");
++
++        clientInfo.addProperty("Waterdog_OriginalUUID", getString(identityData, "identity"));
 +
 +        handshake.setClientInfo(clientInfo);
 +        handshake.setUsername(getString(identityData, "displayName"));
@@ -2585,13 +2574,11 @@ index 00000000..7a5d57b2
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
 new file mode 100644
-index 00000000..b0c6ea41
+index 00000000..c4c72574
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,93 @@
 +package network.ycc.waterdog.pe;
-+
-+import network.ycc.waterdog.jni.NativeHash;
 +
 +import io.netty.buffer.ByteBuf;
 +import io.netty.buffer.ByteBufAllocator;
@@ -2650,18 +2637,18 @@ index 00000000..b0c6ea41
 +        return out;
 +    }
 +
-+    public static void staticPEHash(NativeHash nativeHash, long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
++    public static void staticPEHash(NativeCipher cipher, long counter, ByteBuf in, ByteBuf key, ByteBuf out) {
 +        if (in.hasMemoryAddress()) {
-+            nativeHash.staticPEHash(counter, in, key, out);
++            cipher.staticPEHash(counter, in, key, out);
 +        } else {
 +            final ByteBuffer[] buffers = in.nioBuffers();
-+            nativeHash.updateLongLE(counter);
++            cipher.updateLongLE(counter);
 +            for (ByteBuffer buffer : buffers) {
-+                nativeHash.updateUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
++                cipher.updateUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
 +            }
-+            nativeHash.update(key.markReaderIndex());
++            cipher.update(key.markReaderIndex());
 +            key.resetReaderIndex();
-+            nativeHash.digest(out);
++            cipher.digest(out);
 +        }
 +    }
 +

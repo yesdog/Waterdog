@@ -1,4 +1,4 @@
-From b399833cec42723af54f0a2239c937ab63ccad58 Mon Sep 17 00:00:00 2001
+From b71c28cd34809f5a549842682a923ecbcdbe7f86 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1248,7 +1248,7 @@ index 85d386c0..7a80acac 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 0b86171b..38cadfb4 100644
+index b2aee668..87bebe5f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -162,6 +162,14 @@ public class BungeeCord extends ProxyServer
