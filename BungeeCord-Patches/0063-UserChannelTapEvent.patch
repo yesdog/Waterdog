@@ -1,4 +1,4 @@
-From 2dca0141f18ef79d2348de6a1c6ae526f03cb2a6 Mon Sep 17 00:00:00 2001
+From 04cd547a0455de64e83fa35df7a95491fc2e18ef Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Thu, 25 Apr 2019 17:51:18 -0600
 Subject: [PATCH] UserChannelTapEvent

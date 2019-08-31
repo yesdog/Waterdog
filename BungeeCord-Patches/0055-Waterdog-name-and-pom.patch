@@ -1,4 +1,4 @@
-From 748ec809b9f0a68c6568153ad71ba66ebe0ff164 Mon Sep 17 00:00:00 2001
+From 5ff5f38728e379a0bf8ade8270496d3e9967a346 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -234,7 +234,7 @@ index fd999b51..58f67a6c 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/log4j/pom.xml b/log4j/pom.xml
-index e03fe0d7..11a26a1c 100644
+index 75dab185..8ede070f 100644
 --- a/log4j/pom.xml
 +++ b/log4j/pom.xml
 @@ -3,18 +3,18 @@
@@ -584,7 +584,7 @@ index 2493fc17..2ed54c98 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index f15927ec..0b4fc522 100644
+index 440e128f..cff54751 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -4,24 +4,33 @@
@@ -713,7 +713,7 @@ index 8acdc22d..615c7247 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
-index 624eb5f0..173f2b68 100644
+index dc2c584d..d9497970 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
 @@ -49,7 +49,7 @@ public class BungeeCordLauncher
