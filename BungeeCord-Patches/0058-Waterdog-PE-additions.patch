@@ -1,4 +1,4 @@
-From d25c62d14f2f56437f64b0740fd82c801e317934 Mon Sep 17 00:00:00 2001
+From 0bfd40c4207a1527270c95c0a1d40fcb33a7e59b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2070,10 +2070,10 @@ index 00000000..4f50e2e3
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
 new file mode 100644
-index 00000000..0d5ee9c9
+index 00000000..366103e9
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionInitializer.java
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,210 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.gson.JsonObject;
@@ -2081,6 +2081,7 @@ index 00000000..0d5ee9c9
 +import com.nimbusds.jose.JWSObject;
 +
 +import io.netty.buffer.ByteBuf;
++import io.netty.buffer.ByteBufAllocator;
 +import io.netty.buffer.CompositeByteBuf;
 +import io.netty.channel.Channel;
 +import io.netty.channel.ChannelHandlerContext;
@@ -2190,7 +2191,9 @@ index 00000000..0d5ee9c9
 +        @Override
 +        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 +            if (msg instanceof ByteBuf) {
-+                final ByteBuf data = (ByteBuf) msg;
++                //TODO: chunked in-place cipher seems to break, maybe not the hash?
++                final ByteBuf data = condenseMaybe((ByteBuf) msg, ctx.alloc());
++                //final ByteBuf data = (ByteBuf) msg;
 +                try {
 +                    final int readerIndex = data.readerIndex();
 +                    final int writerIndex = data.writerIndex();
@@ -2205,10 +2208,21 @@ index 00000000..0d5ee9c9
 +                    data.readerIndex(readerIndex).writerIndex(writerIndex - HASH_LENGTH);
 +                    ctx.fireChannelRead(data.retain());
 +                } finally {
-+                    ReferenceCountUtil.safeRelease(msg);
++                    ReferenceCountUtil.safeRelease(data);
 +                }
 +            } else {
 +                ctx.fireChannelRead(msg);
++            }
++        }
++
++        protected ByteBuf condenseMaybe(ByteBuf buf, ByteBufAllocator alloc) {
++            if (buf.nioBufferCount() > 1) {
++                final ByteBuf out = alloc.directBuffer(buf.readableBytes());
++                out.writeBytes(buf);
++                buf.release();
++                return out;
++            } else {
++                return buf;
 +            }
 +        }
 +    }
@@ -2574,10 +2588,10 @@ index 00000000..27adebeb
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
 new file mode 100644
-index 00000000..c4c72574
+index 00000000..eddc3303
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PENativeExt.java
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,97 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -2644,7 +2658,9 @@ index 00000000..c4c72574
 +            final ByteBuffer[] buffers = in.nioBuffers();
 +            cipher.updateLongLE(counter);
 +            for (ByteBuffer buffer : buffers) {
-+                cipher.updateUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
++                if (buffer.remaining() > 0) {
++                    cipher.updateUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
++                }
 +            }
 +            cipher.update(key.markReaderIndex());
 +            key.resetReaderIndex();
@@ -2658,7 +2674,9 @@ index 00000000..c4c72574
 +        } else {
 +            final ByteBuffer[] buffers = buf.nioBuffers();
 +            for (ByteBuffer buffer : buffers) {
-+                cipher.cipherUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
++                if (buffer.remaining() > 0) {
++                    cipher.cipherUnsafe(Buffer.memoryAddress(buffer) + buffer.position(), buffer.remaining());
++                }
 +            }
 +        }
 +    }
