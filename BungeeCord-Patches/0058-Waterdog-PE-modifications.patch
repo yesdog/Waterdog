@@ -1,4 +1,4 @@
-From 50924c629d9bc7ae4b7b1fcce533f5bc42e44a94 Mon Sep 17 00:00:00 2001
+From ec852b9ea8f8df0f471810e4ecf99dc6929b2f29 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -219,10 +219,10 @@ index 9951c1f9..dc63f0a6 100644
      public static void writeString(String s, ByteBuf buf)
      {
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-index a46bbc78..ca6e6071 100644
+index 71ddf022..7daaee69 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-@@ -35,10 +35,22 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
+@@ -28,10 +28,22 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
      }
  
      @Override
@@ -1020,7 +1020,7 @@ index dab227a1..12b52465 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 615c7247..b2aee668 100644
+index 98b43213..588cee81 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -239,6 +239,7 @@ public class BungeeCord extends ProxyServer
@@ -1311,7 +1311,7 @@ index 72f487dc..a25d8a82 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 15f7c5b5..1a6b4dbb 100644
+index 7e9678d9..72dd1606 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -131,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1383,7 +1383,7 @@ index 15f7c5b5..1a6b4dbb 100644
 +                }
 +                // Waterdog end
                  PipelineUtils.BASE.initChannel( ch );
-                 ch.pipeline().addAfter( PipelineUtils.FRAME_DECODER, PipelineUtils.PACKET_DECODER, new MinecraftDecoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion(), bungee.getConfig().isAllowEmptyPackets() ) ); // Waterfall
+                 ch.pipeline().addAfter( PipelineUtils.FRAME_DECODER, PipelineUtils.PACKET_DECODER, new MinecraftDecoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion() ) );
                  ch.pipeline().addAfter( PipelineUtils.FRAME_PREPENDER, PipelineUtils.PACKET_ENCODER, new MinecraftEncoder( Protocol.HANDSHAKE, false, getPendingConnection().getVersion() ) );
                  ch.pipeline().get( HandlerBoss.class ).setHandler( new ServerConnector( bungee, UserConnection.this, target ) );
 +                // Waterdog start

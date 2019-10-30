@@ -1,4 +1,4 @@
-From 5ff5f38728e379a0bf8ade8270496d3e9967a346 Mon Sep 17 00:00:00 2001
+From b84f521b60b7b6fe9e28bf9fe9200a85d1722da2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -700,7 +700,7 @@ index 440e128f..cff54751 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 8acdc22d..615c7247 100644
+index 6ae18f2c..98b43213 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -495,7 +495,7 @@ public class BungeeCord extends ProxyServer

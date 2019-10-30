@@ -1,4 +1,4 @@
-From 5995ab4be7f418549093c7d00e5a6407873d74bd Mon Sep 17 00:00:00 2001
+From 09d4815096830067826b5f531a4994bce52a9f03 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -129,7 +129,7 @@ index dc63f0a6..36c5901a 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-index ca6e6071..cb49e898 100644
+index 7daaee69..70c95605 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 @@ -5,10 +5,11 @@ import io.netty.buffer.ByteBufUtil;
@@ -145,7 +145,7 @@ index ca6e6071..cb49e898 100644
  @AllArgsConstructor
  public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
  {
-@@ -69,7 +70,7 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
+@@ -61,7 +62,7 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
              if ( packet != null )
              {
                  packetTypeInfo = packet.getClass();
@@ -492,7 +492,7 @@ index 1cf393b4..d180f16a 100644
              ProtocolConstants.MINECRAFT_1_9,
              ProtocolConstants.MINECRAFT_1_9_1,
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Varint21FrameDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/Varint21FrameDecoder.java
-index 8de4d9be..d2e319f3 100644
+index 743d65e4..37bf6b4b 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Varint21FrameDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Varint21FrameDecoder.java
 @@ -6,10 +6,12 @@ import io.netty.channel.ChannelHandlerContext;
@@ -506,11 +506,11 @@ index 8de4d9be..d2e319f3 100644
  
 +    private AtomicLong lastEmptyPacket = new AtomicLong(0); // Travertine
      private static boolean DIRECT_WARNING;
-     // Waterfall start
-     private boolean allowEmptyPackets;
-@@ -41,7 +43,15 @@ public class Varint21FrameDecoder extends ByteToMessageDecoder
+ 
+     @Override
+@@ -34,7 +36,15 @@ public class Varint21FrameDecoder extends ByteToMessageDecoder
                  // Waterfall end
-                 if ( length == 0 && !allowEmptyPackets) // Waterfall
+                 if ( false && length == 0) // Waterfall - ignore
                  {
 -                    throw new CorruptedFrameException( "Empty Packet!" );
 +                    // Travertine start - vanilla 1.7 client sometimes sends empty packets.
@@ -1260,7 +1260,7 @@ index 85d386c0..7a80acac 100644
      public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index b2aee668..87bebe5f 100644
+index 588cee81..25263596 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 @@ -162,6 +162,14 @@ public class BungeeCord extends ProxyServer
@@ -1415,7 +1415,7 @@ index a25d8a82..c1e3dd6b 100644
                  throw CancelSendSignal.INSTANCE;
              }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 72222fa1..62a75d9e 100644
+index 0df51be8..13005390 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
