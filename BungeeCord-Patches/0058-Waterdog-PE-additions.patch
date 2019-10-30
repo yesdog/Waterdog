@@ -1,4 +1,4 @@
-From 0bfd40c4207a1527270c95c0a1d40fcb33a7e59b Mon Sep 17 00:00:00 2001
+From 1e8056a95eff5b6605a29060b36dc1f9f2510645 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -19,10 +19,10 @@ index 00000000..73495872
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 new file mode 100644
-index 00000000..1d85c399
+index 00000000..6ef76ea2
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,183 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -169,6 +169,7 @@ index 00000000..1d85c399
 +            switch (subchunkVersion) {
 +                case 0: //legacy block ids, no remap needed
 +                case 4: //minet uses this format. what is it?
++                case 139:
 +                    out.writeBytes(in);
 +                    return;
 +                case 8: //new form chunk, baked-in palette
@@ -687,10 +688,10 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..88528127
+index 00000000..3b30439f
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,166 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import io.netty.buffer.ByteBuf;
@@ -817,6 +818,9 @@ index 00000000..88528127
 +        DefinedPacket.readString(buf); //world name (empty string)
 +        DefinedPacket.readString(buf); //premium world template id (empty string)
 +        buf.readBoolean(); //is trial
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_13) {
++            buf.writeBoolean(false); //is server authoritative over movement
++        }
 +        buf.readLongLE(); //world ticks
 +        DefinedPacket.readSVarInt(buf); //enchantment seed FFS MOJANG
 +

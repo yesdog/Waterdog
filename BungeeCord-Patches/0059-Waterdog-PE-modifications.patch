@@ -1,4 +1,4 @@
-From d898666277d0071c1e1c093c17e826ee206c0780 Mon Sep 17 00:00:00 2001
+From 50924c629d9bc7ae4b7b1fcce533f5bc42e44a94 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -499,10 +499,10 @@ index c2b0e12c..1e6ac8d5 100644
                      {
                          // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index ff1f28aa..a9a06786 100644
+index ff1f28aa..1cf393b4 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-@@ -6,6 +6,15 @@ import java.util.List;
+@@ -6,6 +6,16 @@ import java.util.List;
  public class ProtocolConstants
  {
  
@@ -513,12 +513,13 @@ index ff1f28aa..a9a06786 100644
 +    public static final int MINECRAFT_PE_1_10 = 340 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_12 = 361 - PE_PROTOCOL_OFFSET;
-+    public static final int MINECRAFT_PE_1_13 = 370 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_13 = 389 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_14 = 390 - PE_PROTOCOL_OFFSET;
 +    // Waterdog end
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -26,6 +35,14 @@ public class ProtocolConstants
+@@ -26,6 +36,15 @@ public class ProtocolConstants
      public static final int MINECRAFT_1_14_3 = 490;
      public static final int MINECRAFT_1_14_4 = 498;
      public static final List<String> SUPPORTED_VERSIONS = Arrays.asList(
@@ -529,11 +530,12 @@ index ff1f28aa..a9a06786 100644
 +            "PE-1.11.x",
 +            "PE-1.12.x",
 +            "PE-1.13.x",
++            "PE-1.14.x",
 +            // Waterdog end
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -35,6 +52,14 @@ public class ProtocolConstants
+@@ -35,6 +54,15 @@ public class ProtocolConstants
              "1.14.x"
      );
      public static final List<Integer> SUPPORTED_VERSION_IDS = Arrays.asList(
@@ -544,11 +546,12 @@ index ff1f28aa..a9a06786 100644
 +            ProtocolConstants.MINECRAFT_PE_1_11,
 +            ProtocolConstants.MINECRAFT_PE_1_12,
 +            ProtocolConstants.MINECRAFT_PE_1_13,
++            ProtocolConstants.MINECRAFT_PE_1_14,
 +            // Waterdog end
              ProtocolConstants.MINECRAFT_1_8,
              ProtocolConstants.MINECRAFT_1_9,
              ProtocolConstants.MINECRAFT_1_9_1,
-@@ -58,14 +83,22 @@ public class ProtocolConstants
+@@ -58,14 +86,22 @@ public class ProtocolConstants
  
      public static final boolean isBeforeOrEq(int before, int other)
      {
@@ -970,7 +973,7 @@ index dbb24e22..112c7229 100644
          if ( protocolVersion < ProtocolConstants.MINECRAFT_1_14 )
          {
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
-index 1d85c399..e1be044d 100644
+index 6ef76ea2..5dee53dd 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/PEBlockRewrite.java
 @@ -139,6 +139,7 @@ public abstract class PEBlockRewrite {
@@ -981,7 +984,7 @@ index 1d85c399..e1be044d 100644
              final int subchunkVersion = in.readUnsignedByte();
              out.writeByte(subchunkVersion);
              switch (subchunkVersion) {
-@@ -150,11 +151,17 @@ public abstract class PEBlockRewrite {
+@@ -151,11 +152,17 @@ public abstract class PEBlockRewrite {
                      rewriteV8ChunkSection(in, out);
                      break;
                  default: //unsupported
