@@ -1,4 +1,4 @@
-From 09d4815096830067826b5f531a4994bce52a9f03 Mon Sep 17 00:00:00 2001
+From 20756b9923883c7addd5c85e36c85a39459bbb63 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -462,11 +462,11 @@ index 1e6ac8d5..a49f76fc 100644
  
              java.util.function.Supplier<? extends DefinedPacket> constructor = protocolData.packetConstructors[id]; // Waterfall - speed up packet construction
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index 1cf393b4..d180f16a 100644
+index ab01d93b..2c8084d8 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -16,6 +16,8 @@ public class ProtocolConstants
-     public static final int MINECRAFT_PE_1_13 = 389 - PE_PROTOCOL_OFFSET;
+     public static final int MINECRAFT_PE_1_13 = 388 - PE_PROTOCOL_OFFSET;
      public static final int MINECRAFT_PE_1_14 = 390 - PE_PROTOCOL_OFFSET;
      // Waterdog end
 +    public static final int MINECRAFT_1_7_2 = 4;
@@ -1643,7 +1643,7 @@ index 8c6ce6e1..619428a3 100644
              con.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index 5f8c2381..8e6d4b4c 100644
+index b9edaa27..7a36e4cb 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -34,6 +34,10 @@ public abstract class EntityMap
