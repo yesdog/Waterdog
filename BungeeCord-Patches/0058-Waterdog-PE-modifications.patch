@@ -1,4 +1,4 @@
-From ec852b9ea8f8df0f471810e4ecf99dc6929b2f29 Mon Sep 17 00:00:00 2001
+From 9a030a52147d55f4c16ff9cfe63fec25cdc8b0b2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1916,7 +1916,7 @@ index 51d0c6cf..8c6ce6e1 100644
  
          ChatEvent chatEvent = new ChatEvent( con, con.getServer(), chat.getMessage() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index 38a4761e..5f8c2381 100644
+index 38a4761e..b9edaa27 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -27,6 +27,11 @@ public abstract class EntityMap
@@ -1925,7 +1925,7 @@ index 38a4761e..5f8c2381 100644
      {
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(version)) {
-+            return EntityMap_PE.INSTANCE;
++            return new EntityMap_PE(version);
 +        }
 +        // Waterdog end
          switch ( version )

@@ -1,4 +1,4 @@
-From 33abb7742a6fdf4ea75eb6ffa793e7ac617a1073 Mon Sep 17 00:00:00 2001
+From 9abf70a35ad315940ef96c34b3d5f310b410183f Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1263,15 +1263,16 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..fe6344fa
+index 00000000..874ab163
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,248 @@
+@@ -0,0 +1,284 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
 +
 +import net.md_5.bungee.protocol.DefinedPacket;
++import net.md_5.bungee.protocol.ProtocolConstants;
 +
 +import java.util.UUID;
 +import java.util.function.Consumer;
@@ -1279,7 +1280,11 @@ index 00000000..fe6344fa
 +
 +public class EntityMap_PE extends EntityMap {
 +
-+    static final EntityMap_PE INSTANCE = new EntityMap_PE();
++    final int version;
++
++    public EntityMap_PE(int version) {
++        this.version = version;
++    }
 +
 +    @Override
 +    public void rewriteServerbound(ByteBuf packet, int oldId, int newId) {
@@ -1378,6 +1383,37 @@ index 00000000..fe6344fa
 +                        act.accept(SK_VI_DATA); //geom data
 +                        act.accept(SK_VI_DATA); //xuid
 +                        act.accept(SK_VI_DATA); //channel
++                        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
++                            to.writeBytes(from, Integer.BYTES); //build platform
++                            { //serialized skin data
++                                act.accept(SK_VI_DATA); //skin id
++                                act.accept(SK_VI_DATA); //skin resource patch
++                                to.writeBytes(from, Integer.BYTES); //width
++                                to.writeBytes(from, Integer.BYTES); //height
++                                act.accept(SK_VI_DATA); //skin data
++                                int animatedImageData = from.readIntLE();
++                                to.writeIntLE(animatedImageData);
++                                for (int j = 0; j < animatedImageData; j++) {
++                                    to.writeBytes(from, Integer.BYTES); //image width
++                                    to.writeBytes(from, Integer.BYTES); //image height
++                                    act.accept(SK_VI_DATA); //image
++                                    to.writeBytes(from, Integer.BYTES); //type
++                                    to.writeBytes(from, Float.BYTES); //frames
++                                }
++                                to.writeBytes(from, Integer.BYTES); //cape width
++                                to.writeBytes(from, Integer.BYTES); //cape height
++                                act.accept(SK_VI_DATA); //cape data
++                                act.accept(SK_VI_DATA); //skin geom data
++                                act.accept(SK_VI_DATA); //serialized animation data
++                                to.writeBytes(from, Byte.BYTES); // is premium skin
++                                to.writeBytes(from, Byte.BYTES); // is persona skin
++                                to.writeBytes(from, Byte.BYTES); // is persona cape on classic skin
++                                act.accept(SK_VI_DATA); //cape id
++                                act.accept(SK_VI_DATA); //full skin id
++                            }
++                            to.writeBytes(from, Byte.BYTES); // is teacher
++                            to.writeBytes(from, Byte.BYTES); // is host
++                        }
 +                    }
 +                }
 +                break;
