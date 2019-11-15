@@ -1,4 +1,4 @@
-From 18f0a6f9e1df8271a2a3e23cfd62d938f72c2b76 Mon Sep 17 00:00:00 2001
+From 8318e1087bcd67f6e383c1bbcfc2306ff60b6301 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1263,10 +1263,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..5c091ad7
+index 00000000..9a5c76ae
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,287 @@
+@@ -0,0 +1,319 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1394,7 +1394,7 @@ index 00000000..5c091ad7
 +                                to.writeBytes(from, Integer.BYTES); //width
 +                                to.writeBytes(from, Integer.BYTES); //height
 +                                act.accept(SK_VI_DATA); //skin data
-+                                int animatedImageData = from.readIntLE();
++                                final int animatedImageData = from.readIntLE();
 +                                to.writeIntLE(animatedImageData);
 +                                for (int j = 0; j < animatedImageData; j++) {
 +                                    to.writeBytes(from, Integer.BYTES); //image width
@@ -1500,13 +1500,45 @@ index 00000000..5c091ad7
 +                        rewrite.run();
 +                        DefinedPacket.readSVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
-+                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
-+                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
-+                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
-+                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom name
-+                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom data
++                        if (version < ProtocolConstants.MINECRAFT_PE_1_13) {
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom name
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //geom data
++                        }
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //xuid
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //channel
++                        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
++                            packet.skipBytes(Integer.BYTES); //build platform
++                            { //serialized skin data
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin id
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin resource patch
++                                packet.skipBytes(Integer.BYTES); //width
++                                packet.skipBytes(Integer.BYTES); //height
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
++                                final int animatedImageData = packet.readIntLE();
++                                for (int j = 0; j < animatedImageData; j++) {
++                                    packet.skipBytes(Integer.BYTES); //image width
++                                    packet.skipBytes(Integer.BYTES); //image height
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); //image
++                                    packet.skipBytes(Integer.BYTES); //type
++                                    packet.skipBytes(Float.BYTES); //frames
++                                }
++                                packet.skipBytes(Integer.BYTES); //cape width
++                                packet.skipBytes(Integer.BYTES); //cape height
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin geom data
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //serialized animation data
++                                packet.skipBytes(Byte.BYTES); // is premium skin
++                                packet.skipBytes(Byte.BYTES); // is persona skin
++                                packet.skipBytes(Byte.BYTES); // is persona cape on classic skin
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape id
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //full skin id
++                            }
++                            packet.skipBytes(Byte.BYTES); // is teacher
++                            packet.skipBytes(Byte.BYTES); // is host
++                        }
 +                    }
 +                } else if (type == 1) { //REMOVE
 +                    for (int i = 0; i < num; i++) {
