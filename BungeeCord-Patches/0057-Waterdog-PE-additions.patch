@@ -1,4 +1,4 @@
-From 9abf70a35ad315940ef96c34b3d5f310b410183f Mon Sep 17 00:00:00 2001
+From 18f0a6f9e1df8271a2a3e23cfd62d938f72c2b76 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1263,10 +1263,10 @@ index 00000000..0a5d0f6f
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..874ab163
+index 00000000..5c091ad7
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,284 @@
+@@ -0,0 +1,287 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1359,6 +1359,7 @@ index 00000000..874ab163
 +                act.accept(SK_SVARINT);
 +                act.accept(VARLONG);
 +                break;
++            //TODO: case 0x2D: //RESPAWN
 +            case 0x37: { //PLAY_ADVENTURE_SETTINGS
 +                final int idIndex = from.writerIndex() - Long.BYTES;
 +                final long id = from.getLongLE(idIndex);
@@ -1376,11 +1377,13 @@ index 00000000..874ab163
 +                        to.writeBytes(from, Long.BYTES * 2);
 +                        act.accept(SVARLONG);
 +                        act.accept(SK_VI_DATA); //username
-+                        act.accept(SK_VI_DATA); //skin name
-+                        act.accept(SK_VI_DATA); //skin data
-+                        act.accept(SK_VI_DATA); //cape data
-+                        act.accept(SK_VI_DATA); //geom name
-+                        act.accept(SK_VI_DATA); //geom data
++                        if (version < ProtocolConstants.MINECRAFT_PE_1_13) {
++                            act.accept(SK_VI_DATA); //skin name
++                            act.accept(SK_VI_DATA); //skin data
++                            act.accept(SK_VI_DATA); //cape data
++                            act.accept(SK_VI_DATA); //geom name
++                            act.accept(SK_VI_DATA); //geom data
++                        }
 +                        act.accept(SK_VI_DATA); //xuid
 +                        act.accept(SK_VI_DATA); //channel
 +                        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
