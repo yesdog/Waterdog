@@ -1,4 +1,4 @@
-From 8318e1087bcd67f6e383c1bbcfc2306ff60b6301 Mon Sep 17 00:00:00 2001
+From 85c85679166c4cc28d13dc60449a0f01425cdb7d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2361,14 +2361,15 @@ index 00000000..366103e9
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
 new file mode 100644
-index 00000000..27adebeb
+index 00000000..677f4205
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEEncryptionUtils.java
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,297 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.base.Charsets;
 +import com.google.common.base.Preconditions;
++import com.google.common.net.HostAndPort;
 +import com.google.common.reflect.TypeToken;
 +import com.google.gson.Gson;
 +import com.google.gson.GsonBuilder;
@@ -2473,7 +2474,7 @@ index 00000000..27adebeb
 +        final JsonObject clientInfo = GSON.fromJson(additionalData.getPayload().toString(), JsonObject.class);
 +        final String serverAddr = clientInfo.get("ServerAddress").getAsString();
 +        Preconditions.checkArgument(serverAddr != null, "ServerAddress is missing");
-+        final String[] serverAddrSplit = serverAddr.split("[:]");
++        final HostAndPort hostAndPort = HostAndPort.fromString(serverAddr);
 +
 +        clientInfo.addProperty("Waterdog_OriginalUUID", getString(identityData, "identity"));
 +
@@ -2493,9 +2494,9 @@ index 00000000..27adebeb
 +            }
 +            Preconditions.checkArgument(handshake.getXuid().signum() == 1, "XUID is negative or zero");
 +        }
-+        handshake.setHost(serverAddrSplit[0]);
-+        if (serverAddrSplit.length > 1) {
-+            handshake.setPort(Integer.parseInt(serverAddrSplit[1]));
++        handshake.setHost(hostAndPort.getHost());
++        if (hostAndPort.hasPort()) {
++            handshake.setPort(hostAndPort.getPort());
 +        }
 +        handshake.setProtocolVersion(protocolVersion);
 +        handshake.setRequestedProtocol(2);
