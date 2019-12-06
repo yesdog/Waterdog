@@ -12,7 +12,7 @@
                  steps {
                      sh 'git config --global user.email "crgodsey@gmail.com" \
                          && git config --global user.name "colinrgodsey"'
-                     sh 'git submodule update --init && ./scripts/applyPatches.sh'
+                     sh "chmod +x ./scripts/jenkinsBuild.sh && ./scripts/jenkinsBuild.sh ${BUILD_ID}"
 
                      sh 'mvn clean package'
                  }
