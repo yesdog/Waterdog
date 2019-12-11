@@ -1,4 +1,4 @@
-From f66e4685184ad4adbcb7490890f87743812e0c65 Mon Sep 17 00:00:00 2001
+From 88e4892cf316d29a2c319a4aa3276a0c1bf2ae50 Mon Sep 17 00:00:00 2001
 From: Alemiz112 <45739737+Alemiz112@users.noreply.github.com>
 Date: Fri, 6 Dec 2019 20:27:45 +0100
 Subject: [PATCH] Waterdog PE (script modifications)
@@ -39,5 +39,5 @@ index 00000000..6a15b9c2
 +    public static String AUTHORS = "YesDogOSS Team, Bungee Team";
 +}
 -- 
-2.23.0.windows.1
+2.17.2 (Apple Git-113)
 
