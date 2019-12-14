@@ -1,4 +1,4 @@
-From 0c3efa2ba5a57f7483d8701efe38465c3fce4b84 Mon Sep 17 00:00:00 2001
+From 4f585810eb0f0c808f9a96983c8541264addda8b Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -463,11 +463,11 @@ index ee937b15..4c9e54d3 100644
  
              java.util.function.Supplier<? extends DefinedPacket> constructor = protocolData.packetConstructors[id]; // Waterfall - speed up packet construction
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index bf02ebd3..c985eefd 100644
+index fca5fc32..fafb12b0 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-@@ -17,6 +17,8 @@ public class ProtocolConstants
-     public static final int MINECRAFT_PE_1_14_BETA = 389 - PE_PROTOCOL_OFFSET;
+@@ -16,6 +16,8 @@ public class ProtocolConstants
+     public static final int MINECRAFT_PE_1_13 = 388 - PE_PROTOCOL_OFFSET;
      public static final int MINECRAFT_PE_1_14 = 390 - PE_PROTOCOL_OFFSET;
      // Waterdog end
 +    public static final int MINECRAFT_1_7_2 = 4;
@@ -475,7 +475,7 @@ index bf02ebd3..c985eefd 100644
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
      public static final int MINECRAFT_1_9_1 = 108;
-@@ -47,6 +49,7 @@ public class ProtocolConstants
+@@ -46,6 +48,7 @@ public class ProtocolConstants
              "PE-1.13.x",
              "PE-1.14.x",
              // Waterdog end
@@ -483,8 +483,8 @@ index bf02ebd3..c985eefd 100644
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -67,6 +70,8 @@ public class ProtocolConstants
-             ProtocolConstants.MINECRAFT_PE_1_14_BETA,
+@@ -65,6 +68,8 @@ public class ProtocolConstants
+             ProtocolConstants.MINECRAFT_PE_1_13,
              ProtocolConstants.MINECRAFT_PE_1_14,
              // Waterdog end
 +            ProtocolConstants.MINECRAFT_1_7_2,
