@@ -1,4 +1,4 @@
-From decc1bf40862deeb8d038607398fa2b368721f10 Mon Sep 17 00:00:00 2001
+From 648840e84ec1a31f3937803146006a880ded4f98 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Wed, 29 Jun 2016 13:56:57 -0500
 Subject: [PATCH] Configurable server version in ping response
@@ -79,5 +79,5 @@ index 0ff6781c..083bc177 100644
  
      @Override
 -- 
-2.21.0
+2.24.0
 

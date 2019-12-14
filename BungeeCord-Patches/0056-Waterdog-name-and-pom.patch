@@ -1,11 +1,11 @@
-From b84f521b60b7b6fe9e28bf9fe9200a85d1722da2 Mon Sep 17 00:00:00 2001
+From 0d8cea0908eb64ce1ccd8b1f0f4a24506fb91af8 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
 
 
 diff --git a/api/pom.xml b/api/pom.xml
-index b79d7ed6..47642e1b 100644
+index 8a67d8a3..652296e4 100644
 --- a/api/pom.xml
 +++ b/api/pom.xml
 @@ -4,42 +4,42 @@
@@ -16,7 +16,7 @@ index b79d7ed6..47642e1b 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -24,7 +24,7 @@ index b79d7ed6..47642e1b 100644
 -    <artifactId>waterfall-api</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-api</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-API</name>
@@ -65,7 +65,7 @@ index b79d7ed6..47642e1b 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/bootstrap/pom.xml b/bootstrap/pom.xml
-index 487fb3bb..64488fb9 100644
+index 0a27c9f6..eaddb6ae 100644
 --- a/bootstrap/pom.xml
 +++ b/bootstrap/pom.xml
 @@ -4,18 +4,18 @@
@@ -76,7 +76,7 @@ index 487fb3bb..64488fb9 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -84,7 +84,7 @@ index 487fb3bb..64488fb9 100644
 -    <artifactId>waterfall-bootstrap</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-bootstrap</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Bootstrap</name>
@@ -92,7 +92,7 @@ index 487fb3bb..64488fb9 100644
      <description>Java 1.6 loader for Waterfall</description>
  
      <properties>
-@@ -27,15 +27,15 @@
+@@ -27,20 +27,20 @@
  
      <dependencies>
          <dependency>
@@ -111,8 +111,23 @@ index 487fb3bb..64488fb9 100644
          <plugins>
              <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-jar-plugin</artifactId>
+-                <version>3.2.0</version>
++                <version>3.0.2</version>
+                 <configuration>
+                     <archive>
+                         <manifestEntries>
+@@ -57,7 +57,7 @@
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-shade-plugin</artifactId>
+-                <version>3.2.1</version>
++                <version>3.0.0</version>
+                 <executions>
+                     <execution>
+                         <phase>package</phase>
 diff --git a/chat/pom.xml b/chat/pom.xml
-index 7ad05abb..2e5814f2 100644
+index 0bd76ea5..48827dd1 100644
 --- a/chat/pom.xml
 +++ b/chat/pom.xml
 @@ -4,18 +4,18 @@
@@ -123,7 +138,7 @@ index 7ad05abb..2e5814f2 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -131,7 +146,7 @@ index 7ad05abb..2e5814f2 100644
 -    <artifactId>waterfall-chat</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-chat</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Chat</name>
@@ -140,10 +155,10 @@ index 7ad05abb..2e5814f2 100644
  
      <dependencies>
 diff --git a/config/pom.xml b/config/pom.xml
-index 9d0fe24b..066821f0 100644
+index 764fcc6b..a9a66ce5 100644
 --- a/config/pom.xml
 +++ b/config/pom.xml
-@@ -4,18 +4,18 @@
+@@ -4,25 +4,25 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -151,7 +166,7 @@ index 9d0fe24b..066821f0 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -159,7 +174,7 @@ index 9d0fe24b..066821f0 100644
 -    <artifactId>waterfall-config</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-config</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Config</name>
@@ -167,8 +182,16 @@ index 9d0fe24b..066821f0 100644
      <description>Generic java configuration API intended for use with Waterfall</description>
  
      <dependencies>
+         <dependency>
+             <groupId>org.yaml</groupId>
+             <artifactId>snakeyaml</artifactId>
+-            <version>1.25</version>
++            <version>1.23</version>
+             <scope>compile</scope>
+         </dependency>
+     </dependencies>
 diff --git a/event/pom.xml b/event/pom.xml
-index d6efe097..c5c31876 100644
+index 5eb97c1f..c4c9de5e 100644
 --- a/event/pom.xml
 +++ b/event/pom.xml
 @@ -4,17 +4,17 @@
@@ -179,7 +202,7 @@ index d6efe097..c5c31876 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -187,7 +210,7 @@ index d6efe097..c5c31876 100644
 -    <artifactId>waterfall-event</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-event</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Event</name>
@@ -195,7 +218,7 @@ index d6efe097..c5c31876 100644
      <description>Generic java event dispatching API intended for use with Waterfall.</description>
  </project>
 diff --git a/log/pom.xml b/log/pom.xml
-index fd999b51..58f67a6c 100644
+index 23dacb1d..c9ce7868 100644
 --- a/log/pom.xml
 +++ b/log/pom.xml
 @@ -4,18 +4,18 @@
@@ -206,7 +229,7 @@ index fd999b51..58f67a6c 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -214,7 +237,7 @@ index fd999b51..58f67a6c 100644
 -    <artifactId>waterfall-log</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-log</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Log</name>
@@ -234,7 +257,7 @@ index fd999b51..58f67a6c 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/log4j/pom.xml b/log4j/pom.xml
-index 75dab185..8ede070f 100644
+index f5267567..f2846ded 100644
 --- a/log4j/pom.xml
 +++ b/log4j/pom.xml
 @@ -3,18 +3,18 @@
@@ -245,7 +268,7 @@ index 75dab185..8ede070f 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -253,7 +276,7 @@ index 75dab185..8ede070f 100644
 -    <artifactId>waterfall-log4j</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-log4j</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Log</name>
@@ -262,7 +285,7 @@ index 75dab185..8ede070f 100644
  
      <properties>
 diff --git a/module/cmd-alert/pom.xml b/module/cmd-alert/pom.xml
-index 6f3aa272..bdd0275e 100644
+index 9340d58a..8011af68 100644
 --- a/module/cmd-alert/pom.xml
 +++ b/module/cmd-alert/pom.xml
 @@ -4,14 +4,14 @@
@@ -273,7 +296,7 @@ index 6f3aa272..bdd0275e 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -281,11 +304,11 @@ index 6f3aa272..bdd0275e 100644
 -    <artifactId>waterfall-module-cmd-alert</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-cmd-alert</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/module/cmd-find/pom.xml b/module/cmd-find/pom.xml
-index 01d95284..9d869f2b 100644
+index c7106fe9..2cb6efd1 100644
 --- a/module/cmd-find/pom.xml
 +++ b/module/cmd-find/pom.xml
 @@ -4,14 +4,14 @@
@@ -296,7 +319,7 @@ index 01d95284..9d869f2b 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -304,11 +327,11 @@ index 01d95284..9d869f2b 100644
 -    <artifactId>waterfall-module-cmd-find</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-cmd-find</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/module/cmd-list/pom.xml b/module/cmd-list/pom.xml
-index bc5dc210..a818a8cd 100644
+index e14d18e7..dce8dca0 100644
 --- a/module/cmd-list/pom.xml
 +++ b/module/cmd-list/pom.xml
 @@ -4,14 +4,14 @@
@@ -319,7 +342,7 @@ index bc5dc210..a818a8cd 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -327,11 +350,11 @@ index bc5dc210..a818a8cd 100644
 -    <artifactId>waterfall-module-cmd-list</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-cmd-list</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/module/cmd-send/pom.xml b/module/cmd-send/pom.xml
-index f6642175..3de9ca8c 100644
+index 68f526b1..53d82394 100644
 --- a/module/cmd-send/pom.xml
 +++ b/module/cmd-send/pom.xml
 @@ -4,14 +4,14 @@
@@ -342,7 +365,7 @@ index f6642175..3de9ca8c 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -350,11 +373,11 @@ index f6642175..3de9ca8c 100644
 -    <artifactId>waterfall-module-cmd-send</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-cmd-send</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/module/cmd-server/pom.xml b/module/cmd-server/pom.xml
-index c93ab2c9..f422d0ba 100644
+index d8ebf472..63e223bc 100644
 --- a/module/cmd-server/pom.xml
 +++ b/module/cmd-server/pom.xml
 @@ -4,14 +4,14 @@
@@ -365,7 +388,7 @@ index c93ab2c9..f422d0ba 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -373,11 +396,11 @@ index c93ab2c9..f422d0ba 100644
 -    <artifactId>waterfall-module-cmd-server</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-cmd-server</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/module/pom.xml b/module/pom.xml
-index aa604f35..f27ab45f 100644
+index 7b05190b..db04018b 100644
 --- a/module/pom.xml
 +++ b/module/pom.xml
 @@ -4,18 +4,18 @@
@@ -388,7 +411,7 @@ index aa604f35..f27ab45f 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -396,7 +419,7 @@ index aa604f35..f27ab45f 100644
 -    <artifactId>waterfall-module</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>pom</packaging>
  
 -    <name>Waterfall Modules</name>
@@ -416,7 +439,7 @@ index aa604f35..f27ab45f 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/module/reconnect-yaml/pom.xml b/module/reconnect-yaml/pom.xml
-index e34bac42..ef50f84d 100644
+index c29ac52f..ec472e58 100644
 --- a/module/reconnect-yaml/pom.xml
 +++ b/module/reconnect-yaml/pom.xml
 @@ -4,14 +4,14 @@
@@ -427,7 +450,7 @@ index e34bac42..ef50f84d 100644
 -        <artifactId>waterfall-module</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-module</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -435,11 +458,11 @@ index e34bac42..ef50f84d 100644
 -    <artifactId>waterfall-module-reconnect-yaml</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-module-reconnect-yaml</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 diff --git a/native/pom.xml b/native/pom.xml
-index b5aeb99e..fc2b6b73 100644
+index f8b549dc..4e330b04 100644
 --- a/native/pom.xml
 +++ b/native/pom.xml
 @@ -4,18 +4,18 @@
@@ -450,7 +473,7 @@ index b5aeb99e..fc2b6b73 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -458,7 +481,7 @@ index b5aeb99e..fc2b6b73 100644
 -    <artifactId>waterfall-native</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-native</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Native</name>
@@ -467,7 +490,7 @@ index b5aeb99e..fc2b6b73 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index eff0bf2e..5441c8ec 100644
+index a89472eb..7734e59c 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -4,25 +4,26 @@
@@ -486,7 +509,7 @@ index eff0bf2e..5441c8ec 100644
 -    <artifactId>waterfall-parent</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-parent</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>pom</packaging>
  
 -    <name>Waterfall-Parent</name>
@@ -534,7 +557,7 @@ index eff0bf2e..5441c8ec 100644
 -
 -    <properties>
 -        <build.number>unknown</build.number>
--        <netty.version>4.1.34.Final</netty.version>
+-        <netty.version>4.1.43.Final</netty.version>
 -        <!-- Require Java 8 -->
 -        <maven.compiler.source>1.8</maven.compiler.source>
 -        <maven.compiler.target>1.8</maven.compiler.target>
@@ -544,8 +567,44 @@ index eff0bf2e..5441c8ec 100644
      <dependencies>
          <dependency>
              <groupId>junit</groupId>
+@@ -120,7 +87,7 @@
+         <dependency>
+             <groupId>org.projectlombok</groupId>
+             <artifactId>lombok</artifactId>
+-            <version>1.18.10</version>
++            <version>1.18.4</version>
+             <scope>provided</scope>
+         </dependency>
+     </dependencies>
+@@ -156,7 +123,7 @@
+              <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-checkstyle-plugin</artifactId>
+-                <version>3.1.0</version>
++                <version>3.0.0</version>
+                 <executions>
+                     <execution>
+                         <phase>process-classes</phase>
+@@ -174,7 +141,7 @@
+                     <dependency>
+                         <groupId>com.puppycrawl.tools</groupId>
+                         <artifactId>checkstyle</artifactId>
+-                        <version>8.27</version>
++                        <version>8.19</version>
+                     </dependency>
+                 </dependencies>
+             </plugin>
+@@ -182,7 +149,7 @@
+             <plugin>
+                 <groupId>org.codehaus.mojo</groupId>
+                 <artifactId>animal-sniffer-maven-plugin</artifactId>
+-                <version>1.18</version>
++                <version>1.16</version>
+                 <executions>
+                     <execution>
+                         <phase>process-classes</phase>
 diff --git a/protocol/pom.xml b/protocol/pom.xml
-index 2493fc17..2ed54c98 100644
+index 4592e2b3..754c17f0 100644
 --- a/protocol/pom.xml
 +++ b/protocol/pom.xml
 @@ -4,18 +4,18 @@
@@ -556,7 +615,7 @@ index 2493fc17..2ed54c98 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -564,7 +623,7 @@ index 2493fc17..2ed54c98 100644
 -    <artifactId>waterfall-protocol</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-protocol</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Protocol</name>
@@ -572,7 +631,30 @@ index 2493fc17..2ed54c98 100644
      <description>Minimal implementation of the Minecraft protocol for use in Waterfall</description>
  
      <!-- We really shouldn't depend on external repositories, but at least this is the Central staging one -->
-@@ -41,8 +41,8 @@
+@@ -31,9 +31,22 @@
+                 <enabled>true</enabled>
+             </snapshots>
+         </repository>
++        <!-- Waterdog start -->
++        <repository>
++            <id>nukkitx-repo</id>
++            <url>https://repo.nukkitx.com/maven-releases</url>
++        </repository>
++        <!-- Waterdog end -->
+     </repositories>
+ 
+     <dependencies>
++        <!-- Waterdog start -->
++        <dependency>
++            <groupId>com.nukkitx</groupId>
++            <artifactId>nbt</artifactId>
++            <version>1.4.2</version>
++        </dependency>
++        <!-- Waterdog end -->
+         <dependency>
+             <groupId>net.md-5</groupId>
+             <artifactId>brigadier</artifactId>
+@@ -41,8 +54,8 @@
              <scope>compile</scope>
          </dependency>
          <dependency>
@@ -584,7 +666,7 @@ index 2493fc17..2ed54c98 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 440e128f..cff54751 100644
+index 39d6e35e..62610829 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -4,24 +4,33 @@
@@ -595,7 +677,7 @@ index 440e128f..cff54751 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -603,7 +685,7 @@ index 440e128f..cff54751 100644
 -    <artifactId>waterfall-proxy</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-proxy</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Proxy</name>
@@ -669,6 +751,15 @@ index 440e128f..cff54751 100644
              <version>${project.version}</version>
              <scope>compile</scope>
          </dependency>
+@@ -101,7 +110,7 @@
+         <dependency>
+             <groupId>mysql</groupId>
+             <artifactId>mysql-connector-java</artifactId>
+-            <version>5.1.48</version>
++            <version>5.1.47</version>
+             <scope>runtime</scope>
+         </dependency>
+ 
 @@ -118,6 +127,29 @@
              <scope>runtime</scope>
          </dependency>
@@ -751,7 +842,7 @@ index 9b20d0df..94711ac8 100644
              // 15 second timeout at various stages
              con.setConnectTimeout( 15000 );
 diff --git a/query/pom.xml b/query/pom.xml
-index 1fd54029..f9f9e677 100644
+index c3a29122..a00b4b99 100644
 --- a/query/pom.xml
 +++ b/query/pom.xml
 @@ -4,18 +4,18 @@
@@ -762,7 +853,7 @@ index 1fd54029..f9f9e677 100644
 -        <artifactId>waterfall-parent</artifactId>
 +        <groupId>network.ycc.waterdog</groupId>
 +        <artifactId>waterdog-parent</artifactId>
-         <version>1.14-SNAPSHOT</version>
+         <version>1.15-SNAPSHOT</version>
          <relativePath>../pom.xml</relativePath>
      </parent>
  
@@ -770,7 +861,7 @@ index 1fd54029..f9f9e677 100644
 -    <artifactId>waterfall-query</artifactId>
 +    <groupId>network.ycc.waterdog</groupId>
 +    <artifactId>waterdog-query</artifactId>
-     <version>1.14-SNAPSHOT</version>
+     <version>1.15-SNAPSHOT</version>
      <packaging>jar</packaging>
  
 -    <name>Waterfall-Query</name>

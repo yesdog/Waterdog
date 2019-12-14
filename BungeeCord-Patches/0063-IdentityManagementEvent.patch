@@ -1,4 +1,4 @@
-From 254a979e00bfd6dca5ffab76b5c308afcd004341 Mon Sep 17 00:00:00 2001
+From 67f765d8ab2cce9efbfe9723d78078f7f9754595 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Sat, 27 Apr 2019 17:43:44 -0600
 Subject: [PATCH] IdentityManagementEvent
@@ -35,7 +35,7 @@ index 00000000..b351d38f
 +    }
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index f382df5f..a0f16d53 100644
+index f06d28f3..aa1f6564 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -517,7 +517,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
