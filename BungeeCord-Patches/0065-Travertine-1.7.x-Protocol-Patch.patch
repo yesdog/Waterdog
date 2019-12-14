@@ -1,4 +1,4 @@
-From b5afb503f200d5f461b9225ce68f51fefb23bc73 Mon Sep 17 00:00:00 2001
+From e4abbf96a9a8deaa3c60e9116055cd5a8fdb058a Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -168,7 +168,7 @@ index 98ecafec..57e0088f 100644
  
      // Waterdog start
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index cf35bea0..9a43480a 100644
+index ee937b15..4c9e54d3 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 @@ -66,7 +66,7 @@ public enum Protocol
@@ -449,7 +449,7 @@ index cf35bea0..9a43480a 100644
              );
              TO_SERVER.registerPacket(
                      LoginPayloadResponse.class,
-@@ -592,7 +592,11 @@ public enum Protocol
+@@ -595,7 +595,11 @@ public enum Protocol
              if ( !hasPacket(id, supportsForge) )
              {
                  if (ProtocolConstants.isPE(version)) return null; // Waterdog - negative packet ids
@@ -1355,7 +1355,7 @@ index 491cf1a1..299a216c 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index de46decc..b6685f57 100644
+index 20ac3e9f..82000e6f 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
@@ -1366,7 +1366,7 @@ index de46decc..b6685f57 100644
  import java.util.Queue;
  import java.util.Set;
  import java.util.UUID;
-@@ -326,10 +327,20 @@ public class ServerConnector extends PacketHandler
+@@ -328,10 +329,20 @@ public class ServerConnector extends PacketHandler
  
              user.unsafe().sendPacket( modLogin );
  
@@ -1391,7 +1391,7 @@ index de46decc..b6685f57 100644
  
              user.setDimension( login.getDimension() );
          } else
-@@ -348,7 +359,7 @@ public class ServerConnector extends PacketHandler
+@@ -350,7 +361,7 @@ public class ServerConnector extends PacketHandler
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
@@ -1400,7 +1400,7 @@ index de46decc..b6685f57 100644
              }
              for ( Score score : serverScoreboard.getScores() )
              {
-@@ -543,6 +554,14 @@ public class ServerConnector extends PacketHandler
+@@ -545,6 +556,14 @@ public class ServerConnector extends PacketHandler
              {
                  this.handshakeHandler.handle( pluginMessage );
  

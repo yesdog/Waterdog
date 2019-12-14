@@ -1,4 +1,4 @@
-From 9e36bd567a4f3ee6c8c7f7e0473f31bf6d07f0c5 Mon Sep 17 00:00:00 2001
+From 26474b8edf97a8f0d721f326d8f192b7e2f7365e Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -604,7 +604,7 @@ index a89472eb..7734e59c 100644
                      <execution>
                          <phase>process-classes</phase>
 diff --git a/protocol/pom.xml b/protocol/pom.xml
-index 4592e2b3..126d4adf 100644
+index 4592e2b3..754c17f0 100644
 --- a/protocol/pom.xml
 +++ b/protocol/pom.xml
 @@ -4,18 +4,18 @@
@@ -631,7 +631,30 @@ index 4592e2b3..126d4adf 100644
      <description>Minimal implementation of the Minecraft protocol for use in Waterfall</description>
  
      <!-- We really shouldn't depend on external repositories, but at least this is the Central staging one -->
-@@ -41,8 +41,8 @@
+@@ -31,9 +31,22 @@
+                 <enabled>true</enabled>
+             </snapshots>
+         </repository>
++        <!-- Waterdog start -->
++        <repository>
++            <id>nukkitx-repo</id>
++            <url>https://repo.nukkitx.com/maven-releases</url>
++        </repository>
++        <!-- Waterdog end -->
+     </repositories>
+ 
+     <dependencies>
++        <!-- Waterdog start -->
++        <dependency>
++            <groupId>com.nukkitx</groupId>
++            <artifactId>nbt</artifactId>
++            <version>1.4.2</version>
++        </dependency>
++        <!-- Waterdog end -->
+         <dependency>
+             <groupId>net.md-5</groupId>
+             <artifactId>brigadier</artifactId>
+@@ -41,8 +54,8 @@
              <scope>compile</scope>
          </dependency>
          <dependency>
