@@ -1,4 +1,4 @@
-From 47756eed469cbee7eb3b4d91f4375a891719869d Mon Sep 17 00:00:00 2001
+From 825e52fdfa4f8e86b9963f56d29f176e95e954bb Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1624,10 +1624,10 @@ index 00000000..9a5c76ae
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..e9a0a3ae
+index 00000000..ef563aa5
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,175 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -1734,7 +1734,7 @@ index 00000000..e9a0a3ae
 +                    final CompoundTag block = item.getAsCompound("block");
 +                    addEntry((short) id++,
 +                            block.getAsString("name"),
-+                            (short) block.getAsCompound("states").hashCode()
++                            block.getAsCompound("states")
 +                    );
 +                }
 +            } catch (IOException e) {
@@ -1754,7 +1754,7 @@ index 00000000..e9a0a3ae
 +        }
 +    }
 +
-+    void addEntry(short id, String name, short data) {
++    void addEntry(short id, String name, Object data) {
 +        final BlockPair pair = new BlockPair(name, data);
 +        entryToId.put(pair, id);
 +        idToEntry.put(id, pair);
@@ -1772,12 +1772,12 @@ index 00000000..e9a0a3ae
 +        return idToEntry.get((short) id);
 +    }
 +
-+    public static final class BlockPair extends Pair<String, Short> {
++    public static final class BlockPair extends Pair<String, Object> {
 +        final String key;
-+        final short data;
++        final Object data;
 +        final int hash;
 +
-+        public BlockPair(String name, short data) {
++        public BlockPair(String name, Object data) {
 +            this.key = name;
 +            this.data = data;
 +            hash = super.hashCode();
@@ -1787,28 +1787,17 @@ index 00000000..e9a0a3ae
 +            return key;
 +        }
 +
-+        public Short getRight() {
++        public Object getRight() {
 +            return data;
 +        }
 +
-+        public Short setValue(Short value) {
++        public Object setValue(Object value) {
 +            throw new UnsupportedOperationException();
 +        }
 +
 +        @Override
 +        public int hashCode() {
 +            return hash;
-+        }
-+
-+        @Override
-+        public boolean equals(Object obj) {
-+            if (this == obj) {
-+                return true;
-+            } else if (obj instanceof BlockPair) {
-+                final BlockPair other = (BlockPair) obj;
-+                return data == other.data && key.equals(other.key);
-+            }
-+            return false;
 +        }
 +    }
 +
