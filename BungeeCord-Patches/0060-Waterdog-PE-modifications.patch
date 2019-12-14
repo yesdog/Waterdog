@@ -1,4 +1,4 @@
-From 7dd9461781318f4c56bec3e3a5f90afcfd32bdc5 Mon Sep 17 00:00:00 2001
+From b7e0d642b3ea1ff5c3699fad571a2e5b3e1493f3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -502,7 +502,7 @@ index 44dc34ff..ee937b15 100644
                      {
                          // This is a new packet, skip it till we reach the next protocol
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
-index c34f6fa2..fca5fc32 100644
+index c34f6fa2..0c9322fb 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/ProtocolConstants.java
 @@ -6,6 +6,16 @@ import java.util.List;
@@ -517,7 +517,7 @@ index c34f6fa2..fca5fc32 100644
 +    public static final int MINECRAFT_PE_1_11 = 354 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_12 = 361 - PE_PROTOCOL_OFFSET;
 +    public static final int MINECRAFT_PE_1_13 = 388 - PE_PROTOCOL_OFFSET;
-+    public static final int MINECRAFT_PE_1_14 = 390 - PE_PROTOCOL_OFFSET;
++    public static final int MINECRAFT_PE_1_14 = 389 - PE_PROTOCOL_OFFSET;
 +    // Waterdog end
      public static final int MINECRAFT_1_8 = 47;
      public static final int MINECRAFT_1_9 = 107;
@@ -2052,5 +2052,5 @@ index 0c1ecfb8..6b4c81b8 100644
      }
  
 -- 
-2.17.2 (Apple Git-113)
+2.23.0.windows.1
 
