@@ -1,4 +1,4 @@
-From d08e197441fb2fa3e13c652e3f0df841aa6b4564 Mon Sep 17 00:00:00 2001
+From 3c35a156242dd6184496a907c07ce2a8ab475905 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1624,10 +1624,10 @@ index 00000000..9a5c76ae
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
-index 00000000..2300fffb
+index 00000000..e9a0a3ae
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
-@@ -0,0 +1,177 @@
+@@ -0,0 +1,186 @@
 +package network.ycc.waterdog.pe;
 +
 +import com.google.common.collect.MapMaker;
@@ -1725,9 +1725,18 @@ index 00000000..2300fffb
 +        this.uuid = uuid;
 +
 +        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
++            int id = 0;
 +            try {
 +                final DataInput is = new NetworkDataInputStream(new ByteBufInputStream(buf));
 +                ListTag<CompoundTag> tag = (ListTag<CompoundTag>) new NBTInputStream(is).readTag();
++
++                for (CompoundTag item : tag.getValue()) {
++                    final CompoundTag block = item.getAsCompound("block");
++                    addEntry((short) id++,
++                            block.getAsString("name"),
++                            (short) block.getAsCompound("states").hashCode()
++                    );
++                }
 +            } catch (IOException e) {
 +                throw new IllegalArgumentException("Failed to parse palette NBT", e);
 +            }
