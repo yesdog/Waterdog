@@ -1,4 +1,4 @@
-From 46d90ad058f2652da4782f943a5838ead4ef91a0 Mon Sep 17 00:00:00 2001
+From 1ca62239b262775ce236d54d2acd5621398db773 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1090,6 +1090,26 @@ index 98b43213..588cee81 100644
      }
  
      @Override
+diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
+index d9497970..3eda0a37 100644
+--- a/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
++++ b/proxy/src/main/java/net/md_5/bungee/BungeeCordLauncher.java
+@@ -58,7 +58,14 @@ public class BungeeCordLauncher
+ 
+         BungeeCord bungee = new BungeeCord();
+         ProxyServer.setInstance( bungee );
+-        bungee.getLogger().info( "Enabled Waterfall version " + bungee.getVersion() );
++        // Waterdog start
++        bungee.getLogger().info( ChatColor.AQUA + "Starting "+VersionInfo.SOFTWARE+" proxy software!");
++        bungee.getLogger().info( ChatColor.DARK_AQUA + "Software Version: "+VersionInfo.VERSION);
++        bungee.getLogger().info( ChatColor.DARK_AQUA + "Build Version: "+VersionInfo.JENKINS_BUILD_ID);
++        bungee.getLogger().info( ChatColor.DARK_AQUA + "Raw Version: "+bungee.getVersion());
++        bungee.getLogger().info( ChatColor.DARK_AQUA + "Development Build: "+VersionInfo.IS_DEVELOPMENT_BUILD);
++        bungee.getLogger().info( ChatColor.DARK_AQUA + "Software Authors: "+VersionInfo.AUTHORS);
++        // Waterdog end
+         bungee.start();
+ 
+         if ( !options.has( "noconsole" ) )
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 index 4c0637b9..f2898669 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
