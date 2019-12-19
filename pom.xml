@@ -49,7 +49,7 @@
 
     <properties>
         <build.number>unknown</build.number>
-        <netty.version>4.1.34.Final</netty.version>
+        <netty.version>4.1.42.Final</netty.version>
         <!-- Require Java 8 -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
