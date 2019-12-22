@@ -1,4 +1,4 @@
-From cc7fd753275f2404e45074678aa7c44a43e03f55 Mon Sep 17 00:00:00 2001
+From c51e36bad6f8c843736d712c5d3d374a143d515d Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -538,7 +538,7 @@ index 20bbd5db..5e898b17 100644
              "1.8.x",
              "1.9.x",
              "1.10.x",
-@@ -37,6 +56,15 @@ public class ProtocolConstants
+@@ -38,6 +57,15 @@ public class ProtocolConstants
              "1.15.x"
      );
      public static final List<Integer> SUPPORTED_VERSION_IDS = Arrays.asList(
@@ -554,7 +554,7 @@ index 20bbd5db..5e898b17 100644
              ProtocolConstants.MINECRAFT_1_8,
              ProtocolConstants.MINECRAFT_1_9,
              ProtocolConstants.MINECRAFT_1_9_1,
-@@ -61,14 +89,22 @@ public class ProtocolConstants
+@@ -63,14 +91,22 @@ public class ProtocolConstants
  
      public static final boolean isBeforeOrEq(int before, int other)
      {
@@ -1941,7 +1941,7 @@ index 51d0c6cf..8c6ce6e1 100644
  
          ChatEvent chatEvent = new ChatEvent( con, con.getServer(), chat.getMessage() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index e5d566bd..bf9fe49c 100644
+index 066135ad..f7e9bdd5 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 @@ -28,6 +28,11 @@ public abstract class EntityMap
@@ -2052,5 +2052,5 @@ index 0c1ecfb8..6b4c81b8 100644
      }
  
 -- 
-2.17.2 (Apple Git-113)
+2.23.0.windows.1
 
