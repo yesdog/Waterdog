@@ -28,7 +28,7 @@ index 3556eda0..44dc34ff 100644
              );
              TO_CLIENT.registerPacket(
                      Login.class,
-+                    Login::new, // Waterfall - speed up packet construction
++                    Login::new, // Waterfuck - speed up packet construction
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x23 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x25 ),
