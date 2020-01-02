@@ -15,7 +15,7 @@
                      sh "chmod +x ./scripts/jenkinsBuild.sh && ./scripts/jenkinsBuild.sh ${BUILD_ID}"
                       
                      sh "mvn -s /root/.m2/settings.xml -version"
-                     sh 'mvn clean -B clean -DSNYK_API_ENDPOINT="https://snyk.io/" -Dbuild.number=${BUILD_NUMBER} install'
+                     sh 'mvn clean -Pupstream -B clean -DSNYK_API_ENDPOINT="https://snyk.io/" -Dbuild.number=${BUILD_NUMBER} install'
                  }
                  post {
                      success {
