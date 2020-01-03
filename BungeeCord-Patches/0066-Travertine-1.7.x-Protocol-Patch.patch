@@ -1,4 +1,4 @@
-From f072f3b0f43ad2fc324f863a321a2cfff2923868 Mon Sep 17 00:00:00 2001
+From cfee0488a0b6e01dfc40ee1743b6330809e8d34b Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -101,10 +101,10 @@ index 00000000..90064112
 +    }
 +}
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index dc63f0a6..36c5901a 100644
+index 141d57be..89fa5444 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-@@ -274,6 +274,11 @@ public abstract class DefinedPacket
+@@ -279,6 +279,11 @@ public abstract class DefinedPacket
          read( buf );
      }
  
@@ -116,7 +116,7 @@ index dc63f0a6..36c5901a 100644
      public void write(ByteBuf buf)
      {
          throw new UnsupportedOperationException( "Packet must implement write method" );
-@@ -284,6 +289,11 @@ public abstract class DefinedPacket
+@@ -289,6 +294,11 @@ public abstract class DefinedPacket
          write( buf );
      }
  
@@ -129,7 +129,7 @@ index dc63f0a6..36c5901a 100644
  
      @Override
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-index 7daaee69..70c95605 100644
+index b005affb..ad4ded95 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 @@ -5,10 +5,11 @@ import io.netty.buffer.ByteBufUtil;
@@ -1644,10 +1644,10 @@ index 8c6ce6e1..619428a3 100644
              con.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index f7e9bdd5..547ce9f7 100644
+index 6b4b0739..720e0f8e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-@@ -40,6 +40,10 @@ public abstract class EntityMap
+@@ -39,6 +39,10 @@ public abstract class EntityMap
          // Waterfall end
          switch ( version )
          {

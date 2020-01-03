@@ -22,9 +22,9 @@
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:com:WaterfallMC/Waterfall.git</connection>
-        <developerConnection>scm:git:git@github.com:WaterfallMC/Waterfall.git</developerConnection>
-        <url>git@github.com:WaterfallMC/Waterfall.git</url>
+        <connection>scm:git:git@github.com:com:yesdog/Waterdog.git</connection>
+        <developerConnection>scm:git:git@github.com:yesdog/Waterdog.git</developerConnection>
+        <url>git@github.com:yesdog/Waterdog.git</url>
     </scm>
 
     <issueManagement>
