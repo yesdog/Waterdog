@@ -1,4 +1,4 @@
-From cc7fd753275f2404e45074678aa7c44a43e03f55 Mon Sep 17 00:00:00 2001
+From 3ab78bd18e2d615359fb91189426e50606b8076c Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -167,7 +167,7 @@ index e4f14974..0129ae39 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
-index 9951c1f9..dc63f0a6 100644
+index e56bfccb..141d57be 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/DefinedPacket.java
 @@ -10,6 +10,47 @@ import lombok.RequiredArgsConstructor;
@@ -219,7 +219,7 @@ index 9951c1f9..dc63f0a6 100644
      public static void writeString(String s, ByteBuf buf)
      {
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
-index 71ddf022..7daaee69 100644
+index 6c3c7ab8..b005affb 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/MinecraftDecoder.java
 @@ -28,10 +28,22 @@ public class MinecraftDecoder extends MessageToMessageDecoder<ByteBuf>
@@ -1941,10 +1941,10 @@ index 51d0c6cf..8c6ce6e1 100644
  
          ChatEvent chatEvent = new ChatEvent( con, con.getServer(), chat.getMessage() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-index 066135ad..f7e9bdd5 100644
+index af27f65c..6b4b0739 100644
 --- a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap.java
-@@ -28,6 +28,11 @@ public abstract class EntityMap
+@@ -27,6 +27,11 @@ public abstract class EntityMap
      // Returns the correct entity map for the protocol version
      public static EntityMap getEntityMap(int version)
      {
