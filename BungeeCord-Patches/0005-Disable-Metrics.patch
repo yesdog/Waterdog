@@ -1,4 +1,4 @@
-From 9d0423a0fc9c025eb17ae9c86635cad557f964af Mon Sep 17 00:00:00 2001
+From 157cff1f3abbcb6f9949a36102bc7e33583d6858 Mon Sep 17 00:00:00 2001
 From: Jamie Mansfield <dev@jamierocks.uk>
 Date: Thu, 19 May 2016 10:55:20 -0700
 Subject: [PATCH] Disable Metrics
@@ -6,10 +6,10 @@ Subject: [PATCH] Disable Metrics
 MCStats has not been stable for a long while now, and in our opinion it is not worth migrating to an alternative service. Waterfall has been maintained for the past two years without any or much consideration to statistics, we have users and that's enough for us ;)
 
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 1269cc10..57d82b66 100644
+index d11c66bb..7fe9cad0 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -121,7 +121,7 @@ public class BungeeCord extends ProxyServer
+@@ -122,7 +122,7 @@ public class BungeeCord extends ProxyServer
       * locations.yml save thread.
       */
      private final Timer saveThread = new Timer( "Reconnect Saver" );
@@ -18,7 +18,7 @@ index 1269cc10..57d82b66 100644
      /**
       * Server socket listener.
       */
-@@ -296,7 +296,7 @@ public class BungeeCord extends ProxyServer
+@@ -297,7 +297,7 @@ public class BungeeCord extends ProxyServer
                  }
              }
          }, 0, TimeUnit.MINUTES.toMillis( 5 ) );
@@ -27,7 +27,7 @@ index 1269cc10..57d82b66 100644
      }
  
      public void startListeners()
-@@ -428,7 +428,7 @@ public class BungeeCord extends ProxyServer
+@@ -431,7 +431,7 @@ public class BungeeCord extends ProxyServer
                      reconnectHandler.close();
                  }
                  saveThread.cancel();
@@ -38,10 +38,10 @@ index 1269cc10..57d82b66 100644
                  getLogger().info( "Disabling plugins" );
 diff --git a/proxy/src/main/java/net/md_5/bungee/Metrics.java b/proxy/src/main/java/net/md_5/bungee/Metrics.java
 deleted file mode 100644
-index 4fd3dd78..00000000
+index eabf7573..00000000
 --- a/proxy/src/main/java/net/md_5/bungee/Metrics.java
 +++ /dev/null
-@@ -1,129 +0,0 @@
+@@ -1,134 +0,0 @@
 -package net.md_5.bungee;
 -
 -import java.io.BufferedReader;
@@ -96,7 +96,10 @@ index 4fd3dd78..00000000
 -    }
 -
 -    /**
--     * Generic method that posts a plugin to the metrics website
+-     * Generic method that posts a plugin to the metrics website.
+-     *
+-     * @param isPing first post or not
+-     * @throws IOException any errors encountered
 -     */
 -    private void postPlugin(boolean isPing) throws IOException
 -    {
@@ -154,6 +157,7 @@ index 4fd3dd78..00000000
 -     * @param buffer the StringBuilder to append the data pair onto
 -     * @param key the key value
 -     * @param value the value
+-     * @throws UnsupportedEncodingException if UTF-8 encoding not supported
 -     */
 -    private static void encodeDataPair(final StringBuilder buffer, final String key, final String value) throws UnsupportedEncodingException
 -    {
@@ -165,6 +169,7 @@ index 4fd3dd78..00000000
 -     *
 -     * @param text the text to encode
 -     * @return the encoded text, as UTF-8
+-     * @throws UnsupportedEncodingException if UTF-8 encoding not supported
 -     */
 -    private static String encode(final String text) throws UnsupportedEncodingException
 -    {
@@ -172,5 +177,5 @@ index 4fd3dd78..00000000
 -    }
 -}
 -- 
-2.21.0
+2.25.0
 

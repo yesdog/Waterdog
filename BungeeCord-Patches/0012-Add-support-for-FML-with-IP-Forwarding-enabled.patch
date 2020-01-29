@@ -1,4 +1,4 @@
-From a1c00179eedc983afb5ba68f6a28f15e1aad64dc Mon Sep 17 00:00:00 2001
+From 36f9a586c2ebfb7947ab641c721219ad21090f98 Mon Sep 17 00:00:00 2001
 From: Daniel Naylor <git@drnaylor.co.uk>
 Date: Tue, 25 Oct 2016 12:23:07 -0400
 Subject: [PATCH] Add support for FML with IP Forwarding enabled
@@ -12,18 +12,18 @@ However, there is now at least one Forge coremod that intends to support IP forw
 No breaking changes occur due to this patch.
 
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 91b8b41a..ac54ff74 100644
+index 15b9e66c..e8fd2148 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
- import io.netty.buffer.ByteBuf;
+@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
  import io.netty.buffer.ByteBufAllocator;
+ import java.net.InetSocketAddress;
  import java.util.Locale;
 +import java.util.Arrays; // Waterfall
  import java.util.Queue;
  import java.util.Set;
  import java.util.UUID;
-@@ -101,15 +102,39 @@ public class ServerConnector extends PacketHandler
+@@ -102,15 +103,39 @@ public class ServerConnector extends PacketHandler
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
              LoginResult profile = user.getPendingConnection().getLoginProfile();
@@ -67,10 +67,10 @@ index 91b8b41a..ac54ff74 100644
          }
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index fda93018..e5a63541 100644
+index afcae3a2..8f369a3d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -164,8 +164,12 @@ public final class UserConnection implements ProxiedPlayer
+@@ -163,8 +163,12 @@ public final class UserConnection implements ProxiedPlayer
  
          forgeClientHandler = new ForgeClientHandler( this );
  
@@ -100,5 +100,5 @@ index 6dca2048..f5253b89 100644
       * The FML 1.8 handshake token.
       */
 -- 
-2.21.0
+2.25.0
 

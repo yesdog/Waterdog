@@ -1,4 +1,4 @@
-From 6588b586f4be71f28c761811fc857a43c7b818f8 Mon Sep 17 00:00:00 2001
+From e224b3ff66473f60105966a95e15737214bcde86 Mon Sep 17 00:00:00 2001
 From: Janmm14 <computerjanimaus@yahoo.de>
 Date: Sat, 12 Dec 2015 23:43:30 +0100
 Subject: [PATCH] Improve server list ping logging
@@ -7,10 +7,10 @@ This functionality of this patch was adopted upstream, however, this
 patch remains for a few misc improvements around here
 
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index e32a06c2..251e8726 100644
+index e55d572a..281adc8c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -415,6 +415,6 @@ public class ServerConnector extends PacketHandler
+@@ -416,6 +416,6 @@ public class ServerConnector extends PacketHandler
      @Override
      public String toString()
      {
@@ -19,10 +19,10 @@ index e32a06c2..251e8726 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 1911923c..2eff743d 100644
+index 6d5b00c2..9e03a228 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -597,6 +597,6 @@ public class DownstreamBridge extends PacketHandler
+@@ -609,6 +609,6 @@ public class DownstreamBridge extends PacketHandler
      @Override
      public String toString()
      {
@@ -31,43 +31,23 @@ index 1911923c..2eff743d 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index a43082e8..4731cb9d 100644
+index b9e42946..4e5c8a5c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -295,16 +295,15 @@ public class InitialHandler extends PacketHandler implements PendingConnection
-         }
- 
-         this.virtualHost = InetSocketAddress.createUnresolved( handshake.getHost(), handshake.getPort() );
--        if ( bungee.getConfig().isLogPings() )
--        {
--            bungee.getLogger().log( Level.INFO, "{0} has connected", this );
--        }
- 
-         bungee.getPluginManager().callEvent( new PlayerHandshakeEvent( InitialHandler.this, handshake ) );
- 
-         switch ( handshake.getRequestedProtocol() )
-         {
-             case 1:
-+                if (bungee.getConfig().isLogPings()) {
-+                    bungee.getLogger().log( Level.INFO, "{0} is pinging", this );
-+                }
-                 // Ping
-                 thisState = State.STATUS;
-                 ch.setProtocol( Protocol.STATUS );
-@@ -628,7 +627,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -632,7 +632,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
      @Override
      public String toString()
      {
--        return "[" + ( ( getName() != null ) ? getName() : getAddress() ) + "] <-> InitialHandler";
-+        return "[" + getAddress() + ( getName() != null ? "|" + getName() : "" ) + "] <-> InitialHandler";
+-        return "[" + ( ( getName() != null ) ? getName() : getSocketAddress() ) + "] <-> InitialHandler";
++        return "[" + getSocketAddress() + ( getName() != null ? "|" + getName() : "" ) + "] <-> InitialHandler";
      }
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-index de916f6e..bdaee47e 100644
+index c7e1a621..d44d4c2e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/UpstreamBridge.java
-@@ -267,6 +267,6 @@ public class UpstreamBridge extends PacketHandler
+@@ -270,6 +270,6 @@ public class UpstreamBridge extends PacketHandler
      @Override
      public String toString()
      {
@@ -76,5 +56,5 @@ index de916f6e..bdaee47e 100644
      }
  }
 -- 
-2.21.0
+2.25.0
 
