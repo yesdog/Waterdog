@@ -1,11 +1,11 @@
-From 147928b585fe922bddabf0f3eb62acd26bee3647 Mon Sep 17 00:00:00 2001
+From 40a0644bbf7f925e5b36d96abf4ac7ee0921cdf0 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
 
 
 diff --git a/api/pom.xml b/api/pom.xml
-index 8a67d8a3..652296e4 100644
+index 2380a5fd..5a558594 100644
 --- a/api/pom.xml
 +++ b/api/pom.xml
 @@ -4,42 +4,42 @@
@@ -65,7 +65,7 @@ index 8a67d8a3..652296e4 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/bootstrap/pom.xml b/bootstrap/pom.xml
-index 0a27c9f6..eaddb6ae 100644
+index e7b76d5b..1689786e 100644
 --- a/bootstrap/pom.xml
 +++ b/bootstrap/pom.xml
 @@ -4,18 +4,18 @@
@@ -92,7 +92,7 @@ index 0a27c9f6..eaddb6ae 100644
      <description>Java 1.6 loader for Waterfall</description>
  
      <properties>
-@@ -27,20 +27,20 @@
+@@ -28,20 +28,20 @@
  
      <dependencies>
          <dependency>
@@ -117,7 +117,7 @@ index 0a27c9f6..eaddb6ae 100644
                  <configuration>
                      <archive>
                          <manifestEntries>
-@@ -57,7 +57,7 @@
+@@ -58,7 +58,7 @@
              <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
                  <artifactId>maven-shade-plugin</artifactId>
@@ -490,7 +490,7 @@ index f8b549dc..4e330b04 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index 66610a0f..7734e59c 100644
+index 903fd182..d275ea28 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -4,25 +4,26 @@
@@ -526,7 +526,7 @@ index 66610a0f..7734e59c 100644
      <licenses>
          <license>
              <name>The BSD 3-Clause License</name>
-@@ -64,40 +65,6 @@
+@@ -64,39 +65,6 @@
          <module>native</module>
      </modules>
  
@@ -557,8 +557,7 @@ index 66610a0f..7734e59c 100644
 -
 -    <properties>
 -        <build.number>unknown</build.number>
--        <netty.version>4.1.44.Final</netty.version>
--        <!-- Require Java 8 -->
+-        <netty.version>4.1.45.Final</netty.version>
 -        <maven.compiler.source>1.8</maven.compiler.source>
 -        <maven.compiler.target>1.8</maven.compiler.target>
 -        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -567,7 +566,7 @@ index 66610a0f..7734e59c 100644
      <dependencies>
          <dependency>
              <groupId>junit</groupId>
-@@ -120,7 +87,7 @@
+@@ -119,7 +87,7 @@
          <dependency>
              <groupId>org.projectlombok</groupId>
              <artifactId>lombok</artifactId>
@@ -576,7 +575,7 @@ index 66610a0f..7734e59c 100644
              <scope>provided</scope>
          </dependency>
      </dependencies>
-@@ -156,7 +123,7 @@
+@@ -155,7 +123,7 @@
               <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
                  <artifactId>maven-checkstyle-plugin</artifactId>
@@ -585,7 +584,7 @@ index 66610a0f..7734e59c 100644
                  <executions>
                      <execution>
                          <phase>process-classes</phase>
-@@ -174,7 +141,7 @@
+@@ -173,7 +141,7 @@
                      <dependency>
                          <groupId>com.puppycrawl.tools</groupId>
                          <artifactId>checkstyle</artifactId>
@@ -594,7 +593,7 @@ index 66610a0f..7734e59c 100644
                      </dependency>
                  </dependencies>
              </plugin>
-@@ -182,7 +149,7 @@
+@@ -181,7 +149,7 @@
              <plugin>
                  <groupId>org.codehaus.mojo</groupId>
                  <artifactId>animal-sniffer-maven-plugin</artifactId>
@@ -666,7 +665,7 @@ index 4592e2b3..754c17f0 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 39d6e35e..62610829 100644
+index 52e45fe1..ad28101a 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -4,24 +4,33 @@
@@ -791,10 +790,10 @@ index 39d6e35e..62610829 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 6ae18f2c..98b43213 100644
+index c7ac1735..a62f6698 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -495,7 +495,7 @@ public class BungeeCord extends ProxyServer
+@@ -498,7 +498,7 @@ public class BungeeCord extends ProxyServer
      @Override
      public String getName()
      {

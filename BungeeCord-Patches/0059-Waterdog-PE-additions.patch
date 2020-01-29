@@ -1,4 +1,4 @@
-From 825e52fdfa4f8e86b9963f56d29f176e95e954bb Mon Sep 17 00:00:00 2001
+From 383dc81ed240a3a2b5551a44810836f7a7444e5e Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2978,10 +2978,10 @@ index 00000000..08d67c4b
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
 new file mode 100644
-index 00000000..66563ead
+index 00000000..ba95aaff
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEProxyServerInfoHandler.java
-@@ -0,0 +1,148 @@
+@@ -0,0 +1,153 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.buffer.ByteBuf;
@@ -3006,6 +3006,7 @@ index 00000000..66563ead
 +import network.ycc.raknet.server.pipeline.UdpPacketHandler;
 +
 +import java.net.InetSocketAddress;
++import java.net.SocketAddress;
 +import java.util.UUID;
 +import java.util.logging.Level;
 +
@@ -3110,6 +3111,10 @@ index 00000000..66563ead
 +        }
 +
 +        public InetSocketAddress getAddress() {
++            return remoteAddress;
++        }
++
++        public SocketAddress getSocketAddress() {
 +            return remoteAddress;
 +        }
 +
