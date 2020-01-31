@@ -1,4 +1,4 @@
-From 9ece9eee1db885737f55a9215fd014c1664f7ccf Mon Sep 17 00:00:00 2001
+From 6566339942a14a4eebfe3bdc63ea7b01308617cb Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Wed, 29 Jun 2016 04:29:25 +0200
 Subject: [PATCH] Add dynamic server addition/removal api.
@@ -8,14 +8,15 @@ The provided methods will not move a player if a server is removed or the server
 Thanks to Overcast for the idea
 
 diff --git a/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java b/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
-index 1f643980..dc4d609f 100644
+index 57835bb7..a1c1ba33 100644
 --- a/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
 +++ b/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
-@@ -31,9 +31,95 @@ public interface ProxyConfig
+@@ -37,11 +37,95 @@ public interface ProxyConfig
  
      /**
       * Set of all servers.
-+     *
+-     *
+      * @return servers
 +     * @deprecated The returned map may be modified concurrently by the proxy.
 +     *             The safe alternative is {@link #getServersCopy()}.
       */
@@ -105,13 +106,13 @@ index 1f643980..dc4d609f 100644
 +    // Waterfall end
 +
      /**
-      * Does the server authenticate with mojang
-      */
+      * Does the server authenticate with Mojang.
+      *
 diff --git a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
-index 15bea8fe..1c8e9eda 100644
+index 1f330bd2..a4011335 100644
 --- a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
 +++ b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
-@@ -93,9 +93,25 @@ public abstract class ProxyServer
+@@ -96,9 +96,25 @@ public abstract class ProxyServer
       * return a fresh map each time.
       *
       * @return all registered remote server destinations
@@ -156,7 +157,7 @@ index 262b29c8..d7ed3e11 100644
      {
          int index = path.indexOf( SEPARATOR );
 diff --git a/module/cmd-server/src/main/java/net/md_5/bungee/module/cmd/server/CommandServer.java b/module/cmd-server/src/main/java/net/md_5/bungee/module/cmd/server/CommandServer.java
-index 9693701d..3fdd9949 100644
+index 59c104d3..698b420f 100644
 --- a/module/cmd-server/src/main/java/net/md_5/bungee/module/cmd/server/CommandServer.java
 +++ b/module/cmd-server/src/main/java/net/md_5/bungee/module/cmd/server/CommandServer.java
 @@ -83,7 +83,7 @@ public class CommandServer extends Command implements TabExecutor
@@ -169,10 +170,10 @@ index 9693701d..3fdd9949 100644
              private final String lower = ( args.length == 0 ) ? "" : args[0].toLowerCase( Locale.ROOT );
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index 83a300dc..0ff6781c 100644
+index b18027e2..d572ff28 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -596,10 +596,18 @@ public class BungeeCord extends ProxyServer
+@@ -599,10 +599,18 @@ public class BungeeCord extends ProxyServer
          return config.getServers();
      }
  
@@ -193,7 +194,7 @@ index 83a300dc..0ff6781c 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
-index 193d8bce..2ec6c23c 100644
+index 8d047dfc..f45ff190 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
 @@ -1,6 +1,7 @@
@@ -220,7 +221,7 @@ index 193d8bce..2ec6c23c 100644
      /**
       * Set of all servers.
       */
-@@ -65,6 +68,7 @@ public abstract class Configuration implements ProxyConfig
+@@ -66,6 +69,7 @@ public abstract class Configuration implements ProxyConfig
      private boolean preventProxyConnections;
      private boolean forgeSupport;
  
@@ -228,7 +229,7 @@ index 193d8bce..2ec6c23c 100644
      public void load()
      {
          ConfigurationAdapter adapter = ProxyServer.getInstance().getConfigurationAdapter();
-@@ -108,7 +112,7 @@ public abstract class Configuration implements ProxyConfig
+@@ -110,7 +114,7 @@ public abstract class Configuration implements ProxyConfig
              servers = new CaseInsensitiveMap<>( newServers );
          } else
          {
@@ -237,7 +238,7 @@ index 193d8bce..2ec6c23c 100644
  
              for ( ServerInfo oldServer : oldServers.values() )
              {
-@@ -171,4 +175,71 @@ public abstract class Configuration implements ProxyConfig
+@@ -173,4 +177,71 @@ public abstract class Configuration implements ProxyConfig
      {
          return favicon;
      }
@@ -310,5 +311,5 @@ index 193d8bce..2ec6c23c 100644
 +    // Waterfall end
  }
 -- 
-2.21.0
+2.25.0
 

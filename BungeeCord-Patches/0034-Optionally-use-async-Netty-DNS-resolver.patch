@@ -1,4 +1,4 @@
-From c64e18322664b2b19ff86f05fa389611016cee5e Mon Sep 17 00:00:00 2001
+From 94b012e38aa05a0e17a9873c31b8c396f4f4ed99 Mon Sep 17 00:00:00 2001
 From: Tux <write@imaginarycode.com>
 Date: Wed, 21 Dec 2016 03:13:03 -0500
 Subject: [PATCH] Optionally use async Netty DNS resolver
@@ -6,10 +6,10 @@ Subject: [PATCH] Optionally use async Netty DNS resolver
 We no longer need to cache the address for the session server now.
 
 diff --git a/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java b/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
-index db615ed9..af93ae8c 100644
+index 480fb574..888ef5a3 100644
 --- a/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
 +++ b/api/src/main/java/net/md_5/bungee/api/ProxyConfig.java
-@@ -176,6 +176,13 @@ public interface ProxyConfig
+@@ -205,6 +205,13 @@ public interface ProxyConfig
       */
      String getGameVersion();
  
@@ -24,7 +24,7 @@ index db615ed9..af93ae8c 100644
  
      /**
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 2d66e26d..3ba7d5cb 100644
+index 66561fd9..01cb5c50 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -41,6 +41,14 @@
@@ -80,7 +80,7 @@ index 111404fb..ef44d334 100644
      public int getTabThrottle() {
          return tabThrottle;
 diff --git a/proxy/src/main/java/net/md_5/bungee/http/HttpClient.java b/proxy/src/main/java/net/md_5/bungee/http/HttpClient.java
-index 2feb4d66..b265bb43 100644
+index e0c52f21..37337429 100644
 --- a/proxy/src/main/java/net/md_5/bungee/http/HttpClient.java
 +++ b/proxy/src/main/java/net/md_5/bungee/http/HttpClient.java
 @@ -28,6 +28,10 @@ public class HttpClient
@@ -129,10 +129,11 @@ index 2feb4d66..b265bb43 100644
  
          ChannelFutureListener future = new ChannelFutureListener()
          {
-@@ -92,7 +98,39 @@ public class HttpClient
+@@ -92,7 +98,40 @@ public class HttpClient
              }
          };
  
++
 +        // Waterfall Start - Optionally use Netty's async DNS Resolver
 +        if (net.md_5.bungee.api.ProxyServer.getInstance().getConfig().isUseNettyDnsResolver()) {
 +            getWithNettyResolver(eventLoop, uri, port, future, callback, ssl);
@@ -145,7 +146,7 @@ index 2feb4d66..b265bb43 100644
 +
 +    private static void getWithNettyResolver(EventLoop eventLoop, URI uri, int port, ChannelFutureListener future, Callback<String> callback, boolean ssl) {
 +        java.net.InetSocketAddress address = java.net.InetSocketAddress.createUnresolved(uri.getHost(), port);
-+        new Bootstrap().channel( PipelineUtils.getChannel() ).group( eventLoop ).handler( new HttpInitializer( callback, ssl, uri.getHost(), port ) ).
++        new Bootstrap().channel( PipelineUtils.getChannel( null ) ).group( eventLoop ).handler( new HttpInitializer( callback, ssl, uri.getHost(), port ) ).
 +                option( ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT ).resolver(dnsResolverGroup).remoteAddress( address ).connect().addListener( future );
 +    }
 +
@@ -164,24 +165,11 @@ index 2feb4d66..b265bb43 100644
 +            }
 +            addressCache.put( uri.getHost(), inetHost );
 +        }
-         new Bootstrap().channel( PipelineUtils.getChannel() ).group( eventLoop ).handler( new HttpInitializer( callback, ssl, uri.getHost(), port ) ).
+         new Bootstrap().channel( PipelineUtils.getChannel( null ) ).group( eventLoop ).handler( new HttpInitializer( callback, ssl, uri.getHost(), port ) ).
                  option( ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT ).remoteAddress( inetHost, port ).connect().addListener( future );
      }
 +    // Waterfall End
  }
-diff --git a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-index 6c418567..23241d68 100644
---- a/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-+++ b/proxy/src/main/java/net/md_5/bungee/netty/PipelineUtils.java
-@@ -119,7 +119,7 @@ public class PipelineUtils
-         return epoll ? EpollSocketChannel.class : NioSocketChannel.class;
-     }
- 
--    public static Class<? extends Channel> getDatagramChannel()
-+    public static Class<? extends io.netty.channel.socket.DatagramChannel> getDatagramChannel() // Waterfall - change to DatagramChannel
-     {
-         return epoll ? EpollDatagramChannel.class : NioDatagramChannel.class;
-     }
 -- 
-2.24.0
+2.25.0
 
