@@ -1,4 +1,4 @@
-From c58bba401428451a2614bc93290ae96fecd0faef Mon Sep 17 00:00:00 2001
+From 0007abff5b1e9a825404a066e675e4a121a07f27 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1019,6 +1019,100 @@ index 6ef76ea2..5dee53dd 100644
      }
  
      protected void rewriteV8ChunkSection(ByteBuf in, ByteBuf out) {
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
+index 55ca27bd..88074783 100644
+--- a/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/PERawPacketData.java
+@@ -9,6 +9,7 @@ import io.netty.channel.Channel;
+ import net.md_5.bungee.protocol.DefinedPacket;
+ import net.md_5.bungee.protocol.ProtocolConstants;
+ 
++import java.util.Map;
+ import java.util.UUID;
+ 
+ public class PERawPacketData {
+@@ -173,4 +174,24 @@ public class PERawPacketData {
+         channel.write(removeEntityEffect);
+     }
+ 
++    public static void injectSetGameRule(Channel channel, final Map<String, Object> rules){
++        final ByteBuf gameRulePacket = channel.alloc().ioBuffer();
++        DefinedPacket.writeVarInt(0x48, gameRulePacket); //GAME_RULES_CHANGED_PACKET
++        DefinedPacket.writeVarInt(rules.size(), gameRulePacket);
++        rules.forEach((String rule, Object value)->{
++            DefinedPacket.writeString(rule, gameRulePacket);
++
++            if (value instanceof Byte){
++                DefinedPacket.writeVarInt(1, gameRulePacket);
++                gameRulePacket.writeByte((byte) value);
++            }else if (value instanceof Integer){
++                DefinedPacket.writeVarInt(2, gameRulePacket);
++                DefinedPacket.writeSVarInt((int) value, gameRulePacket);
++            }else if (value instanceof Float){
++                DefinedPacket.writeVarInt(3, gameRulePacket);
++                gameRulePacket.writeFloatLE((float) value);
++            }
++        });
++        channel.write(gameRulePacket);
++    }
+ }
+diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
+index 553713ff..92d7fedf 100644
+--- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
++++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
+@@ -17,6 +17,8 @@ import net.md_5.bungee.protocol.packet.Login;
+ import network.ycc.waterdog.pe.PEDataValues;
+ 
+ import java.io.IOException;
++import java.util.HashMap;
++import java.util.Map;
+ 
+ @Data
+ @NoArgsConstructor
+@@ -28,6 +30,7 @@ public class PELogin extends Login {
+     private byte[] tailPayload;
+     private int payloadPaletteOffset; //offset of tailPayload for the palette
+     private int payloadPaletteLength;
++    private Map<String, Object> rules = new HashMap<>();
+ 
+     public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, int viewDistance, boolean reducedDebugInfo, byte[] tailPayload) {
+         super(entityId, gameMode, dimension, 0, difficulty, maxPlayers, levelType, viewDistance, reducedDebugInfo, true);
+@@ -77,27 +80,30 @@ public class PELogin extends Login {
+         }
+         buf.readBoolean(); //commands enabled
+         buf.readBoolean(); //needs texture pack
+-        
++
+         final int nGameRules = DefinedPacket.readVarInt(buf); //game rules
+         for (int i = 0 ; i < nGameRules ; i++) {
+-            DefinedPacket.readString(buf);
++            String rule = DefinedPacket.readString(buf);
++            Object value;
++
+             final int grType = DefinedPacket.readVarInt(buf);
+             switch (grType) {
+                 case 1: {
+-                    buf.readByte();
++                    value = buf.readByte();
+                     break;
+                 }
+                 case 2: {
+-                    DefinedPacket.readSVarInt(buf);
++                    value = DefinedPacket.readSVarInt(buf);
+                     break;
+                 }
+                 case 3: {
+-                    buf.readFloatLE();
++                    value = buf.readFloatLE();
+                     break;
+                 }
+                 default:
+                     throw new IllegalArgumentException("Unknown game rule type " + grType);
+             }
++            rules.put(rule, value);
+         }
+ 
+         buf.readBoolean(); //bonus chest
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
 index dab227a1..12b52465 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
@@ -1166,18 +1260,19 @@ index fa4fff0e..f18f2202 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 139c4f09..51ee3a8b 100644
+index 139c4f09..74613589 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -53,6 +53,7 @@ import net.md_5.bungee.protocol.packet.SetCompression;
+@@ -53,6 +53,8 @@ import net.md_5.bungee.protocol.packet.SetCompression;
  import net.md_5.bungee.protocol.packet.ViewDistance;
  import net.md_5.bungee.util.BufUtil;
  import net.md_5.bungee.util.QuietException;
 +import network.ycc.waterdog.pe.packet.PEHandshake;
++import network.ycc.waterdog.pe.packet.PELogin;
  
  @RequiredArgsConstructor
  public class ServerConnector extends PacketHandler
-@@ -100,7 +101,15 @@ public class ServerConnector extends PacketHandler
+@@ -100,7 +102,15 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -1194,7 +1289,7 @@ index 139c4f09..51ee3a8b 100644
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -141,9 +150,16 @@ public class ServerConnector extends PacketHandler
+@@ -141,9 +151,16 @@ public class ServerConnector extends PacketHandler
              copiedHandshake.setHost( copiedHandshake.getHost() + user.getExtraDataInHandshake() );
          }
  
@@ -1211,7 +1306,7 @@ index 139c4f09..51ee3a8b 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -158,6 +174,12 @@ public class ServerConnector extends PacketHandler
+@@ -158,6 +175,12 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -1224,7 +1319,7 @@ index 139c4f09..51ee3a8b 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -165,6 +187,15 @@ public class ServerConnector extends PacketHandler
+@@ -165,6 +188,15 @@ public class ServerConnector extends PacketHandler
      @Override
      public void handle(LoginSuccess loginSuccess) throws Exception
      {
@@ -1240,7 +1335,7 @@ index 139c4f09..51ee3a8b 100644
          Preconditions.checkState( thisState == State.LOGIN_SUCCESS, "Not expecting LOGIN_SUCCESS" );
          ch.setProtocol( Protocol.GAME );
          thisState = State.LOGIN;
-@@ -197,6 +228,30 @@ public class ServerConnector extends PacketHandler
+@@ -197,6 +229,30 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1271,7 +1366,7 @@ index 139c4f09..51ee3a8b 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -247,6 +302,31 @@ public class ServerConnector extends PacketHandler
+@@ -247,6 +303,31 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getSeed(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo(), login.isNormalRespawn() );
  
@@ -1303,7 +1398,7 @@ index 139c4f09..51ee3a8b 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -261,6 +341,13 @@ public class ServerConnector extends PacketHandler
+@@ -261,6 +342,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1317,7 +1412,7 @@ index 139c4f09..51ee3a8b 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -322,6 +409,39 @@ public class ServerConnector extends PacketHandler
+@@ -322,6 +410,40 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1351,6 +1446,7 @@ index 139c4f09..51ee3a8b 100644
 +                user.unsafe().sendPacket( new network.ycc.waterdog.pe.packet.PEStopSoundPacket( "portal.travel", true ) );
 +
 +                network.ycc.waterdog.pe.PERawPacketData.injectRemoveAllEffects(user.getCh().getHandle(), user.getClientEntityId());
++                network.ycc.waterdog.pe.PERawPacketData.injectSetGameRule(user.getCh().getHandle(), ((PELogin) login).getRules());
 +            }
 +            // Waterdog end
 +
