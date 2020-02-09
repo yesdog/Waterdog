@@ -836,7 +836,7 @@ index 9b20d0df..27bc0342 100644
          try
          {
 -            URL website = new URL( "https://papermc.io/ci/job/Waterfall/" + version.getBuild() + "/artifact/Waterfall-Proxy/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
-+            URL website = new URL( "https://jenkins.mizerak.eu/job/WaterDog/job/master/" + version.getBuild() + "/artifact/Waterfall-Proxy/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
++            URL website = new URL( "https://ci.codemc.org/job/yesdog/job/Waterdog/" + version.getBuild() + "/artifact/Waterfall-Proxy/module/" + module.getName().replace( '_', '-' ) + "/target/" + module.getName() + ".jar" );
              URLConnection con = website.openConnection();
              // 15 second timeout at various stages
              con.setConnectTimeout( 15000 );
