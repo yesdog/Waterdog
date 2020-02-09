@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ "$1" == "" ]; then
-     echo "ERROR: Bad build ID providen!"
+     echo "ERROR: Bad build ID provided!"
      exit 1;
 fi
 
