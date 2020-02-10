@@ -828,7 +828,7 @@ index b26035cf..1bc785eb 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
-index 9b20d0df..94711ac8 100644
+index 9b20d0df..27bc0342 100644
 --- a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 +++ b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 @@ -18,7 +18,7 @@ public class JenkinsModuleSource implements ModuleSource
@@ -880,5 +880,5 @@ index c3a29122..a00b4b99 100644
              <scope>compile</scope>
          </dependency>
 -- 
-2.17.2 (Apple Git-113)
+2.23.0.windows.1
 
