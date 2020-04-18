@@ -1,4 +1,4 @@
-From 383dc81ed240a3a2b5551a44810836f7a7444e5e Mon Sep 17 00:00:00 2001
+From 9f3e07ca33d8b79d6d7fa3da727a32e0277e91ea Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1299,10 +1299,10 @@ index 00000000..6a15b9c2
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..9a5c76ae
+index 00000000..45c7eb1c
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,319 @@
+@@ -0,0 +1,384 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1449,9 +1449,46 @@ index 00000000..9a5c76ae
 +                                to.writeBytes(from, Byte.BYTES); // is persona cape on classic skin
 +                                act.accept(SK_VI_DATA); //cape id
 +                                act.accept(SK_VI_DATA); //full skin id
++
++                                if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                                    act.accept(SK_VI_DATA); //arm length
++                                    act.accept(SK_VI_DATA); //skin color
++                                    final int personaPieces = from.readIntLE(); //persona piece count
++                                    to.writeIntLE(personaPieces);
++
++                                    for (int i1 = 0; i1 < personaPieces; i1++) {
++                                        act.accept(SK_VI_DATA); //pieceId
++                                        act.accept(SK_VI_DATA); //pieceType
++                                        act.accept(SK_VI_DATA); //packId
++                                        to.writeBoolean(from.readBoolean()); //isDefaultPiece
++                                        act.accept(SK_VI_DATA); //productId
++                                    }
++
++                                    final int pieceTintColorCount = from.readIntLE(); //Piece tint color count
++                                    to.writeIntLE(pieceTintColorCount);
++
++                                    for (int i2 = 0; i2 < pieceTintColorCount; i2++) {
++                                        act.accept(SK_VI_DATA); //pieceType
++
++                                        final int colorCount = from.readIntLE(); //colorCount
++                                        to.writeIntLE(colorCount);
++
++                                        for (int i3 = 0; i3 < colorCount; i3++) {
++                                            act.accept(SK_VI_DATA); //another color
++                                        }
++                                    }
++                                }
 +                            }
-+                            to.writeBytes(from, Byte.BYTES); // is teacher
-+                            to.writeBytes(from, Byte.BYTES); // is host
++                            to.writeBytes(from, Byte.BYTES); //is teacher
++                            to.writeBytes(from, Byte.BYTES); //is host
++                        }
++                    }
++
++                    if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                        if (from.readableBytes() > 0) {
++                            for (int i4 = 0; i4 < from.readableBytes(); i4++) {
++                                to.writeBoolean(true); //isTrusted
++                            }
 +                        }
 +                    }
 +                }
@@ -1532,7 +1569,7 @@ index 00000000..9a5c76ae
 +                        final int preUUIDReaderIndex = packet.readerIndex();
 +                        add.accept(new UUID(packet.readLongLE(), packet.readLongLE()));
 +                        packet.readerIndex(preUUIDReaderIndex);
-+                        
++
 +                        rewrite.run();
 +                        DefinedPacket.readSVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
@@ -1547,35 +1584,62 @@ index 00000000..9a5c76ae
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //channel
 +                        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
 +                            packet.skipBytes(Integer.BYTES); //build platform
-+                            { //serialized skin data
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin id
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin resource patch
-+                                packet.skipBytes(Integer.BYTES); //width
-+                                packet.skipBytes(Integer.BYTES); //height
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
-+                                final int animatedImageData = packet.readIntLE();
-+                                for (int j = 0; j < animatedImageData; j++) {
-+                                    packet.skipBytes(Integer.BYTES); //image width
-+                                    packet.skipBytes(Integer.BYTES); //image height
-+                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); //image
-+                                    packet.skipBytes(Integer.BYTES); //type
-+                                    packet.skipBytes(Float.BYTES); //frames
++                            //serialized skin data
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin id
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin resource patch
++                            packet.skipBytes(Integer.BYTES); //width
++                            packet.skipBytes(Integer.BYTES); //height
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin data
++
++                            final int animatedImageData = packet.readIntLE();
++                            for (int j = 0; j < animatedImageData; j++) {
++                                packet.skipBytes(Integer.BYTES); //image width
++                                packet.skipBytes(Integer.BYTES); //image height
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //image
++                                packet.skipBytes(Integer.BYTES); //type
++                                packet.skipBytes(Float.BYTES); //frames
++                            }
++
++                            packet.skipBytes(Integer.BYTES); //cape width
++                            packet.skipBytes(Integer.BYTES); //cape height
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin geom data
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //serialized animation data
++                            packet.skipBytes(Byte.BYTES); // is premium skin
++                            packet.skipBytes(Byte.BYTES); // is persona skin
++                            packet.skipBytes(Byte.BYTES); // is persona cape on classic skin
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape id
++                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //full skin id
++
++                            if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); // armSize
++                                packet.skipBytes(DefinedPacket.readVarInt(packet)); // skinColor
++                                final int personaPieceCount = packet.readIntLE(); // personaPieceCount
++                                for (int i1 = 0; i1 < personaPieceCount; i1++) {
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); // pieceId
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); // pieceType
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); // packId
++                                    packet.skipBytes(Byte.BYTES);
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); // productId
 +                                }
-+                                packet.skipBytes(Integer.BYTES); //cape width
-+                                packet.skipBytes(Integer.BYTES); //cape height
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape data
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin geom data
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //serialized animation data
-+                                packet.skipBytes(Byte.BYTES); // is premium skin
-+                                packet.skipBytes(Byte.BYTES); // is persona skin
-+                                packet.skipBytes(Byte.BYTES); // is persona cape on classic skin
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape id
-+                                packet.skipBytes(DefinedPacket.readVarInt(packet)); //full skin id
++                                final int pieceTintColorCount = packet.readIntLE(); // Piece Tint Color
++                                for (int i2 = 0; i2 < pieceTintColorCount; i2++) {
++                                    packet.skipBytes(DefinedPacket.readVarInt(packet)); // Piece Type
++                                    final int colorAmount = packet.readIntLE(); // Color Amount
++                                    for (int i3 = 0; i3 < colorAmount; i3++) {
++                                        packet.skipBytes(DefinedPacket.readVarInt(packet)); // Another Color
++                                    }
++                                }
 +                            }
 +                            packet.skipBytes(Byte.BYTES); // is teacher
 +                            packet.skipBytes(Byte.BYTES); // is host
 +                        }
 +                    }
++
++                    if (packet.isReadable()) {
++                        packet.skipBytes(packet.readableBytes()); //more shit
++                    }
++
 +                } else if (type == 1) { //REMOVE
 +                    for (int i = 0; i < num; i++) {
 +                        final long msb = packet.readLongLE();
@@ -1599,6 +1663,7 @@ index 00000000..9a5c76ae
 +        void rewrite(ByteBuf from, ByteBuf to, int oldId, int newId);
 +    }
 +
++    // THIS IS JUST A FANCY WORD FOR A STRING YOU DUMBSHIT
 +    static public final Rewrite SK_VI_DATA = (from, to, oldId, newId) -> {
 +        final int length = DefinedPacket.readVarInt(from);
 +        DefinedPacket.writeVarInt(length, to);
@@ -1622,6 +1687,7 @@ index 00000000..9a5c76ae
 +    };
 +
 +}
+\ No newline at end of file
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
 new file mode 100644
 index 00000000..ef563aa5
@@ -3390,5 +3456,5 @@ index 00000000..36072583
 +    }
 +}
 -- 
-2.17.2 (Apple Git-113)
+2.23.0.windows.1
 
