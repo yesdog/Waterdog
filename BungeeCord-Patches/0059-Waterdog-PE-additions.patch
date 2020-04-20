@@ -1,4 +1,4 @@
-From 15f1b028bf1a19397f00029574e7a01c5a81fe78 Mon Sep 17 00:00:00 2001
+From 6eb801dda14e41ff1055cb14901ca0603c983313 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2883,10 +2883,10 @@ index 00000000..eddc3303
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..52e7ccf0
+index 00000000..f5c376aa
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,133 @@
+@@ -0,0 +1,139 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.bootstrap.ServerBootstrap;
@@ -2962,6 +2962,12 @@ index 00000000..52e7ccf0
 +            pipeline.replace(PipelineUtils.FRAME_PREPENDER, PipelineUtils.FRAME_PREPENDER, new ChannelInboundHandlerAdapter());
 +            pipeline.get(MinecraftDecoder.class).setProtocolVersion(ProtocolConstants.MINECRAFT_PE_1_8);
 +            moveTimeout(channel);
++
++            if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class)) {
++                channel.config().setOption(EpollChannelOption.MAX_DATAGRAM_PAYLOAD_SIZE, 4 * 1024);
++                channel.config().setOption(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(
++                        4 * 1024, 8 * 1024, 16 * 1024));
++            }
 +        }
 +    };
 +
