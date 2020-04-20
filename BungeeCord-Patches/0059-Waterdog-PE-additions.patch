@@ -1,4 +1,4 @@
-From 9f3e07ca33d8b79d6d7fa3da727a32e0277e91ea Mon Sep 17 00:00:00 2001
+From 15f1b028bf1a19397f00029574e7a01c5a81fe78 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -2883,21 +2883,23 @@ index 00000000..eddc3303
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 new file mode 100644
-index 00000000..33f83cc2
+index 00000000..52e7ccf0
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,133 @@
 +package network.ycc.waterdog.pe;
 +
 +import io.netty.bootstrap.ServerBootstrap;
++import io.netty.channel.AdaptiveRecvByteBufAllocator;
 +import io.netty.channel.Channel;
 +import io.netty.channel.ChannelFutureListener;
 +import io.netty.channel.ChannelHandlerContext;
 +import io.netty.channel.ChannelInboundHandlerAdapter;
 +import io.netty.channel.ChannelInitializer;
-+
++import io.netty.channel.ChannelOption;
 +import io.netty.channel.ChannelPipeline;
 +import io.netty.channel.WriteBufferWaterMark;
++import io.netty.channel.epoll.EpollChannelOption;
 +import io.netty.channel.epoll.EpollDatagramChannel;
 +import io.netty.channel.socket.DatagramPacket;
 +import io.netty.channel.unix.UnixChannelOption;
@@ -2974,11 +2976,17 @@ index 00000000..33f83cc2
 +
 +    public static void multiServerBootstrap(ChannelFutureListener listener, Logger logger, Supplier<ServerBootstrap> f) {
 +        final ServerBootstrap bootstrap = f.get();
-+        if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class) && REUSE_LISTENERS > 1) {
-+            logger.info("Epoll enabled, creating " + REUSE_LISTENERS + " RakNet sockets with SO_REUSEPORT");
-+            bootstrap.option(UnixChannelOption.SO_REUSEPORT, true);
++        if (PipelineUtils.getDatagramChannel().equals(EpollDatagramChannel.class)) {
++            if (REUSE_LISTENERS > 1) {
++                logger.info("Epoll enabled, creating " + REUSE_LISTENERS + " RakNet sockets with SO_REUSEPORT");
++                bootstrap.option(UnixChannelOption.SO_REUSEPORT, true);
++            }
++            bootstrap.option(EpollChannelOption.MAX_DATAGRAM_PAYLOAD_SIZE, 4 * 1024);
 +            for (int i = 0 ; i < REUSE_LISTENERS ; i++) {
-+                bootstrap.clone().bind().addListener(listener);
++                bootstrap.clone()
++                .option(ChannelOption.RCVBUF_ALLOCATOR, new AdaptiveRecvByteBufAllocator(
++                        4 * 1024, 64 * 1024, 256 * 1024))
++                .bind().addListener(listener);
 +            }
 +        } else {
 +            bootstrap.bind().addListener(listener);
@@ -3456,5 +3464,5 @@ index 00000000..36072583
 +    }
 +}
 -- 
-2.23.0.windows.1
+2.17.2 (Apple Git-113)
 
