@@ -1,4 +1,4 @@
-From 02a64f1c57178caf14008a4a8c7b0fa4e29a381a Mon Sep 17 00:00:00 2001
+From 1bda4c40029c9fd1a017222bdabe5ee9cb65afaf Mon Sep 17 00:00:00 2001
 From: Nathan Poirier <nathan@poirier.io>
 Date: Tue, 28 Jun 2016 23:00:49 -0500
 Subject: [PATCH] Improve ServerKickEvent
@@ -62,10 +62,10 @@ index 0e1ef5c4..ee63732d 100644
      @Deprecated
      public String getKickReason()
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 281adc8c..dae9e294 100644
+index d431f514..f594a287 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -339,7 +339,7 @@ public class ServerConnector extends PacketHandler
+@@ -346,7 +346,7 @@ public class ServerConnector extends PacketHandler
      public void handle(Kick kick) throws Exception
      {
          ServerInfo def = user.updateAndGetNextServer( target );
@@ -75,7 +75,7 @@ index 281adc8c..dae9e294 100644
          {
              // Pre cancel the event if we are going to try another server
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 9e03a228..e8e8b69d 100644
+index 6598781b..d1654bcc 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 @@ -12,6 +12,7 @@ import com.mojang.brigadier.context.StringRange;
@@ -132,7 +132,7 @@ index 9e03a228..e8e8b69d 100644
          }
  
          ServerDisconnectEvent serverDisconnectEvent = new ServerDisconnectEvent( con, server.getInfo() );
-@@ -493,7 +509,11 @@ public class DownstreamBridge extends PacketHandler
+@@ -494,7 +510,11 @@ public class DownstreamBridge extends PacketHandler
      public void handle(Kick kick) throws Exception
      {
          ServerInfo def = con.updateAndGetNextServer( server.getInfo() );
@@ -146,5 +146,5 @@ index 9e03a228..e8e8b69d 100644
          {
              con.connectNow( event.getCancelServer(), ServerConnectEvent.Reason.KICK_REDIRECT );
 -- 
-2.25.0
+2.26.0
 
