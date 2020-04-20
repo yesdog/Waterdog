@@ -1,4 +1,4 @@
-From 762ba6d800585a01ace5dd22ecd93af12f8f12e9 Mon Sep 17 00:00:00 2001
+From 23b1bc9319e67aac5e820c49aed086f0a66c333c Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Sat, 27 Apr 2019 17:43:44 -0600
 Subject: [PATCH] IdentityManagementEvent
@@ -35,10 +35,10 @@ index 00000000..b351d38f
 +    }
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index b5695f84..36107d9f 100644
+index 807f512e..cb2a6cad 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-@@ -519,7 +519,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -534,7 +534,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          HttpClient.get( authURL, ch.getHandle().eventLoop(), handler );
      }
  
@@ -67,7 +67,7 @@ index b5695f84..36107d9f 100644
      {
          if ( isOnlineMode() )
          {
-@@ -551,11 +571,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -566,11 +586,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
  
          }
  

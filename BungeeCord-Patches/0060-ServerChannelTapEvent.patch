@@ -1,4 +1,4 @@
-From aae95890f526f48e6fa0d5bf266acc07e52ac950 Mon Sep 17 00:00:00 2001
+From fd1b551430bf335c6d02f1fb5b548ede12cb8675 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 17 Apr 2019 06:51:16 -0600
 Subject: [PATCH] ServerChannelTapEvent
@@ -33,7 +33,7 @@ index 00000000..a1475d4a
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 7e4cdf38..8379a8fe 100644
+index c87e2f3d..b5589396 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -383,6 +383,7 @@ public final class UserConnection implements ProxiedPlayer

@@ -1,4 +1,4 @@
-From 5b4822e5f4a52c807c34a528bb0704768ded62df Mon Sep 17 00:00:00 2001
+From 0e311ced56b4dd6a816749a46431b26e98ffe382 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -114,10 +114,10 @@ index f7459860..4f13a7a3 100644
       * Gets this player's locale.
       *
 diff --git a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java b/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
-index 3bae8064..e5f556a2 100644
+index aefe026e..288406fc 100644
 --- a/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
 +++ b/api/src/test/java/net/md_5/bungee/api/ServerConnectRequestTest.java
-@@ -77,6 +77,12 @@ public class ServerConnectRequestTest
+@@ -76,6 +76,12 @@ public class ServerConnectRequestTest
          public void ping(Callback<ServerPing> callback)
          {
          }
@@ -129,12 +129,12 @@ index 3bae8064..e5f556a2 100644
 +        // Waterdog end
      };
  
-     @Test
+     @Test(expected = NullPointerException.class)
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-index e4f14974..0129ae39 100644
+index 252389bd..014baa6d 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/AbstractPacketHandler.java
-@@ -185,4 +185,42 @@ public abstract class AbstractPacketHandler
+@@ -190,4 +190,42 @@ public abstract class AbstractPacketHandler
      {
      }
      // Waterfall end
@@ -280,10 +280,10 @@ index d4b03843..98ecafec 100644
 +    // Waterdog end
  }
 diff --git a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-index 44dc34ff..ee937b15 100644
+index aa1515f4..a90e7d0b 100644
 --- a/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
 +++ b/protocol/src/main/java/net/md_5/bungee/protocol/Protocol.java
-@@ -51,6 +51,18 @@ public enum Protocol
+@@ -52,6 +52,18 @@ public enum Protocol
      {
  
          {
@@ -302,7 +302,7 @@ index 44dc34ff..ee937b15 100644
              TO_SERVER.registerPacket(
                      Handshake.class,
                      Handshake::new, // Waterfall - speed up packet construction
-@@ -63,9 +75,67 @@ public enum Protocol
+@@ -64,9 +76,67 @@ public enum Protocol
      {
  
          {
@@ -370,7 +370,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x21 ),
-@@ -83,6 +153,7 @@ public enum Protocol
+@@ -84,6 +154,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      Chat.class,
                      Chat::new, // Waterfall - speed up packet construction
@@ -378,7 +378,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0F ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x0E ),
-@@ -91,6 +162,7 @@ public enum Protocol
+@@ -92,6 +163,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      Respawn.class,
                      Respawn::new, // Waterfall - speed up packet construction
@@ -386,7 +386,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x07 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x33 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x34 ),
-@@ -102,6 +174,7 @@ public enum Protocol
+@@ -103,6 +175,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      BossBar.class,
                      BossBar::new, // Waterfall - speed up packet construction
@@ -394,7 +394,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0C ),
                      map( ProtocolConstants.MINECRAFT_1_15, 0x0D )
              );
-@@ -195,6 +268,7 @@ public enum Protocol
+@@ -196,6 +269,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      PluginMessage.class,
                      PluginMessage::new, // Waterfall - speed up packet construction
@@ -402,7 +402,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x3F ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x18 ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x19 ),
-@@ -204,6 +278,7 @@ public enum Protocol
+@@ -205,6 +279,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      Kick.class,
                      Kick::new, // Waterfall - speed up packet construction
@@ -410,7 +410,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x40 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x1A ),
                      map( ProtocolConstants.MINECRAFT_1_13, 0x1B ),
-@@ -257,6 +332,7 @@ public enum Protocol
+@@ -263,6 +338,7 @@ public enum Protocol
              TO_SERVER.registerPacket(
                      KeepAlive.class,
                      KeepAlive::new, // Waterfall - speed up packet construction
@@ -418,7 +418,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x0B ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0C ),
-@@ -267,6 +343,7 @@ public enum Protocol
+@@ -273,6 +349,7 @@ public enum Protocol
              TO_SERVER.registerPacket(
                      Chat.class,
                      Chat::new, // Waterfall - speed up packet construction
@@ -426,7 +426,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x01 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x02 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x03 ),
-@@ -286,6 +363,7 @@ public enum Protocol
+@@ -292,6 +369,7 @@ public enum Protocol
              TO_SERVER.registerPacket(
                      ClientSettings.class,
                      ClientSettings::new, // Waterfall - speed up packet construction
@@ -434,7 +434,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x15 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x04 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x05 ),
-@@ -295,6 +373,7 @@ public enum Protocol
+@@ -301,6 +379,7 @@ public enum Protocol
              TO_SERVER.registerPacket(
                      PluginMessage.class,
                      PluginMessage::new, // Waterfall - speed up packet construction
@@ -442,7 +442,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x17 ),
                      map( ProtocolConstants.MINECRAFT_1_9, 0x09 ),
                      map( ProtocolConstants.MINECRAFT_1_12, 0x0A ),
-@@ -337,9 +416,22 @@ public enum Protocol
+@@ -343,9 +422,22 @@ public enum Protocol
      {
  
          {
@@ -465,7 +465,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x00 )
              );
              TO_CLIENT.registerPacket(
-@@ -350,6 +442,7 @@ public enum Protocol
+@@ -356,6 +448,7 @@ public enum Protocol
              TO_CLIENT.registerPacket(
                      LoginSuccess.class,
                      LoginSuccess::new, // Waterfall - speed up packet construction
@@ -473,7 +473,7 @@ index 44dc34ff..ee937b15 100644
                      map( ProtocolConstants.MINECRAFT_1_8, 0x02 )
              );
              TO_CLIENT.registerPacket(
-@@ -477,6 +570,16 @@ public enum Protocol
+@@ -483,6 +576,16 @@ public enum Protocol
              return supportsForge || i >= 0 && i <= MAX_PACKET_ID;
          }
  
@@ -490,7 +490,7 @@ index 44dc34ff..ee937b15 100644
          public final DefinedPacket createPacket(int id, int version)
          {
              return createPacket(id, version, true);
-@@ -491,6 +594,7 @@ public enum Protocol
+@@ -497,6 +600,7 @@ public enum Protocol
              }
              if ( !hasPacket(id, supportsForge) )
              {
@@ -498,7 +498,7 @@ index 44dc34ff..ee937b15 100644
                  throw new BadPacketException( "Packet with id " + id + " outside of range " );
              }
  
-@@ -517,6 +621,13 @@ public enum Protocol
+@@ -523,6 +627,13 @@ public enum Protocol
                  ProtocolMapping mapping = mappings[mappingIndex];
                  for ( int protocol : ProtocolConstants.SUPPORTED_VERSION_IDS )
                  {
@@ -1133,10 +1133,10 @@ index dab227a1..12b52465 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index a62f6698..48b28a16 100644
+index 25ddd9ff..d1296368 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -240,6 +240,7 @@ public class BungeeCord extends ProxyServer
+@@ -246,6 +246,7 @@ public class BungeeCord extends ProxyServer
                  logger.info( "Using standard Java compressor." );
              }
          }
@@ -1144,7 +1144,7 @@ index a62f6698..48b28a16 100644
      }
  
      /**
-@@ -331,6 +332,7 @@ public class BungeeCord extends ProxyServer
+@@ -346,6 +347,7 @@ public class BungeeCord extends ProxyServer
                      }
                  }
              };
@@ -1152,7 +1152,7 @@ index a62f6698..48b28a16 100644
              new ServerBootstrap()
                      .channel( PipelineUtils.getServerChannel( info.getSocketAddress() ) )
                      .option( ChannelOption.SO_REUSEADDR, true ) // TODO: Move this elsewhere!
-@@ -339,8 +341,23 @@ public class BungeeCord extends ProxyServer
+@@ -354,8 +356,23 @@ public class BungeeCord extends ProxyServer
                      .group( bossEventLoopGroup, workerEventLoopGroup )
                      .localAddress( info.getSocketAddress() )
                      .bind().addListener( listener );
@@ -1177,7 +1177,7 @@ index a62f6698..48b28a16 100644
              {
                  Preconditions.checkArgument( info.getSocketAddress() instanceof InetSocketAddress, "Can only create query listener on UDP address" );
  
-@@ -638,7 +655,7 @@ public class BungeeCord extends ProxyServer
+@@ -673,7 +690,7 @@ public class BungeeCord extends ProxyServer
  
      public PluginMessage registerChannels(int protocolVersion)
      {
@@ -1186,7 +1186,7 @@ index a62f6698..48b28a16 100644
          {
              return new PluginMessage( "minecraft:register", Util.format( Iterables.transform( pluginChannels, PluginMessage.MODERNISE ), "\00" ).getBytes( Charsets.UTF_8 ), false );
          }
-@@ -658,16 +675,18 @@ public class BungeeCord extends ProxyServer
+@@ -693,16 +710,18 @@ public class BungeeCord extends ProxyServer
          return getConfig().getGameVersion(); // Waterfall
      }
  
@@ -1230,7 +1230,7 @@ index d9497970..3eda0a37 100644
  
          if ( !options.has( "noconsole" ) )
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-index fa4fff0e..f18f2202 100644
+index 7b002089..10db4ca6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 @@ -36,6 +36,7 @@ import net.md_5.bungee.protocol.packet.PluginMessage;
@@ -1265,10 +1265,10 @@ index fa4fff0e..f18f2202 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 139c4f09..74613589 100644
+index 35a19224..bced2ca2 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-@@ -53,6 +53,8 @@ import net.md_5.bungee.protocol.packet.SetCompression;
+@@ -54,6 +54,8 @@ import net.md_5.bungee.protocol.packet.SetCompression;
  import net.md_5.bungee.protocol.packet.ViewDistance;
  import net.md_5.bungee.util.BufUtil;
  import net.md_5.bungee.util.QuietException;
@@ -1277,7 +1277,7 @@ index 139c4f09..74613589 100644
  
  @RequiredArgsConstructor
  public class ServerConnector extends PacketHandler
-@@ -100,7 +102,15 @@ public class ServerConnector extends PacketHandler
+@@ -101,7 +103,15 @@ public class ServerConnector extends PacketHandler
          Handshake originalHandshake = user.getPendingConnection().getHandshake();
          Handshake copiedHandshake = new Handshake( originalHandshake.getProtocolVersion(), originalHandshake.getHost(), originalHandshake.getPort(), 2 );
  
@@ -1294,7 +1294,7 @@ index 139c4f09..74613589 100644
          {
              String newHost = copiedHandshake.getHost() + "\00" + user.getAddress().getHostString() + "\00" + user.getUUID();
  
-@@ -141,9 +151,16 @@ public class ServerConnector extends PacketHandler
+@@ -142,9 +152,16 @@ public class ServerConnector extends PacketHandler
              copiedHandshake.setHost( copiedHandshake.getHost() + user.getExtraDataInHandshake() );
          }
  
@@ -1311,7 +1311,7 @@ index 139c4f09..74613589 100644
          channel.write( new LoginRequest( user.getName() ) );
      }
  
-@@ -158,6 +175,12 @@ public class ServerConnector extends PacketHandler
+@@ -159,6 +176,12 @@ public class ServerConnector extends PacketHandler
      {
          if ( packet.packet == null )
          {
@@ -1324,7 +1324,7 @@ index 139c4f09..74613589 100644
              throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -165,6 +188,15 @@ public class ServerConnector extends PacketHandler
+@@ -166,6 +189,15 @@ public class ServerConnector extends PacketHandler
      @Override
      public void handle(LoginSuccess loginSuccess) throws Exception
      {
@@ -1340,7 +1340,7 @@ index 139c4f09..74613589 100644
          Preconditions.checkState( thisState == State.LOGIN_SUCCESS, "Not expecting LOGIN_SUCCESS" );
          ch.setProtocol( Protocol.GAME );
          thisState = State.LOGIN;
-@@ -197,6 +229,30 @@ public class ServerConnector extends PacketHandler
+@@ -198,6 +230,30 @@ public class ServerConnector extends PacketHandler
          ch.setCompressionThreshold( setCompression.getThreshold() );
      }
  
@@ -1371,7 +1371,7 @@ index 139c4f09..74613589 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -247,6 +303,31 @@ public class ServerConnector extends PacketHandler
+@@ -248,6 +304,31 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getSeed(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo(), login.isNormalRespawn() );
  
@@ -1403,7 +1403,7 @@ index 139c4f09..74613589 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -261,6 +342,13 @@ public class ServerConnector extends PacketHandler
+@@ -262,6 +343,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1417,7 +1417,7 @@ index 139c4f09..74613589 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -322,6 +410,40 @@ public class ServerConnector extends PacketHandler
+@@ -328,6 +416,40 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1459,7 +1459,7 @@ index 139c4f09..74613589 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 95dbaefd..7e4cdf38 100644
+index 7c129221..c87e2f3d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -130,6 +130,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1614,10 +1614,10 @@ index 37fe6ac7..fdb26501 100644
  
      @Override
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
-index 35eb2503..c1a1769d 100644
+index 85d2197a..6b89352d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/Configuration.java
-@@ -69,6 +69,13 @@ public abstract class Configuration implements ProxyConfig
+@@ -71,6 +71,13 @@ public abstract class Configuration implements ProxyConfig
      private boolean preventProxyConnections;
      private boolean forgeSupport = true; // Waterfall: default to enabled
  
@@ -1631,7 +1631,7 @@ index 35eb2503..c1a1769d 100644
      @Synchronized("serversLock") // Waterfall
      public void load()
      {
-@@ -101,6 +108,12 @@ public abstract class Configuration implements ProxyConfig
+@@ -105,6 +112,12 @@ public abstract class Configuration implements ProxyConfig
          compressionThreshold = adapter.getInt( "network_compression_threshold", compressionThreshold );
          preventProxyConnections = adapter.getBoolean( "prevent_proxy_connections", preventProxyConnections );
          forgeSupport = adapter.getBoolean( "forge_support", forgeSupport );
@@ -1645,10 +1645,10 @@ index 35eb2503..c1a1769d 100644
          disabledCommands = new CaseInsensitiveSet( (Collection<String>) adapter.getList( "disabled_commands", Arrays.asList( "disabledcommandhere" ) ) );
  
 diff --git a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
-index 85c2a0b5..b3b22148 100644
+index 65121ba2..76953d79 100644
 --- a/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
 +++ b/proxy/src/main/java/net/md_5/bungee/conf/YamlConfig.java
-@@ -226,8 +226,12 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -229,8 +229,12 @@ public class YamlConfig implements ConfigurationAdapter
              String addr = get( "address", "localhost:25565", val );
              String motd = ChatColor.translateAlternateColorCodes( '&', get( "motd", "&1Just another Waterfall - Forced Host", val ) );
              boolean restricted = get( "restricted", false, val );
@@ -1662,7 +1662,7 @@ index 85c2a0b5..b3b22148 100644
              ret.put( name, info );
          }
  
-@@ -241,12 +245,14 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -244,12 +248,14 @@ public class YamlConfig implements ConfigurationAdapter
      {
          Collection<Map<String, Object>> base = get( "listeners", (Collection) Arrays.asList( new Map[]
          {
@@ -1677,7 +1677,7 @@ index 85c2a0b5..b3b22148 100644
  
          for ( Map<String, Object> val : base )
          {
-@@ -255,7 +261,7 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -258,7 +264,7 @@ public class YamlConfig implements ConfigurationAdapter
  
              int maxPlayers = get( "max_players", 1, val );
              boolean forceDefault = get( "force_default_server", false, val );
@@ -1686,7 +1686,7 @@ index 85c2a0b5..b3b22148 100644
              int tabListSize = get( "tab_size", 60, val );
              SocketAddress address = Util.getAddr( host );
              Map<String, String> forced = new CaseInsensitiveMap<>( get( "forced_hosts", forcedDef, val ) );
-@@ -268,10 +274,11 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -271,10 +277,11 @@ public class YamlConfig implements ConfigurationAdapter
              boolean setLocalAddress = get( "bind_local_address", true, val );
              boolean pingPassthrough = get( "ping_passthrough", false, val );
  
@@ -1700,7 +1700,7 @@ index 85c2a0b5..b3b22148 100644
              List<String> serverPriority = new ArrayList<>( get( "priorities", Collections.EMPTY_LIST, val ) );
  
              // Default server list migration
-@@ -296,8 +303,9 @@ public class YamlConfig implements ConfigurationAdapter
+@@ -299,8 +306,9 @@ public class YamlConfig implements ConfigurationAdapter
              }
              set( "priorities", serverPriority, val );
  
@@ -1712,7 +1712,7 @@ index 85c2a0b5..b3b22148 100644
  
          return ret;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index 9fbb5e92..0ca82da8 100644
+index d7d0fafc..d38250ac 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 @@ -140,6 +140,21 @@ public class DownstreamBridge extends PacketHandler
@@ -1737,7 +1737,7 @@ index 9fbb5e92..0ca82da8 100644
          con.sendPacket( packet );
      }
  
-@@ -159,6 +174,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -160,6 +175,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
@@ -1759,7 +1759,7 @@ index 9fbb5e92..0ca82da8 100644
      @Override
      public void handle(ScoreboardObjective objective) throws Exception
      {
-@@ -475,6 +505,19 @@ public class DownstreamBridge extends PacketHandler
+@@ -476,6 +506,19 @@ public class DownstreamBridge extends PacketHandler
                      out.writeUTF( player.getUUID() );
                  }
              }
@@ -1780,7 +1780,7 @@ index 9fbb5e92..0ca82da8 100644
              {
                  ServerInfo info = bungee.getServerInfo( in.readUTF() );
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
-index 8e1b9a19..b5695f84 100644
+index 007d3daf..807f512e 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/InitialHandler.java
 @@ -99,6 +99,10 @@ public class InitialHandler extends PacketHandler implements PendingConnection
@@ -1794,7 +1794,7 @@ index 8e1b9a19..b5695f84 100644
      @Getter
      private LoginResult loginProfile;
      @Getter
-@@ -135,6 +139,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -146,6 +150,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
      {
          if ( packet.packet == null )
          {
@@ -1802,7 +1802,7 @@ index 8e1b9a19..b5695f84 100644
              throw new QuietException( "Unexpected packet received during login process! " + BufUtil.dump( packet.buf, 16 ) );
          }
      }
-@@ -278,6 +283,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -293,6 +298,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
      public void handle(Handshake handshake) throws Exception
      {
          Preconditions.checkState( thisState == State.HANDSHAKE, "Not expecting HANDSHAKE" );
@@ -1814,7 +1814,7 @@ index 8e1b9a19..b5695f84 100644
          this.handshake = handshake;
          ch.setVersion( handshake.getProtocolVersion() );
  
-@@ -334,6 +344,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -349,6 +359,27 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                      }
                      return;
                  }
@@ -1842,7 +1842,7 @@ index 8e1b9a19..b5695f84 100644
                  break;
              default:
                  throw new IllegalArgumentException( "Cannot request protocol " + handshake.getRequestedProtocol() );
-@@ -373,6 +404,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -388,6 +419,13 @@ public class InitialHandler extends PacketHandler implements PendingConnection
              return;
          }
  
@@ -1856,7 +1856,7 @@ index 8e1b9a19..b5695f84 100644
          Callback<PreLoginEvent> callback = new Callback<PreLoginEvent>()
          {
  
-@@ -388,6 +426,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -403,6 +441,30 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                  {
                      return;
                  }
@@ -1887,7 +1887,7 @@ index 8e1b9a19..b5695f84 100644
                  if ( onlineMode )
                  {
                      unsafe().sendPacket( request = EncryptionUtil.encryptRequest() );
-@@ -521,6 +583,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -536,6 +598,11 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                              userCon.setCompressionThreshold( BungeeCord.getInstance().config.getCompressionThreshold() );
                              userCon.init();
  
@@ -1899,7 +1899,7 @@ index 8e1b9a19..b5695f84 100644
                              unsafe.sendPacket( new LoginSuccess( getUniqueId().toString(), getName() ) ); // With dashes in between
                              ch.setProtocol( Protocol.GAME );
  
-@@ -591,10 +658,66 @@ public class InitialHandler extends PacketHandler implements PendingConnection
+@@ -612,10 +679,66 @@ public class InitialHandler extends PacketHandler implements PendingConnection
          return ( name != null ) ? name : ( loginRequest == null ) ? null : loginRequest.getData();
      }
  
@@ -2096,10 +2096,10 @@ index 6dc5633f..05be59b0 100644
              } else
              {
 diff --git a/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java b/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
-index a66099fc..7287197c 100644
+index 989bfd87..9fb0d78d 100644
 --- a/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
 +++ b/proxy/src/main/java/net/md_5/bungee/netty/HandlerBoss.java
-@@ -154,6 +154,11 @@ public class HandlerBoss extends ChannelInboundHandlerAdapter
+@@ -164,6 +164,11 @@ public class HandlerBoss extends ChannelInboundHandlerAdapter
                      {
                          handler, cause
                      } );
@@ -2175,5 +2175,5 @@ index 0c1ecfb8..6b4c81b8 100644
      }
  
 -- 
-2.23.0.windows.1
+2.17.2 (Apple Git-113)
 

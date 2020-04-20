@@ -1,11 +1,11 @@
-From 40a0644bbf7f925e5b36d96abf4ac7ee0921cdf0 Mon Sep 17 00:00:00 2001
+From 645bc49888f48cf8c30a0a24498dfa777be03005 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
 
 
 diff --git a/api/pom.xml b/api/pom.xml
-index 2380a5fd..5a558594 100644
+index 705b7279..a1eaeb20 100644
 --- a/api/pom.xml
 +++ b/api/pom.xml
 @@ -4,42 +4,42 @@
@@ -65,7 +65,7 @@ index 2380a5fd..5a558594 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/bootstrap/pom.xml b/bootstrap/pom.xml
-index e7b76d5b..1689786e 100644
+index 2876d8d6..ef85465a 100644
 --- a/bootstrap/pom.xml
 +++ b/bootstrap/pom.xml
 @@ -4,18 +4,18 @@
@@ -92,7 +92,7 @@ index e7b76d5b..1689786e 100644
      <description>Java 1.6 loader for Waterfall</description>
  
      <properties>
-@@ -28,20 +28,20 @@
+@@ -29,20 +29,20 @@
  
      <dependencies>
          <dependency>
@@ -117,7 +117,7 @@ index e7b76d5b..1689786e 100644
                  <configuration>
                      <archive>
                          <manifestEntries>
-@@ -58,7 +58,7 @@
+@@ -59,7 +59,7 @@
              <plugin>
                  <groupId>org.apache.maven.plugins</groupId>
                  <artifactId>maven-shade-plugin</artifactId>
@@ -155,10 +155,10 @@ index 0bd76ea5..48827dd1 100644
  
      <dependencies>
 diff --git a/config/pom.xml b/config/pom.xml
-index 764fcc6b..a9a66ce5 100644
+index 4bf7237f..a806dde3 100644
 --- a/config/pom.xml
 +++ b/config/pom.xml
-@@ -4,25 +4,25 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -182,14 +182,15 @@ index 764fcc6b..a9a66ce5 100644
      <description>Generic java configuration API intended for use with Waterfall</description>
  
      <dependencies>
+@@ -29,7 +29,7 @@
          <dependency>
              <groupId>org.yaml</groupId>
              <artifactId>snakeyaml</artifactId>
 -            <version>1.25</version>
 +            <version>1.23</version>
              <scope>compile</scope>
+             <optional>true</optional>
          </dependency>
-     </dependencies>
 diff --git a/event/pom.xml b/event/pom.xml
 index 5eb97c1f..c4c9de5e 100644
 --- a/event/pom.xml
@@ -400,7 +401,7 @@ index d8ebf472..63e223bc 100644
      <packaging>jar</packaging>
  
 diff --git a/module/pom.xml b/module/pom.xml
-index 7b05190b..db04018b 100644
+index 261c8d75..92bed0dd 100644
 --- a/module/pom.xml
 +++ b/module/pom.xml
 @@ -4,18 +4,18 @@
@@ -427,7 +428,7 @@ index 7b05190b..db04018b 100644
      <description>Parent project for all Waterfall modules.</description>
  
      <modules>
-@@ -34,8 +34,8 @@
+@@ -35,8 +35,8 @@
  
      <dependencies>
          <dependency>
@@ -490,7 +491,7 @@ index f8b549dc..4e330b04 100644
  
      <dependencies>
 diff --git a/pom.xml b/pom.xml
-index 903fd182..d275ea28 100644
+index d79bb6ea..7fa8aeff 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -4,25 +4,26 @@
@@ -557,7 +558,7 @@ index 903fd182..d275ea28 100644
 -
 -    <properties>
 -        <build.number>unknown</build.number>
--        <netty.version>4.1.45.Final</netty.version>
+-        <netty.version>4.1.48.Final</netty.version>
 -        <maven.compiler.source>1.8</maven.compiler.source>
 -        <maven.compiler.target>1.8</maven.compiler.target>
 -        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -584,15 +585,6 @@ index 903fd182..d275ea28 100644
                  <executions>
                      <execution>
                          <phase>process-classes</phase>
-@@ -173,7 +141,7 @@
-                     <dependency>
-                         <groupId>com.puppycrawl.tools</groupId>
-                         <artifactId>checkstyle</artifactId>
--                        <version>8.27</version>
-+                        <version>8.19</version>
-                     </dependency>
-                 </dependencies>
-             </plugin>
 @@ -181,7 +149,7 @@
              <plugin>
                  <groupId>org.codehaus.mojo</groupId>
@@ -665,10 +657,10 @@ index 4592e2b3..754c17f0 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 52e45fe1..ad28101a 100644
+index 54500dde..00ef6cdc 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
-@@ -4,24 +4,33 @@
+@@ -4,18 +4,18 @@
      <modelVersion>4.0.0</modelVersion>
  
      <parent>
@@ -692,7 +684,8 @@ index 52e45fe1..ad28101a 100644
      <description>Proxy component of the Elastic Portal Suite</description>
  
      <properties>
-         <maven.deploy.skip>true</maven.deploy.skip>
+@@ -23,6 +23,15 @@
+         <maven.javadoc.skip>true</maven.javadoc.skip>
      </properties>
  
 +    <!-- Waterdog start -->
@@ -707,7 +700,7 @@ index 52e45fe1..ad28101a 100644
      <dependencies>
          <dependency>
              <groupId>com.flowpowered</groupId>
-@@ -63,32 +72,32 @@
+@@ -64,32 +73,32 @@
              <scope>compile</scope>
          </dependency>
          <dependency>
@@ -750,7 +743,7 @@ index 52e45fe1..ad28101a 100644
              <version>${project.version}</version>
              <scope>compile</scope>
          </dependency>
-@@ -101,7 +110,7 @@
+@@ -102,7 +111,7 @@
          <dependency>
              <groupId>mysql</groupId>
              <artifactId>mysql-connector-java</artifactId>
@@ -759,7 +752,7 @@ index 52e45fe1..ad28101a 100644
              <scope>runtime</scope>
          </dependency>
  
-@@ -118,6 +127,29 @@
+@@ -119,6 +128,29 @@
              <scope>runtime</scope>
          </dependency>
          <!-- Waterfall end -->
@@ -790,10 +783,10 @@ index 52e45fe1..ad28101a 100644
  
      <build>
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-index c7ac1735..a62f6698 100644
+index a839cba5..25ddd9ff 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeCord.java
-@@ -498,7 +498,7 @@ public class BungeeCord extends ProxyServer
+@@ -533,7 +533,7 @@ public class BungeeCord extends ProxyServer
      @Override
      public String getName()
      {
@@ -828,7 +821,7 @@ index b26035cf..1bc785eb 100644
      }
  }
 diff --git a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
-index 9b20d0df..27bc0342 100644
+index 9b20d0df..94711ac8 100644
 --- a/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 +++ b/proxy/src/main/java/net/md_5/bungee/module/JenkinsModuleSource.java
 @@ -18,7 +18,7 @@ public class JenkinsModuleSource implements ModuleSource
@@ -880,5 +873,5 @@ index c3a29122..a00b4b99 100644
              <scope>compile</scope>
          </dependency>
 -- 
-2.23.0.windows.1
+2.17.2 (Apple Git-113)
 

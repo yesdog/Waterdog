@@ -1,4 +1,4 @@
-From 14bd59d8cedccd72d8636c7e2e4f97b99220b597 Mon Sep 17 00:00:00 2001
+From aa7955515a01104e1310e96976d6b96e246e9ff2 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (native modifications)
@@ -487,7 +487,7 @@ index 00000000..b3ada134
 +#endif
 +#endif
 diff --git a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
-index 9695c6e4..a611d8ba 100644
+index a6d7cfb5..a0373049 100644
 --- a/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 +++ b/native/src/main/java/net/md_5/bungee/jni/NativeCode.java
 @@ -20,6 +20,8 @@ public final class NativeCode<T>

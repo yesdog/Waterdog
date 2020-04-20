@@ -1,4 +1,4 @@
-From 7dadcfe84c954c1e420a581c1c174fa4e149a752 Mon Sep 17 00:00:00 2001
+From 532731030f02ffbd99e68d688ea6c266abe24449 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Thu, 25 Apr 2019 17:51:18 -0600
 Subject: [PATCH] UserChannelTapEvent
@@ -27,7 +27,7 @@ index 00000000..231fc70d
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-index 52e7ccf0..1c2343d7 100644
+index f5c376aa..1af8c723 100644
 --- a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 @@ -16,8 +16,11 @@ import io.netty.channel.socket.DatagramPacket;
