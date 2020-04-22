@@ -1,4 +1,4 @@
-From e03e0b564715df80fa194d61641266797883be09 Mon Sep 17 00:00:00 2001
+From 4013e73a46b87dbbbca08fc458d6ac626b36e69b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Fri, 19 Apr 2019 07:42:33 -0600
 Subject: [PATCH] Update guava
@@ -6,7 +6,7 @@ Subject: [PATCH] Update guava
 fixes https://snyk.io/vuln/SNYK-JAVA-COMGOOGLEGUAVA-32236
 
 diff --git a/pom.xml b/pom.xml
-index 7fa8aeff..c01c2266 100644
+index eb000d26..0dcfd6e3 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -75,7 +75,7 @@

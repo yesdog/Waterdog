@@ -1,4 +1,4 @@
-From f890c6505d24c9e94825dc508adc07f86e22abbd Mon Sep 17 00:00:00 2001
+From 19bb7dcc27bacaa9534e35f45095de50470cabe1 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (native binaries)

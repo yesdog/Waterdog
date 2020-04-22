@@ -1,4 +1,4 @@
-From 20c2956701736edd05c879d853c145be4c3ee653 Mon Sep 17 00:00:00 2001
+From 126b65f5dc3e317c62e6dc4d133b72b86cdf170a Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Wed, 22 Apr 2020 09:00:57 -0600
 Subject: [PATCH] TEST native zlib performance
