@@ -1,4 +1,4 @@
-From 532731030f02ffbd99e68d688ea6c266abe24449 Mon Sep 17 00:00:00 2001
+From f8f15be6a566f2aa671e1e1fa1a8d590d13b970c Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Thu, 25 Apr 2019 17:51:18 -0600
 Subject: [PATCH] UserChannelTapEvent
@@ -27,10 +27,10 @@ index 00000000..231fc70d
 +    private Channel channel;
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-index f5c376aa..1af8c723 100644
+index 0c8044fb..a62298ee 100644
 --- a/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEPipelineUtils.java
-@@ -16,8 +16,11 @@ import io.netty.channel.socket.DatagramPacket;
+@@ -17,8 +17,11 @@ import io.netty.channel.socket.DatagramPacket;
  import io.netty.channel.unix.UnixChannelOption;
  import io.netty.handler.timeout.ReadTimeoutHandler;
  import io.netty.util.ReferenceCountUtil;
@@ -42,7 +42,7 @@ index f5c376aa..1af8c723 100644
  import net.md_5.bungee.api.ProxyServer;
  import net.md_5.bungee.api.config.ListenerInfo;
  import net.md_5.bungee.netty.PipelineUtils;
-@@ -53,7 +56,10 @@ public class PEPipelineUtils {
+@@ -54,7 +57,10 @@ public class PEPipelineUtils {
              pipeline
              .addLast(UserDataCodec.NAME, MC_USER_DATA_CODEC)
              .addLast(PECompressor.NAME, new PECompressor())

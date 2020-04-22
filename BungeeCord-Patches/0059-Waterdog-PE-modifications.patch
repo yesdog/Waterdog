@@ -1,4 +1,4 @@
-From 0e311ced56b4dd6a816749a46431b26e98ffe382 Mon Sep 17 00:00:00 2001
+From 2863d2e721ab9be07ebb790025515046b95c7d6b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1459,7 +1459,7 @@ index 35a19224..bced2ca2 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 7c129221..c87e2f3d 100644
+index 7c129221..adc8db4b 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 @@ -130,6 +130,18 @@ public final class UserConnection implements ProxiedPlayer
@@ -1543,7 +1543,7 @@ index 7c129221..c87e2f3d 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -378,12 +427,25 @@ public final class UserConnection implements ProxiedPlayer
+@@ -378,12 +427,26 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1565,12 +1565,13 @@ index 7c129221..c87e2f3d 100644
 +                .option(network.ycc.raknet.RakNet.MTU, maxMTU == -1 ? network.ycc.raknet.config.DefaultConfig.DEFAULT_MTU : maxMTU) //some servers hate large frames
 +                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout())
 +                .remoteAddress(target.getAddress());
++            network.ycc.waterdog.pe.PEPipelineUtils.enableDownstreamScatteredReads(b);
 +        }
 +        // Waterdog end
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() && getPendingConnection().getListener().getSocketAddress() instanceof InetSocketAddress )
          {
-@@ -611,7 +673,22 @@ public final class UserConnection implements ProxiedPlayer
+@@ -611,7 +674,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1593,7 +1594,7 @@ index 7c129221..c87e2f3d 100644
  
      @Override
      public Locale getLocale()
-@@ -726,6 +803,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -726,6 +804,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
