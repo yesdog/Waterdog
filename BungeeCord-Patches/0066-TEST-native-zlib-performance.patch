@@ -1,0 +1,57 @@
+From 20c2956701736edd05c879d853c145be4c3ee653 Mon Sep 17 00:00:00 2001
+From: Colin Godsey <crgodsey@gmail.com>
+Date: Wed, 22 Apr 2020 09:00:57 -0600
+Subject: [PATCH] TEST native zlib performance
+
+
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
+index 72ea99eb..33c40413 100644
+--- a/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PECompressor.java
+@@ -72,7 +72,8 @@ public class PECompressor extends ChannelOutboundHandlerAdapter {
+                     flushData(ctx);
+                 }
+                 metricsIncrement(ctx, 4 + buf.readableBytes(), RakNetMetrics::preCompressionBytes);
+-                if (zlib instanceof NativeZlib) {
++                //TEMPORARY while evaluating native zlib slowdown
++                /*if (zlib instanceof NativeZlib) {
+                     if (buf.readableBytes() >= (inTmp.writableBytes() - 5)) {
+                         //big packets are fine to encode per packet
+                         flushInTmp(ctx);
+@@ -84,7 +85,7 @@ public class PECompressor extends ChannelOutboundHandlerAdapter {
+                         DefinedPacket.writeVarInt(buf.readableBytes(), inTmp);
+                         inTmp.writeBytes(buf);
+                     }
+-                } else {
++                } else */{
+                     final ByteBuf header = ctx.alloc().directBuffer(8, 8);
+                     DefinedPacket.writeVarInt(buf.readableBytes(), header);
+                     inBuffer.addComponent(true, header);
+@@ -204,6 +205,10 @@ public class PECompressor extends ChannelOutboundHandlerAdapter {
+     protected void flushDataNonNative(ChannelHandlerContext ctx) throws DataFormatException {
+         final ByteBuf out = ctx.alloc().directBuffer(inBuffer.readableBytes() / 4 + 16);
+         metricsIncrement(ctx, inBuffer.readableBytes(), RakNetMetrics::preCompressionBytes);
++        if (zlib instanceof NativeZlib) {
++            //TEMPORARY while evaluating native zlib slowdown
++            inBuffer.consolidate();
++        }
+         zlib.process(inBuffer, out);
+         inBuffer.release();
+         inBuffer = ctx.alloc().compositeDirectBuffer(MAX_COMPONENTS);
+@@ -213,10 +218,11 @@ public class PECompressor extends ChannelOutboundHandlerAdapter {
+ 
+     protected void flushData(ChannelHandlerContext ctx) throws DataFormatException {
+         dirty = false;
+-        if (zlib instanceof NativeZlib) {
++        //TEMPORARY while evaluating native zlib slowdown
++        /*if (zlib instanceof NativeZlib) {
+             flushInTmp(ctx);
+             flushDataNative(ctx);
+-        } else {
++        } else */{
+             flushDataNonNative(ctx);
+         }
+     }
+-- 
+2.17.2 (Apple Git-113)
+
