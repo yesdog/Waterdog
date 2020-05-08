@@ -1,14 +1,14 @@
-From f21164d37a566e7db8eb46f883f1227eff144ef9 Mon Sep 17 00:00:00 2001
+From 9cc52c0463eb2b09d627897fbe0b222a6622cbdd Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
 
 
 diff --git a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
-index a4011335..94e18aa8 100644
+index a4011335..0752e963 100644
 --- a/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
 +++ b/api/src/main/java/net/md_5/bungee/api/ProxyServer.java
-@@ -221,19 +221,13 @@ public abstract class ProxyServer
+@@ -221,19 +221,17 @@ public abstract class ProxyServer
       * @param restricted whether the server info restricted property will be set
       * @return the constructed instance
       */
@@ -28,6 +28,10 @@ index a4011335..94e18aa8 100644
 -     */
 -    public abstract ServerInfo constructServerInfo(String name, SocketAddress address, String motd, boolean restricted);
 +    public ServerInfo constructServerInfo(String name, SocketAddress address, String motd, boolean restricted) {
++        return constructServerInfo(name, address, motd, restricted, false, "default");
++    }
++
++    public ServerInfo constructServerInfo(String name, InetSocketAddress address, String motd, boolean restricted) {
 +        return constructServerInfo(name, address, motd, restricted, false, "default");
 +    }
 +    // Waterdog end
@@ -1230,7 +1234,7 @@ index d9497970..3eda0a37 100644
  
          if ( !options.has( "noconsole" ) )
 diff --git a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
-index 7b002089..10db4ca6 100644
+index 7b002089..ea0f4d5c 100644
 --- a/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 +++ b/proxy/src/main/java/net/md_5/bungee/BungeeServerInfo.java
 @@ -36,6 +36,7 @@ import net.md_5.bungee.protocol.packet.PluginMessage;
@@ -1241,7 +1245,7 @@ index 7b002089..10db4ca6 100644
  })
  // CHECKSTYLE:ON
  public class BungeeServerInfo implements ServerInfo
-@@ -53,6 +54,22 @@ public class BungeeServerInfo implements ServerInfo
+@@ -53,6 +54,26 @@ public class BungeeServerInfo implements ServerInfo
      @Getter
      private final Queue<DefinedPacket> packetQueue = new LinkedList<>();
  
@@ -1253,6 +1257,10 @@ index 7b002089..10db4ca6 100644
 +        this.restricted = restricted;
 +        this.rakNet = true;
 +        this.transferGroup = "default";
++    }
++
++    public BungeeServerInfo(String name, InetSocketAddress socketAddress, String motd, boolean restricted) {
++        this(name, (SocketAddress)socketAddress, motd, restricted);
 +    }
 +
 +    @Getter
@@ -2176,5 +2184,5 @@ index 0c1ecfb8..6b4c81b8 100644
      }
  
 -- 
-2.17.2 (Apple Git-113)
+2.26.2
 
