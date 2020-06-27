@@ -1,4 +1,4 @@
-From 6ea95e61dc89fd77fa582c7e0fa4c3c7b169d94d Mon Sep 17 00:00:00 2001
+From 3934644d9cbb0269d9a9e2838fed61183033e6e5 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -688,10 +688,10 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..553713ff
+index 00000000..15eff8e8
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,203 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import com.nukkitx.nbt.stream.NBTInputStream;
@@ -739,6 +739,10 @@ index 00000000..553713ff
 +        buf.readFloatLE(); //yaw
 +        buf.readFloatLE(); //pitch
 +        readSVarInt(buf); //seed
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.readShort();//type
++            DefinedPacket.readString(buf); //biome
++        }
 +        setDimension(PEDataValues.getPcDimensionId(readSVarInt(buf)));
 +        readSVarInt(buf); //world type (1 - infinite)
 +        readSVarInt(buf); //world gamemode (SURVIVAL)
@@ -754,12 +758,15 @@ index 00000000..553713ff
 +        DefinedPacket.readSVarInt(buf);
 +        buf.readBoolean(); //disable achievements
 +        DefinedPacket.readSVarInt(buf); //time
-+        buf.readBoolean(); //edu mode
++        DefinedPacket.readSVarInt(buf); //edu mode
 +        buf.readBoolean(); //edu features
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16) {
++            DefinedPacket.readString(buf); //educationProductId
++        }
 +        buf.readFloatLE(); //rain level
 +        buf.readFloatLE(); //lighting level
 +        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_9) {
-+            buf.readBoolean(); //???
++            buf.readBoolean(); //has confirmed platform locked content
 +        }
 +        buf.readBoolean(); //is multiplayer
 +        buf.readBoolean(); //broadcast to lan
@@ -821,6 +828,12 @@ index 00000000..553713ff
 +        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_13) {
 +            DefinedPacket.readString(buf); //vanilla version
 +        }
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.readIntLE(); //worldWidth
++            buf.readIntLE(); //worldDepth
++            buf.readBoolean(); //netherType
++            buf.readBoolean(); //expGameplay
++        }
 +        DefinedPacket.readString(buf); //level ID (empty string)
 +        DefinedPacket.readString(buf); //world name (empty string)
 +        DefinedPacket.readString(buf); //premium world template id (empty string)
@@ -871,6 +884,10 @@ index 00000000..553713ff
 +        buf.writeFloatLE(0); //player pitch
 +        buf.writeFloatLE(0); //player yaw
 +        writeSVarInt(0, buf); //seed
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.writeShort(0); //type
++            DefinedPacket.writeString("", buf); //biome
++        }
 +        writeSVarInt(PEDataValues.getPeDimensionId(getDimension()), buf); //world dimension
 +        writeSVarInt(1, buf); //world type (1 - infinite)
 +        writeSVarInt(0, buf); //world gamemode
