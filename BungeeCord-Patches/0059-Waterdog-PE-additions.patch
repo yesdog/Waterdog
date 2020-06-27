@@ -1,4 +1,4 @@
-From 2ca39d80c9578c5e37f6c24b4af8da7f89eaff24 Mon Sep 17 00:00:00 2001
+From 3934644d9cbb0269d9a9e2838fed61183033e6e5 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -688,10 +688,10 @@ index 00000000..e0c0b55f
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 new file mode 100644
-index 00000000..553713ff
+index 00000000..15eff8e8
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,203 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import com.nukkitx.nbt.stream.NBTInputStream;
@@ -739,6 +739,10 @@ index 00000000..553713ff
 +        buf.readFloatLE(); //yaw
 +        buf.readFloatLE(); //pitch
 +        readSVarInt(buf); //seed
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.readShort();//type
++            DefinedPacket.readString(buf); //biome
++        }
 +        setDimension(PEDataValues.getPcDimensionId(readSVarInt(buf)));
 +        readSVarInt(buf); //world type (1 - infinite)
 +        readSVarInt(buf); //world gamemode (SURVIVAL)
@@ -754,12 +758,15 @@ index 00000000..553713ff
 +        DefinedPacket.readSVarInt(buf);
 +        buf.readBoolean(); //disable achievements
 +        DefinedPacket.readSVarInt(buf); //time
-+        buf.readBoolean(); //edu mode
++        DefinedPacket.readSVarInt(buf); //edu mode
 +        buf.readBoolean(); //edu features
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16) {
++            DefinedPacket.readString(buf); //educationProductId
++        }
 +        buf.readFloatLE(); //rain level
 +        buf.readFloatLE(); //lighting level
 +        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_9) {
-+            buf.readBoolean(); //???
++            buf.readBoolean(); //has confirmed platform locked content
 +        }
 +        buf.readBoolean(); //is multiplayer
 +        buf.readBoolean(); //broadcast to lan
@@ -821,6 +828,12 @@ index 00000000..553713ff
 +        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_13) {
 +            DefinedPacket.readString(buf); //vanilla version
 +        }
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.readIntLE(); //worldWidth
++            buf.readIntLE(); //worldDepth
++            buf.readBoolean(); //netherType
++            buf.readBoolean(); //expGameplay
++        }
 +        DefinedPacket.readString(buf); //level ID (empty string)
 +        DefinedPacket.readString(buf); //world name (empty string)
 +        DefinedPacket.readString(buf); //premium world template id (empty string)
@@ -871,6 +884,10 @@ index 00000000..553713ff
 +        buf.writeFloatLE(0); //player pitch
 +        buf.writeFloatLE(0); //player yaw
 +        writeSVarInt(0, buf); //seed
++        if (protocolVersion >= ProtocolConstants.MINECRAFT_PE_1_16){
++            buf.writeShort(0); //type
++            DefinedPacket.writeString("", buf); //biome
++        }
 +        writeSVarInt(PEDataValues.getPeDimensionId(getDimension()), buf); //world dimension
 +        writeSVarInt(1, buf); //world type (1 - infinite)
 +        writeSVarInt(0, buf); //world gamemode
@@ -1085,10 +1102,10 @@ index 00000000..32e761d5
 +}
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java
 new file mode 100644
-index 00000000..a17e9e3e
+index 00000000..7c31b51b
 --- /dev/null
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEResourceStack.java
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,55 @@
 +package network.ycc.waterdog.pe.packet;
 +
 +import network.ycc.waterdog.pe.PEResourcePackData;
@@ -1112,6 +1129,7 @@ index 00000000..a17e9e3e
 +    private boolean isExperimental = true;
 +    private PEResourcePackData[] resourcePacks = null;
 +    private PEResourcePackData[] behaviorPacks = null;
++    private String baseGameVersion = "1.16.0";
 +
 +    @Override
 +    public void read(ByteBuf buf) {
@@ -1124,6 +1142,7 @@ index 00000000..a17e9e3e
 +        writePacks(buf, behaviorPacks);
 +        writePacks(buf, resourcePacks);
 +        buf.writeBoolean(isExperimental);
++        DefinedPacket.writeString(baseGameVersion, buf);
 +    }
 +
 +    @Override
@@ -1299,7 +1318,7 @@ index 00000000..6a15b9c2
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..45c7eb1c
+index 00000000..111aa685
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 @@ -0,0 +1,384 @@
@@ -1403,15 +1422,18 @@ index 00000000..45c7eb1c
 +                from.readerIndex(originalReader);
 +                return;
 +            }
-+            case 0x3F: { //PLAY_PLAYER_INFO
++            case 0x3F: //PLAY_PLAYER_INFO
 +                final int type = from.readUnsignedByte();
 +                final int num = DefinedPacket.readVarInt(from);
 +                to.writeByte(type);
 +                DefinedPacket.writeVarInt(num, to);
 +                if (type == 0) { //ADD
 +                    for (int i = 0; i < num; i++) {
-+                        to.writeBytes(from, Long.BYTES * 2);
-+                        act.accept(SVARLONG);
++                        to.writeBytes(from, Long.BYTES * 2); //UUID
++
++                        //DefinedPacket.writeVarLong(DefinedPacket.readVarLong(from), to); - will not rewrite entity ID
++                        act.accept(VARLONG); //entity ID
++
 +                        act.accept(SK_VI_DATA); //username
 +                        if (version < ProtocolConstants.MINECRAFT_PE_1_13) {
 +                            act.accept(SK_VI_DATA); //skin name
@@ -1424,58 +1446,57 @@ index 00000000..45c7eb1c
 +                        act.accept(SK_VI_DATA); //channel
 +                        if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
 +                            to.writeBytes(from, Integer.BYTES); //build platform
-+                            { //serialized skin data
-+                                act.accept(SK_VI_DATA); //skin id
-+                                act.accept(SK_VI_DATA); //skin resource patch
-+                                to.writeBytes(from, Integer.BYTES); //width
-+                                to.writeBytes(from, Integer.BYTES); //height
-+                                act.accept(SK_VI_DATA); //skin data
-+                                final int animatedImageData = from.readIntLE();
-+                                to.writeIntLE(animatedImageData);
-+                                for (int j = 0; j < animatedImageData; j++) {
-+                                    to.writeBytes(from, Integer.BYTES); //image width
-+                                    to.writeBytes(from, Integer.BYTES); //image height
-+                                    act.accept(SK_VI_DATA); //image
-+                                    to.writeBytes(from, Integer.BYTES); //type
-+                                    to.writeBytes(from, Float.BYTES); //frames
++                            //serialized skin data
++                            act.accept(SK_VI_DATA); //skin id
++                            act.accept(SK_VI_DATA); //skin resource patch
++                            to.writeBytes(from, Integer.BYTES); //width
++                            to.writeBytes(from, Integer.BYTES); //height
++                            act.accept(SK_VI_DATA); //skin data
++                            final int animatedImageData = from.readIntLE();
++                            to.writeIntLE(animatedImageData);
++                            for (int j = 0; j < animatedImageData; j++) {
++                                to.writeBytes(from, Integer.BYTES); //image width
++                                to.writeBytes(from, Integer.BYTES); //image height
++                                act.accept(SK_VI_DATA); //image
++                                to.writeBytes(from, Integer.BYTES); //type
++                                to.writeBytes(from, Float.BYTES); //frames
++                            }
++                            to.writeBytes(from, Integer.BYTES); //cape width
++                            to.writeBytes(from, Integer.BYTES); //cape height
++                            act.accept(SK_VI_DATA); //cape data
++                            act.accept(SK_VI_DATA); //skin geom data
++                            act.accept(SK_VI_DATA); //serialized animation data
++                            to.writeBytes(from, Byte.BYTES); // is premium skin
++                            to.writeBytes(from, Byte.BYTES); // is persona skin
++                            to.writeBytes(from, Byte.BYTES); // is persona cape on classic skin
++                            act.accept(SK_VI_DATA); //cape id
++                            act.accept(SK_VI_DATA); //full skin id
++
++                            if (version >= ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                                act.accept(SK_VI_DATA); //arm length
++                                act.accept(SK_VI_DATA); //skin color
++                                final int personaPieces = from.readIntLE(); //persona piece count
++                                to.writeIntLE(personaPieces);
++
++                                for (int i1 = 0; i1 < personaPieces; i1++) {
++                                    act.accept(SK_VI_DATA); //pieceId
++                                    act.accept(SK_VI_DATA); //pieceType
++                                    act.accept(SK_VI_DATA); //packId
++                                    to.writeBoolean(from.readBoolean()); //isDefaultPiece
++                                    act.accept(SK_VI_DATA); //productId
 +                                }
-+                                to.writeBytes(from, Integer.BYTES); //cape width
-+                                to.writeBytes(from, Integer.BYTES); //cape height
-+                                act.accept(SK_VI_DATA); //cape data
-+                                act.accept(SK_VI_DATA); //skin geom data
-+                                act.accept(SK_VI_DATA); //serialized animation data
-+                                to.writeBytes(from, Byte.BYTES); // is premium skin
-+                                to.writeBytes(from, Byte.BYTES); // is persona skin
-+                                to.writeBytes(from, Byte.BYTES); // is persona cape on classic skin
-+                                act.accept(SK_VI_DATA); //cape id
-+                                act.accept(SK_VI_DATA); //full skin id
 +
-+                                if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
-+                                    act.accept(SK_VI_DATA); //arm length
-+                                    act.accept(SK_VI_DATA); //skin color
-+                                    final int personaPieces = from.readIntLE(); //persona piece count
-+                                    to.writeIntLE(personaPieces);
++                                final int pieceTintColorCount = from.readIntLE(); //Piece tint color count
++                                to.writeIntLE(pieceTintColorCount);
 +
-+                                    for (int i1 = 0; i1 < personaPieces; i1++) {
-+                                        act.accept(SK_VI_DATA); //pieceId
-+                                        act.accept(SK_VI_DATA); //pieceType
-+                                        act.accept(SK_VI_DATA); //packId
-+                                        to.writeBoolean(from.readBoolean()); //isDefaultPiece
-+                                        act.accept(SK_VI_DATA); //productId
-+                                    }
++                                for (int i2 = 0; i2 < pieceTintColorCount; i2++) {
++                                    act.accept(SK_VI_DATA); //pieceType
 +
-+                                    final int pieceTintColorCount = from.readIntLE(); //Piece tint color count
-+                                    to.writeIntLE(pieceTintColorCount);
++                                    final int colorCount = from.readIntLE(); //colorCount
++                                    to.writeIntLE(colorCount);
 +
-+                                    for (int i2 = 0; i2 < pieceTintColorCount; i2++) {
-+                                        act.accept(SK_VI_DATA); //pieceType
-+
-+                                        final int colorCount = from.readIntLE(); //colorCount
-+                                        to.writeIntLE(colorCount);
-+
-+                                        for (int i3 = 0; i3 < colorCount; i3++) {
-+                                            act.accept(SK_VI_DATA); //another color
-+                                        }
++                                    for (int i3 = 0; i3 < colorCount; i3++) {
++                                        act.accept(SK_VI_DATA); //another color
 +                                    }
 +                                }
 +                            }
@@ -1483,17 +1504,15 @@ index 00000000..45c7eb1c
 +                            to.writeBytes(from, Byte.BYTES); //is host
 +                        }
 +                    }
-+
-+                    if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
-+                        if (from.readableBytes() > 0) {
-+                            for (int i4 = 0; i4 < from.readableBytes(); i4++) {
-+                                to.writeBoolean(true); //isTrusted
++                    if (version >= ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                        for (int i4 = 0; i4 < num; i4++) {
++                            if(from.isReadable()){
++                                to.writeBytes(from, Byte.BYTES); //isTrusted
 +                            }
 +                        }
 +                    }
 +                }
 +                break;
-+            }
 +            case 0x50: //PLAY_TRADE_UPDATE
 +                to.writeBytes(from, 2);
 +                act.accept(SK_SVARINT);
@@ -1561,7 +1580,7 @@ index 00000000..45c7eb1c
 +            }
 +        };
 +        switch (DefinedPacket.readVarInt(packet)) {
-+            case 0x3F: { //PLAY_PLAYER_INFO
++            case 0x3F: //PLAY_PLAYER_INFO
 +                final int type = packet.readUnsignedByte();
 +                final int num = DefinedPacket.readVarInt(packet);
 +                if (type == 0) { //ADD
@@ -1571,7 +1590,7 @@ index 00000000..45c7eb1c
 +                        packet.readerIndex(preUUIDReaderIndex);
 +
 +                        rewrite.run();
-+                        DefinedPacket.readSVarLong(packet); //entity id
++                        DefinedPacket.readVarLong(packet); //entity id
 +                        packet.skipBytes(DefinedPacket.readVarInt(packet)); //username
 +                        if (version < ProtocolConstants.MINECRAFT_PE_1_13) {
 +                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //skin name
@@ -1611,7 +1630,7 @@ index 00000000..45c7eb1c
 +                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //cape id
 +                            packet.skipBytes(DefinedPacket.readVarInt(packet)); //full skin id
 +
-+                            if (version == ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
++                            if (version >= ProtocolConstants.MINECRAFT_PE_1_14_HOTFIX) {
 +                                packet.skipBytes(DefinedPacket.readVarInt(packet)); // armSize
 +                                packet.skipBytes(DefinedPacket.readVarInt(packet)); // skinColor
 +                                final int personaPieceCount = packet.readIntLE(); // personaPieceCount
@@ -1635,9 +1654,10 @@ index 00000000..45c7eb1c
 +                            packet.skipBytes(Byte.BYTES); // is host
 +                        }
 +                    }
-+
-+                    if (packet.isReadable()) {
-+                        packet.skipBytes(packet.readableBytes()); //more shit
++                    for (int i1 = 0; i1 < num; i1++){
++                        if(packet.isReadable()) {
++                            packet.skipBytes(Byte.BYTES);
++                        }
 +                    }
 +
 +                } else if (type == 1) { //REMOVE
@@ -1648,7 +1668,6 @@ index 00000000..45c7eb1c
 +                    }
 +                }
 +                break;
-+            }
 +            case 0x5D: { //PLAY_PLAYER_SKIN_PACKET
 +                rewrite.run();
 +                break;
@@ -3220,7 +3239,7 @@ index 00000000..ba95aaff
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java
 new file mode 100644
-index 00000000..0ed42cee
+index 00000000..c0149117
 --- /dev/null
 +++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEResourcePackManager.java
 @@ -0,0 +1,89 @@
@@ -3310,7 +3329,7 @@ index 00000000..0ed42cee
 +    }
 +
 +    public void sendResourceStack(InitialHandler handler) {
-+        handler.unsafe().sendPacket(new PEResourceStack(hasPacks(), true, resourcePacks, behaviorPacks));
++        handler.unsafe().sendPacket(new PEResourceStack(hasPacks(), true, resourcePacks, behaviorPacks, "1.16.04"));
 +    }
 +}
 diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEZippedResourcePackData.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEZippedResourcePackData.java
@@ -3473,5 +3492,5 @@ index 00000000..36072583
 +    }
 +}
 -- 
-2.17.2 (Apple Git-113)
+2.23.0.windows.1
 
