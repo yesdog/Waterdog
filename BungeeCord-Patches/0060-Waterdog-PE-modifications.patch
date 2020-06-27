@@ -1,4 +1,4 @@
-From 5500d170e7ef80e4e58b942c47b3ddfdad1f673a Mon Sep 17 00:00:00 2001
+From 5524e7ae83d45551ce693af0011b80a81bed3033 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1069,7 +1069,7 @@ index 55ca27bd..88074783 100644
 +    }
  }
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-index 553713ff..92d7fedf 100644
+index 15eff8e8..49ec3010 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 @@ -17,6 +17,8 @@ import net.md_5.bungee.protocol.packet.Login;
@@ -1089,7 +1089,7 @@ index 553713ff..92d7fedf 100644
  
      public PELogin(int entityId, short gameMode, int dimension, short difficulty, short maxPlayers, String levelType, int viewDistance, boolean reducedDebugInfo, byte[] tailPayload) {
          super(entityId, gameMode, dimension, 0, difficulty, maxPlayers, levelType, viewDistance, reducedDebugInfo, true);
-@@ -77,27 +80,30 @@ public class PELogin extends Login {
+@@ -84,27 +87,30 @@ public class PELogin extends Login {
          }
          buf.readBoolean(); //commands enabled
          buf.readBoolean(); //needs texture pack
@@ -1276,7 +1276,7 @@ index 7b002089..ea0f4d5c 100644
      public void addPlayer(ProxiedPlayer player)
      {
 diff --git a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
-index 35a19224..bced2ca2 100644
+index 35a19224..2ca549ae 100644
 --- a/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 +++ b/proxy/src/main/java/net/md_5/bungee/ServerConnector.java
 @@ -54,6 +54,8 @@ import net.md_5.bungee.protocol.packet.SetCompression;
@@ -1382,7 +1382,33 @@ index 35a19224..bced2ca2 100644
      @Override
      public void handle(Login login) throws Exception
      {
-@@ -248,6 +304,31 @@ public class ServerConnector extends PacketHandler
+@@ -213,7 +269,10 @@ public class ServerConnector extends PacketHandler
+ 
+         bungee.getPluginManager().callEvent( event );
+ 
+-        ch.write( BungeeCord.getInstance().registerChannels( user.getPendingConnection().getVersion() ) );
++        if (!(login instanceof network.ycc.waterdog.pe.packet.PELogin)){
++            ch.write(BungeeCord.getInstance().registerChannels( user.getPendingConnection().getVersion() ));
++        }
++
+         Queue<DefinedPacket> packetQueue = target.getPacketQueue();
+         synchronized ( packetQueue )
+         {
+@@ -223,9 +282,10 @@ public class ServerConnector extends PacketHandler
+             }
+         }
+ 
+-        for ( PluginMessage message : user.getPendingConnection().getRelayMessages() )
+-        {
+-            ch.write( message );
++        if (!(login instanceof network.ycc.waterdog.pe.packet.PELogin)){
++            for (PluginMessage message : user.getPendingConnection().getRelayMessages()){
++                ch.write( message );
++            }
+         }
+ 
+         if (!user.isDisableEntityMetadataRewrite() && user.getSettings() != null )
+@@ -248,6 +308,31 @@ public class ServerConnector extends PacketHandler
              Login modLogin = new Login( login.getEntityId(), login.getGameMode(), (byte) login.getDimension(), login.getSeed(), login.getDifficulty(),
                      (byte) user.getPendingConnection().getListener().getTabListSize(), login.getLevelType(), login.getViewDistance(), login.isReducedDebugInfo(), login.isNormalRespawn() );
  
@@ -1414,7 +1440,7 @@ index 35a19224..bced2ca2 100644
              user.unsafe().sendPacket( modLogin );
  
              ByteBuf brand = ByteBufAllocator.DEFAULT.heapBuffer();
-@@ -262,6 +343,13 @@ public class ServerConnector extends PacketHandler
+@@ -262,6 +347,13 @@ public class ServerConnector extends PacketHandler
              user.getTabListHandler().onServerChange();
  
              Scoreboard serverScoreboard = user.getServerSentScoreboard();
@@ -1428,7 +1454,7 @@ index 35a19224..bced2ca2 100644
              if ( !user.isDisableEntityMetadataRewrite() ) { // Waterfall
              for ( Objective objective : serverScoreboard.getObjectives() )
              {
-@@ -328,6 +416,40 @@ public class ServerConnector extends PacketHandler
+@@ -328,6 +420,40 @@ public class ServerConnector extends PacketHandler
              }
              user.setDimension( login.getDimension() );
  
@@ -1470,10 +1496,18 @@ index 35a19224..bced2ca2 100644
              user.getServer().disconnect( "Quitting" );
          }
 diff --git a/proxy/src/main/java/net/md_5/bungee/UserConnection.java b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-index 7c129221..adc8db4b 100644
+index 7c129221..24302eb6 100644
 --- a/proxy/src/main/java/net/md_5/bungee/UserConnection.java
 +++ b/proxy/src/main/java/net/md_5/bungee/UserConnection.java
-@@ -130,6 +130,18 @@ public final class UserConnection implements ProxiedPlayer
+@@ -65,6 +65,7 @@ import net.md_5.bungee.tab.ServerUnique;
+ import net.md_5.bungee.tab.TabList;
+ import net.md_5.bungee.util.CaseInsensitiveSet;
+ import net.md_5.bungee.util.ChatComponentTransformer;
++import network.ycc.raknet.RakNet;
+ 
+ @RequiredArgsConstructor
+ public final class UserConnection implements ProxiedPlayer
+@@ -130,6 +131,18 @@ public final class UserConnection implements ProxiedPlayer
      @Getter
      private final Multimap<Integer, Integer> potions = HashMultimap.create();
      // Waterfall end
@@ -1492,9 +1526,21 @@ index 7c129221..adc8db4b 100644
      /*========================================================================*/
      @Getter
      private String displayName;
-@@ -150,6 +162,13 @@ public final class UserConnection implements ProxiedPlayer
-         public void sendPacket(DefinedPacket packet)
-         {
+@@ -144,12 +157,21 @@ public final class UserConnection implements ProxiedPlayer
+     @Setter
+     private ForgeServerHandler forgeServerHandler;
+     /*========================================================================*/
+-    private final Unsafe unsafe = new Unsafe()
+-    {
++    private final Unsafe unsafe = new Unsafe(){
+         @Override
+-        public void sendPacket(DefinedPacket packet)
+-        {
++        public void sendPacket(DefinedPacket packet) {
++            if ((packet instanceof PluginMessage) && net.md_5.bungee.protocol.ProtocolConstants.isPE(getPendingConnection().getVersion())){
++                return;
++            }
++
              ch.write( packet );
 +            // Waterdog start
 +            if (packet instanceof net.md_5.bungee.protocol.packet.Respawn &&
@@ -1506,7 +1552,7 @@ index 7c129221..adc8db4b 100644
          }
      };
  
-@@ -334,6 +353,17 @@ public final class UserConnection implements ProxiedPlayer
+@@ -334,6 +356,17 @@ public final class UserConnection implements ProxiedPlayer
              return;
          }
  
@@ -1524,7 +1570,7 @@ index 7c129221..adc8db4b 100644
          pendingConnects.add( target );
  
          ChannelInitializer initializer = new ChannelInitializer()
-@@ -341,10 +371,29 @@ public final class UserConnection implements ProxiedPlayer
+@@ -341,10 +374,29 @@ public final class UserConnection implements ProxiedPlayer
              @Override
              protected void initChannel(Channel ch) throws Exception
              {
@@ -1554,7 +1600,7 @@ index 7c129221..adc8db4b 100644
              }
          };
          ChannelFutureListener listener = new ChannelFutureListener()
-@@ -378,12 +427,26 @@ public final class UserConnection implements ProxiedPlayer
+@@ -378,12 +430,27 @@ public final class UserConnection implements ProxiedPlayer
                  }
              }
          };
@@ -1574,6 +1620,7 @@ index 7c129221..adc8db4b 100644
 +                .group(ch.getHandle().eventLoop())
 +                .handler( initializer )
 +                .option(network.ycc.raknet.RakNet.MTU, maxMTU == -1 ? network.ycc.raknet.config.DefaultConfig.DEFAULT_MTU : maxMTU) //some servers hate large frames
++                .option(RakNet.PROTOCOL_VERSION, (getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_PE_1_16) ? 10 : 9)
 +                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout())
 +                .remoteAddress(target.getAddress());
 +            network.ycc.waterdog.pe.PEPipelineUtils.enableDownstreamScatteredReads(b);
@@ -1582,7 +1629,7 @@ index 7c129221..adc8db4b 100644
          // Windows is bugged, multi homed users will just have to live with random connecting IPs
          if ( getPendingConnection().getListener().isSetLocalAddress() && !PlatformDependent.isWindows() && getPendingConnection().getListener().getSocketAddress() instanceof InetSocketAddress )
          {
-@@ -611,7 +674,22 @@ public final class UserConnection implements ProxiedPlayer
+@@ -611,7 +678,22 @@ public final class UserConnection implements ProxiedPlayer
      {
          this.settings = settings;
          this.locale = null;
@@ -1605,7 +1652,7 @@ index 7c129221..adc8db4b 100644
  
      @Override
      public Locale getLocale()
-@@ -726,6 +804,7 @@ public final class UserConnection implements ProxiedPlayer
+@@ -726,6 +808,7 @@ public final class UserConnection implements ProxiedPlayer
  
      public void setCompressionThreshold(int compressionThreshold)
      {
