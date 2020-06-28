@@ -1,4 +1,4 @@
-From 2d2935ccc33dc2391c77a3b761b082a979ee5166 Mon Sep 17 00:00:00 2001
+From cdfe254f80e6fd0c82ce6b42b50153dff930a611 Mon Sep 17 00:00:00 2001
 From: Troy Frew <fuzzy_bot@arenaga.me>
 Date: Tue, 15 Nov 2016 10:31:04 -0500
 Subject: [PATCH] Travertine 1.7.x Protocol Patch
@@ -1471,10 +1471,10 @@ index 45a89696..a20f4476 100644
          {
              this.compressionThreshold = compressionThreshold;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index d38250ac..f5ce78ce 100644
+index afabae45..8a8749dd 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -197,7 +197,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -201,7 +201,7 @@ public class DownstreamBridge extends PacketHandler
          switch ( objective.getAction() )
          {
              case 0:
@@ -1483,7 +1483,7 @@ index d38250ac..f5ce78ce 100644
                  break;
              case 1:
                  serverScoreboard.removeObjective( objective.getName() );
-@@ -207,7 +207,7 @@ public class DownstreamBridge extends PacketHandler
+@@ -211,7 +211,7 @@ public class DownstreamBridge extends PacketHandler
                  if ( oldObjective != null )
                  {
                      oldObjective.setValue( objective.getValue() );
@@ -1492,7 +1492,7 @@ index d38250ac..f5ce78ce 100644
                  }
                  break;
              default:
-@@ -304,16 +304,28 @@ public class DownstreamBridge extends PacketHandler
+@@ -308,16 +308,28 @@ public class DownstreamBridge extends PacketHandler
  
          if ( pluginMessage.getTag().equals( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ? "minecraft:brand" : "MC|Brand" ) )
          {
