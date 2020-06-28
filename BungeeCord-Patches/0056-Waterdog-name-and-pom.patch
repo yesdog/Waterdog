@@ -771,12 +771,12 @@ index 54500dde..00ef6cdc 100644
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>netty-raknet-server</artifactId>
-+            <version>0.7-SNAPSHOT</version>
++            <version>0.8-SNAPSHOT</version>
 +        </dependency>
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>netty-raknet-client</artifactId>
-+            <version>0.7-SNAPSHOT</version>
++            <version>0.8-SNAPSHOT</version>
 +        </dependency>
 +        <!-- Waterdog end -->
      </dependencies>
