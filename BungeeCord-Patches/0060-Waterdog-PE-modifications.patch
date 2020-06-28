@@ -1,4 +1,4 @@
-From 5524e7ae83d45551ce693af0011b80a81bed3033 Mon Sep 17 00:00:00 2001
+From 55f0ee3b63c6a268da35ac815b54ee6e7ab4397e Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1771,15 +1771,19 @@ index 65121ba2..76953d79 100644
  
          return ret;
 diff --git a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-index d7d0fafc..d38250ac 100644
+index d7d0fafc..afabae45 100644
 --- a/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
 +++ b/proxy/src/main/java/net/md_5/bungee/connection/DownstreamBridge.java
-@@ -140,6 +140,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -140,6 +140,25 @@ public class DownstreamBridge extends PacketHandler
      public void handle(PacketWrapper packet) throws Exception
      {
          con.getEntityRewrite().rewriteClientbound( packet.buf, con.getServerEntityId(), con.getClientEntityId(), con.getPendingConnection().getVersion() );
 +        // Waterdog start
 +        if (ProtocolConstants.isPE(con.getPendingConnection().getVersion())) {
++            if ((packet.packet instanceof PluginMessage)){
++                return;
++            }
++
 +            if (con.getEntityRewrite() instanceof net.md_5.bungee.entitymap.EntityMap_PE) {
 +                net.md_5.bungee.entitymap.EntityMap_PE entityMap = (net.md_5.bungee.entitymap.EntityMap_PE) con.getEntityRewrite();
 +                it.unimi.dsi.fastutil.longs.LongSet entityIDs = con.getEntityIDs();
@@ -1796,7 +1800,7 @@ index d7d0fafc..d38250ac 100644
          con.sendPacket( packet );
      }
  
-@@ -160,6 +175,21 @@ public class DownstreamBridge extends PacketHandler
+@@ -160,6 +179,21 @@ public class DownstreamBridge extends PacketHandler
          throw CancelSendSignal.INSTANCE; // Always throw because of profile rewriting
      }
  
@@ -1818,7 +1822,7 @@ index d7d0fafc..d38250ac 100644
      @Override
      public void handle(ScoreboardObjective objective) throws Exception
      {
-@@ -476,6 +506,19 @@ public class DownstreamBridge extends PacketHandler
+@@ -476,6 +510,19 @@ public class DownstreamBridge extends PacketHandler
                      out.writeUTF( player.getUUID() );
                  }
              }
