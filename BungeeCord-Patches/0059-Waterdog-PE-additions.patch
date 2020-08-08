@@ -1,4 +1,4 @@
-From 3934644d9cbb0269d9a9e2838fed61183033e6e5 Mon Sep 17 00:00:00 2001
+From a58f2cb7963530f665272dc93d56f03816fd359b Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:11 -0600
 Subject: [PATCH] Waterdog PE (additions)
@@ -1318,10 +1318,10 @@ index 00000000..6a15b9c2
 +}
 diff --git a/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
 new file mode 100644
-index 00000000..111aa685
+index 00000000..86331181
 --- /dev/null
 +++ b/proxy/src/main/java/net/md_5/bungee/entitymap/EntityMap_PE.java
-@@ -0,0 +1,384 @@
+@@ -0,0 +1,385 @@
 +package net.md_5.bungee.entitymap;
 +
 +import io.netty.buffer.ByteBuf;
@@ -1375,6 +1375,7 @@ index 00000000..111aa685
 +            case 0x28: //PLAY_ENTITY_VELOCITY
 +            case 0x6F: //PLAY_MOVE_ENTITY_DELTA
 +            case 0x71: //PLAY_LOCAL_PLAYER_INITIALIZED
++            case 0x8a: //EMOTE_PACKET
 +                act.accept(VARLONG);
 +                break;
 +            case 0x0C: //PLAY_SPAWN_PLAYER
