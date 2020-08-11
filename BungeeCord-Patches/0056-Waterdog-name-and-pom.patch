@@ -1,4 +1,4 @@
-From 3b593bcd28b14833d8f79f47ff883d49e67fff55 Mon Sep 17 00:00:00 2001
+From 8bffc411cf663bcbe4a8244018ce59f045102ad3 Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:41:38 -0600
 Subject: [PATCH] Waterdog name and pom
@@ -657,7 +657,7 @@ index 4592e2b3..754c17f0 100644
              <scope>compile</scope>
          </dependency>
 diff --git a/proxy/pom.xml b/proxy/pom.xml
-index 54500dde..00ef6cdc 100644
+index 54500dde..88e74c53 100644
 --- a/proxy/pom.xml
 +++ b/proxy/pom.xml
 @@ -4,18 +4,18 @@
@@ -771,12 +771,12 @@ index 54500dde..00ef6cdc 100644
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>netty-raknet-server</artifactId>
-+            <version>0.7-SNAPSHOT</version>
++            <version>0.8-SNAPSHOT</version>
 +        </dependency>
 +        <dependency>
 +            <groupId>network.ycc</groupId>
 +            <artifactId>netty-raknet-client</artifactId>
-+            <version>0.7-SNAPSHOT</version>
++            <version>0.8-SNAPSHOT</version>
 +        </dependency>
 +        <!-- Waterdog end -->
      </dependencies>
@@ -873,5 +873,5 @@ index c3a29122..a00b4b99 100644
              <scope>compile</scope>
          </dependency>
 -- 
-2.17.2 (Apple Git-113)
+2.24.3 (Apple Git-128)
 
