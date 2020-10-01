@@ -121,4 +121,7 @@ will produce a UUID based on the username, just like normal BungeeCord. This can
 
 ![YourKit-Logo](https://yourkit.com/images/yklogo.png)
 
-[YourKit](https://yourkit.com/), makers of the outstanding Java profiler, supports open source projects of all kinds with their full-featured [Java](https://yourkit.com/features/) and [.NET](https://yourkit.com/dotnet/features/) application profilers. We thank them for granting Waterfall an OSS license so that we can make our software the best it can be.
+[YourKit](https://yourkit.com/), who were kind enough to provide us with an Open-Source License of their Outstanding Java & .NET Profiler, YourKit Profiler.
+[Java](https://yourkit.com/features/)  [.NET](https://yourkit.com/dotnet/features/).
+
+Thanks to them we are able to monitor our software's performance and can make it the best possible.
