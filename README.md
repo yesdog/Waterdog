@@ -1,6 +1,6 @@
 Waterdog 
 [![Build Status](https://ci.codemc.org/job/yesdog/job/Waterdog/badge/icon)](https://ci.codemc.org/job/yesdog/job/Waterdog/) 
-[![Discord Chat](https://img.shields.io/discord/574240965351571477.svg)](https://discord.gg/VA8VgCz)
+[![Discord Chat](https://img.shields.io/discord/574240965351571477.svg)](https://discord.gg/sJ452xNugw)
 ![MC Bedrock](https://gist.githubusercontent.com/colinrgodsey/ec4c8ad11c08d8e63bf8cd75679eed9f/raw/d523c9d9ecd2147b758da7dd6a9bcadc28a61f31/mcbe.svg?sanitize=true)
 ![MC Java](https://gist.githubusercontent.com/colinrgodsey/1e18f62beaec3bb595ef1ed381152ad4/raw/df118cbf5c812b050354b74eb9288f0f6748bf67/mcje.svg?sanitize=true)
 =========
@@ -115,7 +115,7 @@ will produce a UUID based on the username, just like normal BungeeCord. This can
 ## Join us
 
 * Feel free to open a PR! We accept contributions.
-* Join us on our [discord](https://discord.gg/MhhWfSW) for any questions.
+* Join us on our [discord](https://discord.gg/sJ452xNugw) for any questions.
 
 ## Special Thanks To
 
