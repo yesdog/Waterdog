@@ -1,4 +1,4 @@
-From 6e419acfddd7d73c723ced77ea2f3a56aaa6d4df Mon Sep 17 00:00:00 2001
+From 7286009918b9b3d543fbf6bec10dff37528a33ba Mon Sep 17 00:00:00 2001
 From: Colin Godsey <crgodsey@gmail.com>
 Date: Tue, 16 Apr 2019 07:50:25 -0600
 Subject: [PATCH] Waterdog PE (modifications)
@@ -1071,10 +1071,20 @@ index 55ca27bd..88074783 100644
 +    }
  }
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-index 15eff8e8..49ec3010 100644
+index 15eff8e8..fb41d58a 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
 +++ b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PELogin.java
-@@ -17,6 +17,8 @@ import net.md_5.bungee.protocol.packet.Login;
+@@ -1,8 +1,6 @@
+ package network.ycc.waterdog.pe.packet;
+ 
+-import com.nukkitx.nbt.stream.NBTInputStream;
+-import com.nukkitx.nbt.stream.NetworkDataInputStream;
+-
++import com.nukkitx.nbt.NbtUtils;
+ import io.netty.buffer.ByteBuf;
+ import io.netty.buffer.ByteBufInputStream;
+ 
+@@ -17,6 +15,8 @@ import net.md_5.bungee.protocol.packet.Login;
  import network.ycc.waterdog.pe.PEDataValues;
  
  import java.io.IOException;
@@ -1127,6 +1137,15 @@ index 15eff8e8..49ec3010 100644
          }
  
          buf.readBoolean(); //bonus chest
+@@ -154,7 +158,7 @@ public class PELogin extends Login {
+             final int paletteStart = buf.readerIndex();
+             try {
+                 final ByteBufInputStream is = new ByteBufInputStream(buf);
+-                new NBTInputStream(new NetworkDataInputStream(is)).readTag();
++                NbtUtils.createNetworkReader(is).readTag();
+             } catch (IOException e) {
+                 throw new IllegalArgumentException("Failed to parse palette NBT", e);
+             }
 diff --git a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java b/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
 index dab227a1..12b52465 100644
 --- a/protocol/src/main/java/network/ycc/waterdog/pe/packet/PEStopSoundPacket.java
@@ -2176,6 +2195,55 @@ index 989bfd87..9fb0d78d 100644
                  } else
                  {
                      ProxyServer.getInstance().getLogger().log( Level.SEVERE, handler + " - encountered exception", cause );
+diff --git a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
+index ef563aa5..7e79ee35 100644
+--- a/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
++++ b/proxy/src/main/java/network/ycc/waterdog/pe/PEBlockPalette.java
+@@ -2,10 +2,9 @@ package network.ycc.waterdog.pe;
+ 
+ import com.google.common.collect.MapMaker;
+ 
+-import com.nukkitx.nbt.stream.NBTInputStream;
+-import com.nukkitx.nbt.stream.NetworkDataInputStream;
+-import com.nukkitx.nbt.tag.CompoundTag;
+-import com.nukkitx.nbt.tag.ListTag;
++import com.nukkitx.nbt.NbtList;
++import com.nukkitx.nbt.NbtMap;
++import com.nukkitx.nbt.NbtUtils;
+ import io.netty.buffer.ByteBuf;
+ 
+ import io.netty.buffer.ByteBufInputStream;
+@@ -19,8 +18,8 @@ import net.md_5.bungee.protocol.ProtocolConstants;
+ 
+ import org.apache.commons.lang3.tuple.Pair;
+ 
+-import java.io.DataInput;
+ import java.io.IOException;
++import java.io.InputStream;
+ import java.security.MessageDigest;
+ import java.security.NoSuchAlgorithmException;
+ import java.util.UUID;
+@@ -97,14 +96,14 @@ public final class PEBlockPalette {
+         if (version >= ProtocolConstants.MINECRAFT_PE_1_13) {
+             int id = 0;
+             try {
+-                final DataInput is = new NetworkDataInputStream(new ByteBufInputStream(buf));
+-                ListTag<CompoundTag> tag = (ListTag<CompoundTag>) new NBTInputStream(is).readTag();
++                final InputStream is  = new ByteBufInputStream(buf);
++                NbtList<NbtMap> tag = (NbtList<NbtMap>) NbtUtils.createNetworkReader(is).readTag();
+ 
+-                for (CompoundTag item : tag.getValue()) {
+-                    final CompoundTag block = item.getAsCompound("block");
++                for (NbtMap item : tag) {
++                    final NbtMap block = item.getCompound("block");
+                     addEntry((short) id++,
+-                            block.getAsString("name"),
+-                            block.getAsCompound("states")
++                            block.getString("name"),
++                            block.getCompound("states")
+                     );
+                 }
+             } catch (IOException e) {
 diff --git a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java b/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
 index 0c1ecfb8..6b4c81b8 100644
 --- a/query/src/main/java/net/md_5/bungee/query/QueryHandler.java
